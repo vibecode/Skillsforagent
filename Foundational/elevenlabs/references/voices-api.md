@@ -1,5 +1,7 @@
 # Voices API Reference
 
+> **Prefer the wrapper script** (`scripts/elevenlabs.sh voices`, `clone`) for common operations. This reference is for advanced parameters and edge cases the script doesn't cover.
+
 Complete reference for voice discovery, management, and cloning.
 
 ## List Voices

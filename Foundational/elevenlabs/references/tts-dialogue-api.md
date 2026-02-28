@@ -1,5 +1,7 @@
 # TTS, Dialogue & Speech-to-Speech API Reference
 
+> **Prefer the wrapper script** (`scripts/elevenlabs.sh tts`, `dialogue`, `sts`) for common operations. This reference is for advanced parameters and edge cases the script doesn't cover.
+
 Complete parameter reference for text-to-speech, multi-voice dialogue, and voice conversion endpoints.
 
 ## Text-to-Speech

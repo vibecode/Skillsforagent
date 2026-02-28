@@ -1,5 +1,7 @@
 # Sound Effects & Music API Reference
 
+> **Prefer the wrapper script** (`scripts/elevenlabs.sh sound`, `music`, `music-plan`, `music-stems`) for common operations. This reference is for advanced parameters and edge cases the script doesn't cover.
+
 Complete parameter reference for sound generation, music composition, and stem separation.
 
 ## Sound Effects

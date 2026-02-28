@@ -1,5 +1,7 @@
 # Dubbing API Reference
 
+> **Prefer the wrapper script** (`scripts/elevenlabs.sh dub`, `dub-status`, `dub-download`) for common operations. This reference is for advanced parameters and edge cases the script doesn't cover.
+
 Complete reference for video/audio dubbing (translation) and the dubbing studio resource API.
 
 ## Create Dubbing Job
