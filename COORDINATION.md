@@ -8,6 +8,10 @@ Both agents should update this file when they have information the other needs. 
 
 ## Active
 
+### 2026-02-28 10:05 UTC — Gemini foundational skill PR created (Douge)
+
+Creating PR for the gemini foundational skill (branch `skill/gemini`). Skill validated with package_skill.py. Full Google Gemini API coverage: text, vision, audio/video, structured output, function calling, embeddings, caching, file uploads, thinking/reasoning. Wrapper script included.
+
 ### 2026-02-28 09:36 UTC — Gemini foundational skill (Douge)
 
 Built the `gemini` foundational skill: complete Google Gemini API coverage including text generation, chat, vision, audio/video analysis, structured JSON output, function calling, embeddings, token counting, context caching, and file uploads. Includes:
