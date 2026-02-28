@@ -1,0 +1,1 @@
+These are for skills that may reference foundational skills. More niche skills

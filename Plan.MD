@@ -6,7 +6,7 @@
 
 - [X] Supadata Skill
 - [X] Firecrawl Skill
-- [ ] Nano Banana Skill
+- [X] Nano Banana Skill
 - [x] FAL ✓
 - [X] Exa Skill
 - [x] Serp YouTube Skill ✓
