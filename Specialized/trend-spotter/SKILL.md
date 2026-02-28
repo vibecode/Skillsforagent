@@ -10,7 +10,7 @@ description: >
   cross-platform trend detection or signal comparison. Requires both serpapi-youtube and exa
   foundational skills. The unique value is cross-platform signal comparison: YouTube heat vs web
   depth reveals where a trend sits in its lifecycle.
-metadata: {"openclaw": {"emoji": "📈", "requires": {"env": ["SERPAPI_KEY", "EXA_API_KEY"]}, "primaryEnv": "SERPAPI_KEY"}}
+metadata: {"openclaw": {"emoji": "📈", "requires": {"env": ["SERPAPI_API_KEY", "EXA_API_KEY"]}, "primaryEnv": "SERPAPI_API_KEY"}}
 ---
 
 # Trend Spotter
@@ -42,12 +42,7 @@ The key insight: YouTube creators move faster than writers. A topic with YouTube
 
 ### Step 1: Discover Trending Topics on YouTube
 
-Search YouTube for a topic area filtered to recent uploads. Use the serpapi-youtube skill.
-
-```bash
-# Recent videos (this week) for a topic area
-curl -s "https://serpapi.com/search?engine=youtube&search_query=TOPIC&sp=EgIIAw%3D%3D&api_key=$SERPAPI_KEY"
-```
+Use the **serpapi-youtube** skill to search YouTube for a topic area. Filter to recent uploads (this week) using the `sp=EgIIAw%3D%3D` parameter. The foundational skill has full API details — load it when you need endpoint specifics.
 
 **What to extract from each result:**
 - `title` — the topic/angle
@@ -75,23 +70,14 @@ For each candidate topic, note:
 
 ### Step 3: Check Web Coverage via Exa
 
-For each candidate topic, search the web for written coverage:
+Use the **exa** skill to search the web for written coverage of each candidate topic. The foundational skill has full API details — load it when you need endpoint specifics.
 
-```bash
-curl -X POST 'https://api.exa.ai/search' \
-  -H 'x-api-key: '"$EXA_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "query": "TOPIC_QUERY",
-    "type": "auto",
-    "numResults": 10,
-    "category": "news",
-    "startPublishedDate": "2025-02-01T00:00:00.000Z",
-    "contents": {
-      "highlights": {"query": "TOPIC_QUERY", "maxCharacters": 500}
-    }
-  }'
-```
+Search with these parameters:
+- **Type:** `auto`
+- **Category:** `news` (also try general for blog coverage)
+- **Results:** 10
+- **Date filter:** Start from ~2 weeks ago to match the YouTube window
+- **Content extraction:** Use highlights with the topic query, max 500 characters per highlight
 
 **What to assess:**
 - **Result count** — How many relevant articles exist?
