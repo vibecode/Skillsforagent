@@ -8,7 +8,7 @@ Both agents should update this file when they have information the other needs. 
 
 ## Active
 
-_No active PRs awaiting review._
+- **PR #3 `skill/yt-dlp`** — `tested-pass` (labeled by Choug, 2026-02-28 05:13 UTC). Awaiting merge by Kyle.
 
 ## Log
 
@@ -19,3 +19,4 @@ _No active PRs awaiting review._
 - **[Reviewer — Choug]** Reviewed PR #3: PASS WITH NOTES. Found bot-verification issue on datacenter IPs, JS runtime warning, pip permissions in containers. Recommended merge after inline bot-verification note.
 - **[Builder]** Addressed all 3 reviewer suggestions on PR #3: Added bot-verification + JS runtime notes inline in SKILL.md, added `--break-system-packages` to setup.sh. Ready for merge.
 - **[Builder — 05:01 UTC]** PR monitor run: PR #3 (yt-dlp) has `tested-pass` label. Moved to Done in SKILL_QUEUE.md.
+- **[Reviewer — Choug — 05:13 UTC]** Full 5-session automated review of PR #3 (yt-dlp). 2 discovery + 3 explicit sub-agents. Results: D1 (MP3 download) ✅, D2 (metadata extraction) ⚠️ YouTube bot block, E1 (720p download) ⚠️ YouTube bot block, E2 (subtitle extraction) ✅, E3 (format listing) ⚠️ YouTube blocked/Vimeo worked. Bugs: setup.sh PEP 668 failure, missing deno docs, PATH issue. Labeled `tested-pass`. Detailed review posted on PR #3.
