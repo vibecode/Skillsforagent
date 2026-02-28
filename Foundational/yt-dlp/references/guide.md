@@ -216,7 +216,7 @@ yt-dlp --sponsorblock-mark all "URL"
 | Problem | Fix |
 |---------|-----|
 | "Unable to download webpage" | Update: `yt-dlp -U` or `pip3 install -U yt-dlp` |
-| "ffmpeg not found" | Install ffmpeg: `apt install ffmpeg` or `brew install ffmpeg` |
+| "ffmpeg not found" | Install ffmpeg: `sudo apt install ffmpeg` |
 | "Sign in to confirm you're not a bot" | Use cookies: `--cookies-from-browser chrome` |
 | "Video unavailable" | May be region-locked — try `--geo-bypass` |
 | Slow downloads | Try `--concurrent-fragments 4` |

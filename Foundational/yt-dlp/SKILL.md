@@ -7,7 +7,7 @@ description: >
   (5) extracting video metadata without downloading (title, duration, views), (6) downloading
   subtitles, (7) any task involving yt-dlp or media downloading from the web. Requires yt-dlp
   CLI and ffmpeg for format merging/conversion.
-metadata: {"openclaw": {"emoji": "📥", "requires": {"bins": ["ffmpeg"]}, "install": [{"kind": "uv", "formula": "yt-dlp", "bins": ["yt-dlp"]}]}}
+metadata: {"openclaw": {"emoji": "📥", "os": ["linux"], "requires": {"bins": ["ffmpeg"]}, "install": [{"kind": "uv", "formula": "yt-dlp", "bins": ["yt-dlp"]}]}}
 ---
 
 # yt-dlp

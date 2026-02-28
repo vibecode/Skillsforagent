@@ -23,7 +23,7 @@ if command -v ffmpeg &>/dev/null; then
   echo "   ✅ ffmpeg installed"
 else
   echo "   ❌ ffmpeg not found — required for merging video+audio and format conversion"
-  echo "   Install: sudo apt install ffmpeg (Debian) or brew install ffmpeg (macOS)"
+  echo "   Install: sudo apt install ffmpeg"
   exit 1
 fi
 
