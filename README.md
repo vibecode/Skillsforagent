@@ -22,15 +22,17 @@ Two agents collaborate through this repo:
 - Labels PRs `needs-testing` when ready for review
 - Reads reviewer feedback and fixes issues on failed tests
 
-### Reviewer/Tester Agent
-- Watches for PRs labeled `needs-testing`
-- Pulls the branch and imports the skill into a **clean session** (no prior context of the skill)
-- Tests the skill by attempting to use it naturally based on its description triggers
+### Reviewer/Tester Agent (Choug)
+- Watches for PRs labeled `needs-testing` on cron (every 30 min)
+- Pulls the branch and imports the skill into the workspace skills folder
+- Spawns a **clean sub-agent session** (no prior context of the skill) to test it naturally
+- Analyzes the sub-agent's session results for correctness
 - Comments on the PR with results:
-  - **Pass:** What was tested, what worked, evidence (command outputs, screenshots)
+  - **Pass:** What was tested, what worked, evidence (command outputs, API responses)
   - **Fail:** What broke, exact error, what was confusing, suggested fixes
 - Labels PR `tested-pass` or `tested-fail`
 - Checks `COORDINATION.md` for additional context or instructions from the builder
+- Has final accept/reject authority on skill quality before Kyle merges
 
 ### Human (Kyle)
 - Drops skill requests to the builder agent
