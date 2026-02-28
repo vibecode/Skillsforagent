@@ -60,10 +60,14 @@ Build a detailed prompt for the **gemini-image** skill. The prompt should descri
 A YouTube thumbnail showing [MAIN VISUAL ELEMENT]. [COMPOSITION DETAILS].
 [COLOR/STYLE DETAILS]. The image is bold, high-contrast, and designed to
 grab attention at small sizes. YouTube thumbnail style.
+Do NOT include any text, words, letters, or numbers in the image.
 ```
+
+> **Important:** Always include "Do NOT include any text, words, letters, or numbers in the image" at the end of your prompt. Gemini frequently bakes text into generated images unprompted, which conflicts with the text overlay step (Step 4 Option B). Adding the explicit no-text instruction prevents this. Only omit it if you specifically want Gemini to render text (Step 4 Option A).
 
 **Prompt tips:**
 - Always include "YouTube thumbnail style" or "YouTube thumbnail" in the prompt
+- Always append the no-text instruction unless using Option A text baking
 - Specify the emotional tone: "dramatic", "exciting", "shocking", "curious"
 - Describe the composition: "close-up face on the left, [object] on the right"
 - Request bold colors: "vibrant", "saturated", "neon accents", "bright background"
@@ -98,14 +102,14 @@ Gemini can generate images with text baked in, but AI-generated text is often un
 - Works best for very short text (1-3 words, common phrases)
 - Always verify the output text is correct
 
-**Option B: Generate image without text, add text programmatically** (reliable)
-- Generate the base image without any text
+**Option B: Generate image without text, add text programmatically** (reliable, recommended)
+- Generate the base image without any text (the no-text prompt instruction from Step 2 handles this)
 - Use ImageMagick to add text overlay:
 
 ```bash
 convert base-thumbnail.png \
   -gravity Center \
-  -font Impact \
+  -font Liberation-Sans-Bold \
   -pointsize 80 \
   -fill white \
   -stroke black \
@@ -114,13 +118,15 @@ convert base-thumbnail.png \
   final-thumbnail.png
 ```
 
+> **Font note:** Impact is the classic thumbnail font but may not be available in all environments. Use Liberation Sans Bold (`Liberation-Sans-Bold`) or Helvetica Bold (`Helvetica-Bold`) as reliable alternatives. Check available fonts with `convert -list font | grep -i bold`. Any thick, bold sans-serif font works well for thumbnails.
+
 - Option B is recommended for any text longer than 2 words or text that must be exact
 
 **Text placement guidelines:**
 - Top-left or center for primary text
 - Avoid bottom-right (YouTube timestamp covers it)
 - Maximum 5 words
-- Use Impact, Arial Black, or any bold sans-serif font
+- Use Liberation Sans Bold, Impact, Arial Black, or any bold sans-serif font
 
 ### Step 5: Deliver
 
