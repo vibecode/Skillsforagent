@@ -17,6 +17,8 @@ Generate high-CTR YouTube-style thumbnails from a topic, title, or video URL. Us
 
 - **gemini-image** — Image generation and editing via Gemini (Nano Banana). Read it for API details.
 
+> **Cloud proxy fallback:** If the direct Gemini API returns a "key expired" or 400 error, use the cloud proxy endpoint per the **environment** skill. The proxy URL replaces the domain (e.g., `generativelanguage.googleapis.com` → `generativelanguage.googleapis.com.cloudproxy.vibecodeapp.com`). Read the environment skill for details.
+
 ## Thumbnail Design Principles
 
 Before generating, understand what makes thumbnails click-worthy:
@@ -40,7 +42,7 @@ Before generating, understand what makes thumbnails click-worthy:
 ### Step 1: Understand the Content
 
 If given a **video URL**, extract context about the video first:
-- Use the **supadata** or **serpapi-youtube** skill to get the video title, description, and key topics
+- Use the **supadata** skill's `/metadata` endpoint (more reliable) or **serpapi-youtube** skill to get the video title, description, and key topics. Avoid Supadata's `/youtube/video` endpoint — it's slower and prone to timeouts. If `/metadata` fails, fall back to `serpapi-youtube`.
 - If a transcript is available, scan it for the main hook or surprise
 
 If given a **topic or title**, work directly with that.
@@ -92,6 +94,10 @@ Use the **gemini-image** skill to generate the thumbnail.
 - **Aspect ratio:** Always use **16:9** — this is YouTube's thumbnail ratio
 - **Generate 2-3 variations** with slightly different prompts (swap emotion, change composition, alter colors) so the user can pick the best one
 - If the first result isn't right, iterate — adjust the prompt and regenerate
+
+> **Output validation:** After base64 decoding the generated image, check the file size is > 1KB. Files under 1KB (e.g., 3 bytes) indicate a failed generation — typically from a null API response. Discard and retry.
+
+> **File format note:** Gemini may return JPEG data regardless of what the docs say. The saved file may actually be JPEG even with a `.png` extension. This usually doesn't matter (image viewers handle it), but if accuracy matters, run `file <output>` to verify the actual format and rename the extension if needed.
 
 ### Step 4: Add Text Overlay (If Needed)
 
