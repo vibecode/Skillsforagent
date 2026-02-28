@@ -8,16 +8,16 @@ Complete parameter reference for `POST /v1/chat/completions`.
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `model` | string | ✅ | — | `gpt-5.2`, `o3`, `o4-mini` (or dated versions) |
+| `model` | string | ✅ | — | `gpt-5.2`, `gpt-5.2-pro`, `gpt-5.1` |
 | `messages` | array | ✅ | — | Conversation messages array |
-| `temperature` | float | — | 1.0 | 0–2. Not supported by o-series |
+| `temperature` | float | — | 1.0 | 0–2 |
 | `top_p` | float | — | 1.0 | Nucleus sampling. Don't combine with temperature |
 | `n` | int | — | 1 | Number of completions |
 | `stream` | bool | — | false | SSE streaming |
 | `stream_options` | object | — | null | `{"include_usage": true}` for usage in final chunk |
 | `stop` | string/array | — | null | Up to 4 stop sequences |
 | `max_tokens` | int | — | model max | Legacy. Use max_completion_tokens instead |
-| `max_completion_tokens` | int | — | — | Max output tokens. For o-series, includes reasoning tokens |
+| `max_completion_tokens` | int | — | — | Max output tokens |
 | `presence_penalty` | float | — | 0 | -2.0 to 2.0. Penalizes new topics |
 | `frequency_penalty` | float | — | 0 | -2.0 to 2.0. Penalizes repetition |
 | `logit_bias` | map | — | null | Map token IDs to bias (-100 to 100) |
@@ -28,7 +28,7 @@ Complete parameter reference for `POST /v1/chat/completions`.
 | `tools` | array | — | — | Function definitions |
 | `tool_choice` | string/object | — | `"auto"` | `auto`, `none`, `required`, or specific |
 | `parallel_tool_calls` | bool | — | true | Allow simultaneous tool calls |
-| `reasoning_effort` | string | — | — | `low`, `medium`, `high` (o-series + GPT-5.2) |
+| `reasoning_effort` | string | — | — | `none`, `low`, `medium`, `high` (GPT-5.2, GPT-5.2-pro) |
 | `user` | string | — | — | User identifier for abuse detection |
 | `store` | bool | — | — | Store completion for retrieval |
 | `metadata` | map | — | — | Key-value pairs for filtering stored completions |
@@ -162,17 +162,6 @@ Send the full message history (user → assistant w/ tool_calls → tool results
 - URL: `"url": "https://example.com/image.jpg"`
 - Base64: `"url": "data:image/png;base64,iVBOR..."`
 - Multiple images: add multiple `image_url` objects to the content array
-
-## Reasoning Model Differences (o3, o4-mini)
-
-| Feature | GPT-5.2 | o3 / o4-mini |
-|---------|---------|-------------|
-| `system` role | ✅ | ❌ Use `developer` |
-| `temperature` | ✅ | ❌ |
-| `top_p` | ✅ | ❌ |
-| `reasoning_effort` | `none`/`low`/`medium`/`high` | `low`/`medium`/`high` |
-| `parallel_tool_calls` | ✅ | ❌ (always sequential) |
-| Reasoning tokens | Optional | Always (counted in max_completion_tokens) |
 
 ## Response Object
 

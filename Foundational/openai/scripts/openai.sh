@@ -52,11 +52,7 @@ cmd_chat() {
   local messages="[]"
 
   if [[ -n "$system" ]]; then
-    # Use developer role for o-series, system for GPT
     local sys_role="system"
-    if [[ "$model" == o* ]]; then
-      sys_role="developer"
-    fi
     messages=$(echo "$messages" | jq --arg role "$sys_role" --arg content "$system" '. + [{"role": $role, "content": $content}]')
   fi
 
@@ -140,7 +136,6 @@ cmd_stream() {
 
   if [[ -n "$system" ]]; then
     local sys_role="system"
-    [[ "$model" == o* ]] && sys_role="developer"
     messages=$(echo "$messages" | jq --arg role "$sys_role" --arg content "$system" '. + [{"role": $role, "content": $content}]')
   fi
 
@@ -201,8 +196,8 @@ case "$CMD" in
     echo "  --text <text>       Input text"
     echo "  --file <path>       Input from file"
     echo "  --model <id>        Model (default: gpt-5.2)"
-    echo "  --system <text>     System/developer prompt"
-    echo "  --reasoning <level> low/medium/high (for o3, o4-mini)"
+    echo "  --system <text>     System prompt"
+    echo "  --reasoning <level> none/low/medium/high (for gpt-5.2)"
     echo "  --image <path>      Attach image for vision"
     echo "  --schema <json>     Structured output JSON schema"
     echo "  --json              Simple JSON mode"
