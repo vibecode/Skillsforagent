@@ -34,6 +34,28 @@ MODEL_DIALOGUE="eleven_v3"
 
 die() { echo "ERROR: $*" >&2; exit 1; }
 
+# Static voice ID table — fallback when /voices API is inaccessible
+declare -A VOICE_IDS=(
+  ["rachel"]="21m00Tcm4TlvDq8ikWAM"
+  ["adam"]="pNInz6obpgDQGcFmaJgB"
+  ["antoni"]="ErXwobaYiN019PkySvjV"
+  ["bella"]="EXAVITQu4vr4xnSDxMaL"
+  ["domi"]="AZnzlk1XvdvUeBnXmlld"
+  ["elli"]="MF3mGyEYCl7XYWbV9V6O"
+  ["josh"]="TxGEqnHWrfWFTfGW9XjX"
+  ["arnold"]="VR6AewLTigWG4xSOukaG"
+  ["sam"]="yoZ06aMxZJJ28mfd3POQ"
+  ["emily"]="LcfcDJNUP1GQjkzn1xUU"
+  ["charlie"]="IKne3meq5aSn9XLyUdCD"
+  ["george"]="JBFqnCBsd6RMkjVDRZzb"
+  ["callum"]="N2lVS1w4EtoT3dr4eOWO"
+  ["charlotte"]="XB0fDUnXU5powFXDhCwa"
+  ["liam"]="TX3LPaxmHKxFdv7VOQHJ"
+  ["lily"]="pFZP5JQG7iQjIQuC4Bku"
+  ["matilda"]="XrExE9yKIg1WjnnlVkGX"
+  ["will"]="bIHbv24MWmeRgasZH58o"
+)
+
 # Resolve voice name to ID. Accepts a voice ID (alphanumeric) or name (looked up).
 resolve_voice() {
   local input="$1"
@@ -42,11 +64,17 @@ resolve_voice() {
     echo "$input"
     return
   fi
-  # Look up by name (case-insensitive)
+  # Try static table first (fast, no API call)
+  local lower="${input,,}"
+  if [[ -n "${VOICE_IDS[$lower]:-}" ]]; then
+    echo "${VOICE_IDS[$lower]}"
+    return
+  fi
+  # Fall back to API lookup (case-insensitive)
   local vid
   vid=$(curl -sf "${BASE}/voices" \
     -H "xi-api-key: ${API_KEY}" | \
-    jq -r --arg name "$input" '.voices[] | select(.name | ascii_downcase == ($name | ascii_downcase)) | .voice_id' | head -1)
+    jq -r --arg name "$input" '.voices[] | select(.name | ascii_downcase == ($name | ascii_downcase)) | .voice_id' | head -1) || true
   [[ -n "$vid" ]] || die "Voice not found: $input. Run: elevenlabs.sh voices"
   echo "$vid"
 }
@@ -55,7 +83,7 @@ cmd_voices() {
   curl -sf "${BASE}/voices" \
     -H "xi-api-key: ${API_KEY}" | \
     jq -r '.voices[] | "\(.voice_id)\t\(.name)\t\(.labels | to_entries | map("\(.key)=\(.value)") | join(", "))"' | \
-    column -t -s $'\t'
+    column -t -s $'\t' 2>/dev/null || cat
 }
 
 cmd_models() {
@@ -63,7 +91,7 @@ cmd_models() {
     -H "xi-api-key: ${API_KEY}" | \
     jq -r '.[] | "\(.model_id)\t\(.name)\t\(.can_do_text_to_speech // false)\t\(.can_do_voice_conversion // false)"' | \
     (echo -e "MODEL_ID\tNAME\tTTS\tSTS"; cat) | \
-    column -t -s $'\t'
+    column -t -s $'\t' 2>/dev/null || cat
 }
 
 cmd_tts() {
