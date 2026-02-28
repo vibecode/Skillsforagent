@@ -5,48 +5,55 @@ description: >
   into a blog post or article, (2) repurposing video content as written content, (3) creating
   an article from a YouTube URL, (4) converting a talk, tutorial, or interview video into
   readable prose, (5) any task involving video-to-text content transformation beyond raw
-  transcription. Combines yt-dlp (metadata, chapters) with supadata (transcripts) to produce
-  structured articles — not summaries, actual readable articles with headings, flow, and quotes.
-metadata: {"openclaw": {"emoji": "📝", "os": ["linux"]}}
+  transcription, (6) youtube to article, (7) video to blog post, (8) repurpose video as text,
+  (9) transcribe and rewrite video content. Combines video metadata extraction with transcript
+  retrieval to produce structured articles — not summaries, actual readable articles with
+  headings, flow, and quotes.
+metadata:
+  openclaw:
+    emoji: "📝"
+    os: [linux]
 ---
 
 # Video-to-Article
 
 Transform YouTube videos into structured, readable articles. Not summaries — proper articles with headings, prose, and quotes.
 
-## Foundational Skills Used
+## This skill builds on:
 
-- **yt-dlp** — Video metadata, chapters, title, description
-- **supadata** — Transcript extraction (or use serpapi-youtube transcript endpoint as fallback)
+- **yt-dlp** — Video metadata, chapters, title, description (CLI tool)
+- **supadata** — Transcript extraction and video metadata (API)
+- **serpapi-youtube** — Transcript fallback (API)
+
+Load these foundational skills when you need their API endpoints or CLI syntax.
 
 ## Process
 
-### 1. Get Video Structure
+### 1. Get Video Metadata
 
 Extract the video's metadata and chapters — these become the article skeleton.
 
-```bash
-# Get metadata with chapters
-yt-dlp --dump-json "VIDEO_URL" | jq '{
-  title, description, duration, upload_date, uploader,
-  chapters: [.chapters[]? | {title, start_time, end_time}],
-  tags, view_count, like_count
-}'
-```
+**Primary method:** Use the `yt-dlp` skill to dump video JSON metadata. Extract title, description, duration, upload date, uploader, chapters (with start/end times), tags, and view count.
+
+**Fallback chain** (yt-dlp frequently fails on datacenter IPs due to YouTube bot detection):
+
+1. **yt-dlp** — best source, returns structured chapters. Try this first.
+2. **supadata** — use the supadata skill's video metadata endpoint. Returns title, description, channel info, view/like counts. Note: doesn't return structured chapter objects, but chapter timestamps in the description can be parsed manually.
+3. **oEmbed API** — `https://www.youtube.com/oembed?url=VIDEO_URL&format=json` returns basic metadata (title, author). No auth needed. Minimal but useful as a last resort for title/author.
+4. **HTML scraping** — fetch the YouTube page and extract metadata from the HTML. Use as final fallback.
 
 **If chapters exist:** Use them as article section headings directly.
 **If no chapters:** You'll derive sections from topic shifts in the transcript (step 3).
 
+**Parsing chapters from descriptions:** When yt-dlp is unavailable, look for timestamp patterns in the video description (e.g., `0:00 Introduction`, `2:15 Getting Started`). Parse these into chapter objects with title and start_time.
+
 ### 2. Get Transcript
 
-```bash
-# Via supadata (preferred — cleaner output)
-curl -s "https://api.supadata.ai/v1/youtube/transcript?url=VIDEO_URL" \
-  -H "x-api-key: $SUPADATA_API_KEY"
+Use the **supadata** skill's YouTube transcript endpoint to fetch timestamped transcript segments.
 
-# Fallback: serpapi-youtube transcript
-curl -s "https://serpapi.com/search?engine=youtube_video_transcript&v=VIDEO_ID&api_key=$SERPAPI_KEY"
-```
+**Important:** Always specify the language parameter (e.g., `lang=en`) — some videos default to non-English auto-generated captions if the language isn't explicit.
+
+**Fallback:** If supadata fails, use the **serpapi-youtube** skill's transcript endpoint as an alternative.
 
 The transcript comes as timestamped segments. You need both the text and the timestamps to align with chapters.
 
@@ -116,16 +123,14 @@ This is where the skill's value lives. For each section:
 *Source: [Video Title](URL) by [Channel Name] | Published: [Date] | [X] views*
 ```
 
-## What Makes a Good Conversion
+## Conversion Approach by Video Type
 
-| Video Type | Conversion Approach |
-|------------|-------------------|
-| Tutorial | Step-by-step article with code blocks or numbered instructions |
-| Interview | Profile piece with heavy quoting, Q&A sections |
-| Talk/Lecture | Essay-style with thesis, supporting arguments, conclusion |
-| Review | Structured review with verdict, pros/cons sections |
-| Listicle ("Top 10...") | Keep the list format, expand each item with detail from transcript |
-| Discussion/Podcast | Extract key arguments per speaker, organize by topic not chronology |
+- **Tutorial:** Step-by-step article with code blocks or numbered instructions
+- **Interview:** Profile piece with heavy quoting, Q&A sections
+- **Talk/Lecture:** Essay-style with thesis, supporting arguments, conclusion
+- **Review:** Structured review with verdict, pros/cons sections
+- **Listicle ("Top 10..."):** Keep the list format, expand each item with detail from transcript
+- **Discussion/Podcast:** Extract key arguments per speaker, organize by topic not chronology
 
 ## Tips
 
