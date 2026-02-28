@@ -10,9 +10,9 @@ echo "📦 Installing yt-dlp..."
 if command -v yt-dlp &>/dev/null; then
   echo "   Already installed: $(yt-dlp --version)"
   echo "   Updating..."
-  pip3 install -U yt-dlp 2>&1 | tail -1
+  pip3 install --break-system-packages -U yt-dlp 2>&1 | tail -1
 else
-  pip3 install -U yt-dlp 2>&1 | tail -1
+  pip3 install --break-system-packages -U yt-dlp 2>&1 | tail -1
 fi
 echo "   ✅ yt-dlp $(yt-dlp --version)"
 

@@ -24,6 +24,11 @@ Installs yt-dlp via pip, verifies ffmpeg, creates config with sensible defaults 
 
 **Requirements:** `ffmpeg` (pre-installed), Python 3 (pre-installed).
 
+## Notes
+
+- **Bot verification:** On server/datacenter IPs, YouTube may block requests with "Sign in to confirm you're not a bot". If this happens, use `--cookies-from-browser chrome` or provide a cookies file with `--cookies cookies.txt`.
+- **JS runtime warning:** yt-dlp may warn about no JavaScript runtime (deno) — this is expected and most operations work without it.
+
 ## Quick Reference
 
 ### Download a Video
