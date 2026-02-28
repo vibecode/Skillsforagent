@@ -4,11 +4,11 @@
 
 ### Foundational Skills
 
-- [ ] Supadata Skill
-- [ ] Firecrawl Skill
+- [X] Supadata Skill
+- [X] Firecrawl Skill
 - [ ] Nano Banana Skill
 - [x] FAL ✓
-- [ ] Exa Skill
+- [X] Exa Skill
 - [x] Serp YouTube Skill ✓
 
 ---
