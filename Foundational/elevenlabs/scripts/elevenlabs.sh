@@ -80,18 +80,38 @@ resolve_voice() {
 }
 
 cmd_voices() {
-  curl -sf "${BASE}/voices" \
-    -H "xi-api-key: ${API_KEY}" | \
-    jq -r '.voices[] | "\(.voice_id)\t\(.name)\t\(.labels | to_entries | map("\(.key)=\(.value)") | join(", "))"' | \
+  local tmpfile
+  tmpfile=$(mktemp)
+  local status
+  status=$(curl -sw '%{http_code}' "${BASE}/voices" \
+    -H "xi-api-key: ${API_KEY}" -o "$tmpfile")
+  if [[ "$status" -ge 400 ]]; then
+    echo "API error (HTTP $status):" >&2
+    cat "$tmpfile" >&2
+    rm -f "$tmpfile"
+    exit 1
+  fi
+  jq -r '.voices[] | "\(.voice_id)\t\(.name)\t\(.labels | to_entries | map("\(.key)=\(.value)") | join(", "))"' "$tmpfile" | \
     column -t -s $'\t' 2>/dev/null || cat
+  rm -f "$tmpfile"
 }
 
 cmd_models() {
-  curl -sf "${BASE}/models" \
-    -H "xi-api-key: ${API_KEY}" | \
-    jq -r '.[] | "\(.model_id)\t\(.name)\t\(.can_do_text_to_speech // false)\t\(.can_do_voice_conversion // false)"' | \
+  local tmpfile
+  tmpfile=$(mktemp)
+  local status
+  status=$(curl -sw '%{http_code}' "${BASE}/models" \
+    -H "xi-api-key: ${API_KEY}" -o "$tmpfile")
+  if [[ "$status" -ge 400 ]]; then
+    echo "API error (HTTP $status):" >&2
+    cat "$tmpfile" >&2
+    rm -f "$tmpfile"
+    exit 1
+  fi
+  jq -r '.[] | "\(.model_id)\t\(.name)\t\(.can_do_text_to_speech // false)\t\(.can_do_voice_conversion // false)"' "$tmpfile" | \
     (echo -e "MODEL_ID\tNAME\tTTS\tSTS"; cat) | \
     column -t -s $'\t' 2>/dev/null || cat
+  rm -f "$tmpfile"
 }
 
 cmd_tts() {
