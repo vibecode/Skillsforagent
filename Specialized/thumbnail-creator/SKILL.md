@@ -62,14 +62,12 @@ Build a detailed prompt for the **gemini-image** skill. The prompt should descri
 A YouTube thumbnail showing [MAIN VISUAL ELEMENT]. [COMPOSITION DETAILS].
 [COLOR/STYLE DETAILS]. The image is bold, high-contrast, and designed to
 grab attention at small sizes. YouTube thumbnail style.
-Do NOT include any text, words, letters, or numbers in the image.
 ```
 
-> **Important:** Always include "Do NOT include any text, words, letters, or numbers in the image" at the end of your prompt. Gemini frequently bakes text into generated images unprompted, which conflicts with the text overlay step (Step 4 Option B). Adding the explicit no-text instruction prevents this. Only omit it if you specifically want Gemini to render text (Step 4 Option A).
+If the thumbnail needs text, include it directly in the prompt (see Step 4).
 
 **Prompt tips:**
 - Always include "YouTube thumbnail style" or "YouTube thumbnail" in the prompt
-- Always append the no-text instruction unless using Option A text baking
 - Specify the emotional tone: "dramatic", "exciting", "shocking", "curious"
 - Describe the composition: "close-up face on the left, [object] on the right"
 - Request bold colors: "vibrant", "saturated", "neon accents", "bright background"
@@ -101,38 +99,28 @@ Use the **gemini-image** skill to generate the thumbnail.
 
 ### Step 4: Add Text Overlay (If Needed)
 
-Gemini can generate images with text baked in, but AI-generated text is often unreliable (misspelled, distorted). Two approaches:
+Most thumbnails benefit from short, punchy text (1-5 words). Gemini handles text generation well for short phrases.
 
-**Option A: Bake text into the prompt** (quick, sometimes imperfect)
-- Add the text to the prompt: "...with bold white text saying 'TOP 10' in the upper left"
-- Works best for very short text (1-3 words, common phrases)
-- Always verify the output text is correct
+**How to do it:** Include the desired text directly in your generation prompt. Specify the text content, position, and style:
 
-**Option B: Generate image without text, add text programmatically** (reliable, recommended)
-- Generate the base image without any text (the no-text prompt instruction from Step 2 handles this)
-- Use ImageMagick to add text overlay:
-
-```bash
-convert base-thumbnail.png \
-  -gravity Center \
-  -font Liberation-Sans-Bold \
-  -pointsize 80 \
-  -fill white \
-  -stroke black \
-  -strokewidth 3 \
-  -annotate +0+0 'YOUR TEXT' \
-  final-thumbnail.png
+```
+...with bold white text saying "TOP 10" in the upper left, large block letters, high contrast against the background
 ```
 
-> **Font note:** Impact is the classic thumbnail font but may not be available in all environments. Use Liberation Sans Bold (`Liberation-Sans-Bold`) or Helvetica Bold (`Helvetica-Bold`) as reliable alternatives. Check available fonts with `convert -list font | grep -i bold`. Any thick, bold sans-serif font works well for thumbnails.
+**Best practices for prompt-baked text:**
+- Keep it under 5 words — shorter text renders more reliably
+- Specify the style: "bold", "block letters", "ALL CAPS", "thick outline"
+- Specify high contrast: "white text with black outline", "bright yellow text on dark background"
+- Specify position: "upper left", "center", "across the top"
+- If the text doesn't render correctly on the first try, regenerate or use gemini-image's editing mode to fix it
 
-- Option B is recommended for any text longer than 2 words or text that must be exact
+**If no text is needed:** Add "Do NOT include any text, words, letters, or numbers in the image" to the prompt to prevent Gemini from adding unwanted text.
 
 **Text placement guidelines:**
 - Top-left or center for primary text
 - Avoid bottom-right (YouTube timestamp covers it)
 - Maximum 5 words
-- Use Liberation Sans Bold, Impact, Arial Black, or any bold sans-serif font
+- Bold, thick sans-serif style works best for thumbnails
 
 ### Step 5: Deliver
 
@@ -148,7 +136,7 @@ Save the thumbnail(s) and present to the user. Default save location: `~/Photos/
 |-----------|-----------|
 | "Make a thumbnail for [topic]" | Steps 2→3→5 (skip transcript extraction) |
 | "Make a thumbnail for this video [URL]" | Steps 1→2→3→5 (extract context first) |
-| "Add text to this thumbnail" | Step 4 only (use gemini-image to edit, or ImageMagick) |
+| "Add text to this thumbnail" | Step 4 only (use gemini-image editing mode to add text) |
 | "Make variations" | Regenerate Step 3 with prompt tweaks |
 | "Make it more clickbaity" | Increase emotional language, add more contrast, exaggerate expressions |
 | "Make it cleaner/professional" | Reduce elements, use more whitespace, softer colors, remove text |
