@@ -241,13 +241,56 @@ Use `tripadvisor_domain` to get results in different languages and regional cont
 
 This is a partial list. Use `www.` prefix for all domains. Full list at SerpApi's TripAdvisor domains page.
 
+## Common Destination Place IDs
+
+Quick-start reference for major destinations. Use these with `tripadvisor_place` to browse suggestions directly without searching.
+
+| Destination | `place_id` |
+|-------------|------------|
+| New York City | `60763` |
+| Paris | `187147` |
+| Rome | `187791` |
+| Tokyo | `298184` |
+| London | `186338` |
+| Barcelona | `187497` |
+| Bangkok | `293916` |
+| Dubai | `295424` |
+| Istanbul | `293974` |
+| Sydney | `255060` |
+
+These IDs return `type: "destination"` responses with `attraction_suggestions`, `hotel_suggestions`, and `restaurant_suggestions` — useful for trip planning or as a fallback when search is unavailable.
+
+---
+
+## Troubleshooting
+
+### Search Engine Returns Empty Results
+
+The `tripadvisor` search engine may occasionally return empty results (`"Tripadvisor hasn't returned any results for this query."`) for all queries. This is a known SerpApi backend issue, not a query problem.
+
+**How to confirm it's a backend issue (not your query):**
+- Try a simple, broad query like `q=Rome` with no filters
+- Try adding `no_cache=true` to force a fresh result
+- If ALL queries return empty (including simple ones), it's a SerpApi-side outage
+
+**Fallback pattern when search is unavailable:**
+
+1. **Use `tripadvisor_place` with known destination IDs** — see the [Common Destination Place IDs](#common-destination-place-ids) table above. A destination lookup returns `attraction_suggestions`, `hotel_suggestions`, and `restaurant_suggestions` you can drill into.
+2. **Extract place IDs from TripAdvisor URLs** — if you have a TripAdvisor URL like `https://www.tripadvisor.com/Restaurant_Review-g187147-d1234567-...`, the `d` number (`1234567`) is the `place_id`. Use it with `tripadvisor_place`.
+3. **Use other search tools to find TripAdvisor URLs** — search the web for "site:tripadvisor.com [query]", extract place IDs from the URLs, then use `tripadvisor_place` for structured data.
+
+The `tripadvisor_place` engine is independently reliable and works even when the search engine is down.
+
+---
+
 ## Error Handling
 
 - Check `search_metadata.status` — should be `"Success"`
-- Invalid `place_id` returns an error — verify IDs come from search results
+- Invalid `place_id` returns an error — verify IDs come from search results or known destination IDs
 - `no_cache=true` forces fresh results (costs 1 credit). Don't combine with `async`
 - Vacation Rental place IDs may return incomplete or empty data (TripAdvisor discontinued support)
 - Hotel pricing in `place_result` reflects live availability — results vary by date
+- Empty search results across all queries likely indicate a SerpApi backend outage — see [Troubleshooting](#troubleshooting)
 
 ## Detailed Reference
 
