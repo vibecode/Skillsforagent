@@ -1,13 +1,16 @@
 ---
 name: thread-to-post
 description: >
-  Convert viral threads and discussions into polished blog posts or LinkedIn articles. Use when:
-  (1) turning a Twitter/X thread into a blog post, (2) converting a Reddit post or comment chain
-  into an article, (3) repurposing a Hacker News discussion as written content, (4) transforming
-  any online thread or discussion into a polished article, (5) creating a LinkedIn post from a
-  viral thread, (6) converting pasted thread text into a structured article, (7) any task involving
-  thread-to-article or discussion-to-post transformation. Builds on: exa (content extraction).
-metadata: {"openclaw": {"emoji": "🧵", "os": ["linux"]}}
+  Convert threads, discussions, and pasted text into polished blog posts or LinkedIn articles.
+  Use when: (1) turning a Twitter/X thread into a blog post, (2) converting a Reddit post or
+  comment chain into an article, (3) repurposing a Hacker News discussion as written content,
+  (4) transforming any online thread or discussion into a polished article, (5) creating a
+  LinkedIn post or article from a thread or pasted text, (6) repurposing pasted thread text
+  or conversation into a structured blog post or LinkedIn article, (7) "turn this into an article",
+  "make this a LinkedIn post", "repurpose as a blog post", or any thread-to-article /
+  discussion-to-post / text-to-article transformation. Works with URLs and raw pasted text.
+  Builds on: exa (content extraction).
+metadata: {"openclaw": {"emoji": "🧵", "os": ["linux"], "requires": {"env": ["EXA_API_KEY"]}}}
 ---
 
 # Thread-to-Post
@@ -23,25 +26,34 @@ Transform viral threads and online discussions into polished, structured article
 
 | Input | How to Handle |
 |-------|--------------|
-| URL (Twitter/X thread) | Extract with **exa** `contents` endpoint |
-| URL (Reddit post) | Extract with **exa** `contents` endpoint |
-| URL (Hacker News) | Extract with **exa** `contents` endpoint |
+| URL (Hacker News) | Extract with **exa** — usually works reliably |
+| URL (Twitter/X thread) | Extract with **exa** — often fails, use fallback chain |
+| URL (Reddit post) | Extract with **exa** — often fails, use fallback chain |
 | URL (any discussion) | Extract with **exa** `contents` endpoint |
-| Raw pasted text | Use directly — skip extraction |
+| Raw pasted text | Use directly — skip extraction (most reliable path) |
 
 ## Workflow
 
 ### Step 1: Get the Content
 
-**If URL provided:** Use the **exa** skill's `contents` endpoint to extract clean text from the URL. Request the `text` content type to get the readable body without HTML noise.
-
-- For Twitter/X threads: Exa extracts the full thread including all tweets in order
-- For Reddit: Exa extracts the post body and top comments
-- For HN: Exa extracts the post and comment discussion
-
-If Exa extraction fails or returns thin content, tell the user and ask them to paste the text directly.
-
 **If raw text provided:** Use it directly. Skip to Step 2.
+
+**If URL provided:** Use the **exa** skill to extract the thread content. Follow this fallback chain — each step tries a more creative approach:
+
+1. **Try `contents` endpoint** — Request `text` content type for the readable body.
+2. **If `contents` fails → try `search`** — Search for the thread by title/topic with `category` filter (e.g., `"tweet"`, `"reddit post"`). Extract content from the top result.
+3. **If `search` fails → try `answer`** — Use Exa's `answer` endpoint with a query about the thread topic. This returns a synthesized summary with citations you can then extract via `contents`.
+4. **If all fail → ask the user to paste the text directly.**
+
+#### ⚠️ Known Extraction Limitations
+
+**Reddit and X/Twitter URLs frequently fail Exa extraction** due to aggressive anti-bot measures on both platforms:
+
+- **X/Twitter:** `contents` often returns empty results or 403/404 errors. Exa's crawler is blocked by X's robots.txt.
+- **Reddit:** `contents` typically hits `CRAWL_LIVECRAWL_TIMEOUT`. Trying `old.reddit.com` or `.json` suffix does not help.
+- **Hacker News:** Generally works well with `contents`.
+
+For Reddit and X/Twitter, expect to hit Step 2-4 of the fallback chain. The `search` and `answer` endpoints work better since they use Exa's pre-indexed content rather than live crawling. When all extraction fails, asking the user to paste the thread text is the best path forward.
 
 ### Step 2: Analyze the Content
 
