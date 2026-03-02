@@ -50,8 +50,14 @@ GET https://serpapi.com/search?engine=open_table_reviews
   "search_metadata": { ... },
   "search_parameters": { ... },
   "search_information": { ... },
-  "reviews_summary": { ... },
-  "awards": [ ... ],
+  "reviews_summary": {
+    "reviews_count": ...,
+    "ratings_count": ...,
+    "ratings_summary": { ... },
+    "ratings": [ ... ],
+    "ai_summary": "...",
+    "awards": [ ... ]
+  },
   "reviews": [ ... ],
   "serpapi_pagination": { ... }
 }
@@ -97,6 +103,7 @@ Echo of submitted parameters:
 | `ratings_summary` | Object | See below |
 | `ratings` | Array | Star distribution |
 | `ai_summary` | String | AI-generated summary of all reviews |
+| `awards` | Array | **Optional.** OpenTable awards for the restaurant. See below |
 
 #### `reviews_summary.ratings_summary`
 
@@ -107,7 +114,7 @@ Echo of submitted parameters:
 | `service` | Float | Average service rating (1.0–5.0) |
 | `ambience` | Float | Average ambience rating (1.0–5.0) |
 | `value` | Float | Average value rating (1.0–5.0) |
-| `noise` | String | Noise level: `"Quiet"`, `"Moderate"`, `"Energetic"`, `"Loud"` |
+| `noise` | String | Noise level: `"Quiet"`, `"Moderate"`, `"Energetic"`, `"Loud"`. **Optional** — may be absent for non-US domains (e.g., `opentable.co.uk`) |
 
 #### `reviews_summary.ratings[]`
 
@@ -116,9 +123,9 @@ Echo of submitted parameters:
 | `stars` | Integer | Star rating (1–5) |
 | `count` | Integer | Number of ratings with this star value |
 
-### `awards[]`
+#### `reviews_summary.awards[]`
 
-Optional. Present when the restaurant has OpenTable awards.
+Optional. Present when the restaurant has OpenTable awards. Nested inside `reviews_summary`, not at the top level.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -160,7 +167,7 @@ Array of review objects (10 per page).
 | `service` | Integer | Service quality rating (1–5) |
 | `ambience` | Integer | Ambience rating (1–5) |
 | `value` | Integer | Value for money rating (1–5) |
-| `noise` | String | Noise level during visit |
+| `noise` | String | Noise level during visit. **Optional** — may be absent for non-US domains |
 
 #### `reviews[].helpfulness`
 
@@ -244,7 +251,10 @@ Present when the restaurant has replied to the review.
       { "stars": 4, "count": 149 },
       { "stars": 5, "count": 688 }
     ],
-    "ai_summary": "Central Park Boathouse offers a \"magical experience\" with \"wonderful food, service, views, and ambiance\" that enhances its iconic location. Guests praise the \"excellent service\" and \"delicious food\", while relishing the \"stunning\" lakeside views. \"Highly recommended\" for special occasions or a quintessential New York dining experience."
+    "ai_summary": "Central Park Boathouse offers a \"magical experience\" with \"wonderful food, service, views, and ambiance\" that enhances its iconic location. Guests praise the \"excellent service\" and \"delicious food\", while relishing the \"stunning\" lakeside views. \"Highly recommended\" for special occasions or a quintessential New York dining experience.",
+    "awards": [
+      { "location": "New York City", "name": "Diners' Choice" }
+    ]
   },
   "reviews": [
     {

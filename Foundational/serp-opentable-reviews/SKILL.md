@@ -83,18 +83,10 @@ Always returned. Contains aggregate data for the restaurant.
 | `ratings_summary.service` | Float | Average service rating (1.0–5.0) |
 | `ratings_summary.ambience` | Float | Average ambience rating (1.0–5.0) |
 | `ratings_summary.value` | Float | Average value rating (1.0–5.0) |
-| `ratings_summary.noise` | String | Noise level (e.g., "Quiet", "Moderate", "Energetic") |
+| `ratings_summary.noise` | String | Noise level (e.g., "Quiet", "Moderate", "Energetic"). **Optional** — may be absent for non-US domains |
 | `ratings[]` | Array | Star distribution: `{ stars: 1-5, count: Integer }` |
 | `ai_summary` | String | AI-generated summary of all reviews |
-
-### `awards[]`
-
-Optional. Returned when the restaurant has OpenTable awards.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `location` | String | Location of the award |
-| `name` | String | Name of the award |
+| `awards[]` | Array | **Optional.** OpenTable awards for the restaurant. Each entry has `location` (String) and `name` (String) |
 
 ### `reviews[]`
 
@@ -116,7 +108,7 @@ Array of individual reviews (10 per page).
 | `rating.service` | Integer | Service rating (1–5) |
 | `rating.ambience` | Integer | Ambience rating (1–5) |
 | `rating.value` | Integer | Value rating (1–5) |
-| `rating.noise` | String | Noise level description |
+| `rating.noise` | String | Noise level description (optional — may be absent for non-US domains) |
 | `helpfulness.up` | Integer | Number of helpful votes (optional) |
 | `helpfulness.score` | Integer | Net helpful score (optional) |
 | `images[]` | Array | Review photos with `id`, `timestamp`, and `variants[]` (optional) |
