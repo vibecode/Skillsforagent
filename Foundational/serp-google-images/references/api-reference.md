@@ -101,8 +101,8 @@ Accepts the same parameters as the full `google_images` engine.
 
 **Key differences:**
 - ~2x faster response times
-- Returns `images_results[]` and `related_searches[]`
-- Does **not** return `shopping_results[]`, `suggested_searches[]`, or `source_logo` fields
+- Returns `images_results[]` only
+- Does **not** return `shopping_results[]`, `suggested_searches[]`, or `related_searches[]`
 - Ideal for bulk image collection or when speed matters more than rich metadata
 
 ---
@@ -173,7 +173,7 @@ Accepts the same parameters as the full `google_images` engine.
 | `title` | string | Yes | Page/image title |
 | `link` | string | Yes | Source page URL |
 | `source` | string | Yes | Source website name |
-| `source_logo` | string | No | Source favicon/logo (full engine only) |
+| `source_logo` | string | No | Source favicon/logo |
 | `tag` | string | No | Tag like "Recipe", "Licensable", "Product" |
 | `is_product` | bool | Yes | Whether source page has a product |
 | `in_stock` | bool | No | Stock status (when `is_product` is true) |
