@@ -171,13 +171,12 @@ Use the `ijn` parameter (page number):
 
 ### Light Engine (`google_images_light`)
 
-**`ijn` does NOT paginate the light engine** — it returns the same results regardless of `ijn` value. Instead, use the `start=` offset parameter:
+**`ijn` does NOT paginate the light engine** — it returns the same results regardless of `ijn` value. Instead, use `serpapi_pagination.next` to get the next page URL, which includes the correct `start=` offset automatically.
 
-- **First page (default):** omit `start` or `start=0` — first ~100 images
-- **Second page:** `start=100` — next ~100 images
-- **Page N:** `start=N*100`
+- **First page (default):** omit `start` or `start=0`
+- **Next pages:** always follow `serpapi_pagination.next` — the offset increment varies and is not a fixed value
 
-**For both engines:** check `serpapi_pagination.next` for the next page URL. When it's absent, there are no more results. Using `serpapi_pagination.next` is the safest approach — it handles the correct pagination parameter automatically.
+**For both engines:** check `serpapi_pagination.next` for the next page URL. When it's absent, there are no more results. Always prefer `serpapi_pagination.next` over manual offset math — it handles the correct pagination parameter and offset value automatically.
 
 ## Suggested Searches (Chips)
 
@@ -276,9 +275,10 @@ Results include `license_details_url` linking to the specific CC license.
 
 **Light engine (`google_images_light`):**
 1. Start without `start` parameter, collect `images_results[]`
-2. Check `serpapi_pagination.next` — if present, use it (or increment `start` by 100)
+2. Check `serpapi_pagination.next` — if present, use it directly
 3. Repeat until no `next` or you have enough results
-4. **Do NOT use `ijn`** — it has no effect on the light engine
+4. **Always use `serpapi_pagination.next`** — the offset increment is not a fixed value; do not hardcode offsets
+5. **Do NOT use `ijn`** — it has no effect on the light engine
 
 ### Drill Into a Specific Image
 

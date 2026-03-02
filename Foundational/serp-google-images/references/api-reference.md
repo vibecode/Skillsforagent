@@ -99,11 +99,11 @@ Cannot combine with `period_unit`/`period_value`. Overrides `cdr`, `cd_min`, `cd
 
 Accepts the same parameters as the full `google_images` engine with one critical pagination difference:
 
-**Pagination:** The `ijn` parameter does **not** work on the light engine — it returns identical results regardless of `ijn` value. Use the `start=` offset parameter instead:
+**Pagination:** The `ijn` parameter does **not** work on the light engine — it returns identical results regardless of `ijn` value. Use `serpapi_pagination.next` to get the next page URL, which includes the correct `start=` offset automatically.
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `start` | `0` | Result offset. Use `start=100` for page 2, `start=200` for page 3, etc. |
+| `start` | `0` | Result offset. **Do not hardcode offset increments** — the step size varies. Always follow `serpapi_pagination.next` for reliable pagination. |
 
 Alternatively, follow the `serpapi_pagination.next` URL which uses the correct pagination parameter automatically.
 
