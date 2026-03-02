@@ -34,10 +34,10 @@ Requires `SERPAPI_KEY` environment variable. All requests go to `https://serpapi
 
 | Scenario | Engine | Reason |
 |----------|--------|--------|
-| Need shopping results, suggested searches, source logos | `google_images` | Only full engine returns these |
-| Need fastest possible response | `google_images_light` | ~2x faster, still returns images + related searches |
+| Need shopping results, suggested searches, or related searches | `google_images` | Only full engine returns these |
+| Need fastest possible response | `google_images_light` | ~2x faster, still returns core image data |
 | Bulk image collection where metadata is secondary | `google_images_light` | Cheaper and faster |
-| Need `related_content_id` for image drill-down | `google_images` | Light engine may omit these IDs |
+| Need `related_content_id` for image drill-down | Either engine | Both reliably return `related_content_id` |
 
 ## Quick Reference
 
@@ -59,7 +59,7 @@ curl -s "https://serpapi.com/search?engine=google_images&q=QUERY&api_key=$SERPAP
 curl -s "https://serpapi.com/search?engine=google_images_light&q=QUERY&api_key=$SERPAPI_KEY"
 ```
 
-Same parameters as full engine. Returns `images_results[]` and `related_searches[]` — no shopping or suggested searches.
+Same parameters as full engine. Returns `images_results[]` — no shopping, suggested searches, or related searches.
 
 ### 3. Related Content for an Image
 
