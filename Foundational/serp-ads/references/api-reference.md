@@ -6,10 +6,11 @@ Complete parameter and response documentation for all ad-related SerpApi endpoin
 
 1. [Google Search Ads (engine=google)](#google-search-ads)
 2. [Shopping Results Schema](#shopping-results-schema)
-3. [Local Ads Schema](#local-ads-schema)
-4. [Ads Transparency Center (engine=google_ads_transparency_center)](#ads-transparency-center)
-5. [Ad Details (engine=google_ads_transparency_center_ad_details)](#ad-details)
-6. [Transparency Center Regions](#transparency-center-regions)
+3. [Immersive Products Schema](#immersive-products-schema)
+4. [Local Ads Schema](#local-ads-schema)
+5. [Ads Transparency Center (engine=google_ads_transparency_center)](#ads-transparency-center)
+6. [Ad Details (engine=google_ads_transparency_center_ad_details)](#ad-details)
+7. [Transparency Center Regions](#transparency-center-regions)
 
 ---
 
@@ -100,7 +101,48 @@ Appears when query triggers vehicle ads (e.g., "2019 suvs for sale"):
 
 ---
 
+## Immersive Products Schema
+
+Google may return `immersive_products` instead of (or alongside) `shopping_results` for product queries. This is a richer carousel format.
+
+> **Always check for both** `shopping_results` and `immersive_products` in the response.
+
+### `immersive_products[]` — Full Field Reference
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | string | Product name |
+| `source` | string | Retailer name |
+| `source_logo` | string | Retailer logo URL (optional) |
+| `thumbnail` | string | Product image URL |
+| `price` | string | Display price |
+| `extracted_price` | float | Numeric price |
+| `original_price` | string | Pre-sale display price (optional) |
+| `extracted_original_price` | float | Numeric original price (optional) |
+| `rating` | float | Star rating |
+| `reviews` | int | Number of reviews |
+| `category` | string | Product category (optional, e.g., "Grills") |
+| `delivery` | string | Delivery info (e.g., "$24.95 by 6/20", "Free by 6/10") |
+| `returns` | string | Return policy (e.g., "30-day returns") |
+| `location` | string | Availability note (e.g., "Also nearby") |
+| `extensions[]` | string[] | Badges/labels (e.g., "SALE", "LOW PRICE", "14% OFF", "Refurbished") |
+| `snippets[]` | object[] | Review snippets (see below) |
+| `immersive_product_page_token` | string | Token for `engine=google_immersive_product` (full product details) |
+| `serpapi_link` | string | SerpApi link to drill into full product details |
+
+### `snippets[]` Object (Immersive Products)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `text` | string | Review snippet text (e.g., "All-day battery life · Prone to overheating") |
+| `link` | string | Source URL for the review |
+| `source` | string | Review source name |
+
+---
+
 ## Local Ads Schema
+
+> **Note:** Local ads are more reliably returned with `device=mobile`. Desktop queries may not include them.
 
 ### `local_ads` Object
 
@@ -111,20 +153,26 @@ Appears when query triggers vehicle ads (e.g., "2019 suvs for sale"):
 | `serpapi_link` | string | SerpApi link to `engine=google_local_services` |
 | `see_more_text` | string | "More plumbers in [area]" |
 | `badge` | string | Section badge |
+| `tags[]` | object[] | Service type tags (mobile only) — each with `position`, `text`, `link` |
 | `ads[]` | object[] | Individual service provider ads |
 
 ### `local_ads.ads[]` Object
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `position` | int | Position of the ad |
 | `title` | string | Business name |
 | `link` | string | Business profile URL |
 | `rating` | float | Star rating |
+| `rating_count` | int | Number of ratings |
+| `type` | string | Type of service advertised |
 | `badge` | string | Trust badge (e.g., "GOOGLE GUARANTEED", "GOOGLE SCREENED") |
 | `service_area` | string | Service area (e.g., "Serves Dracut") |
 | `hours` | string | Operating hours (e.g., "Open 24/7", "Open now") |
 | `years_in_business` | string | Tenure (e.g., "22 years in business") |
 | `phone` | string | Phone number |
+| `thumbnail` | string | Business thumbnail URL |
+| `highlighted_details[]` | string[] | Key details highlighted on the ad (e.g., "Family owned", "Flat $89/hour", "Licensed & insured") |
 
 ---
 

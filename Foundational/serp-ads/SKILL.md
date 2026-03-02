@@ -87,13 +87,45 @@ Each shopping result includes:
 | `shipping` | Shipping info (e.g., "Free shipping") |
 | `extensions[]` | Product attributes (color, material, etc.) |
 
+### Extract Immersive Products
+
+For many product queries, Google returns `immersive_products` instead of (or alongside) classic `shopping_results`. This is a richer product carousel with additional fields.
+
+```bash
+curl -s "https://serpapi.com/search?engine=google&q=laptops&api_key=$SERPAPI_KEY"
+```
+
+> **Important:** Check for both `shopping_results` and `immersive_products` in the response — Google decides which format to serve based on the query.
+
+Each immersive product includes:
+
+| Field | Description |
+|-------|-------------|
+| `title` | Product name |
+| `source` | Retailer name |
+| `source_logo` | Retailer logo URL (optional) |
+| `price` / `extracted_price` | Display price and numeric value |
+| `original_price` / `extracted_original_price` | Pre-sale price (optional) |
+| `rating` / `reviews` | Star rating and review count |
+| `thumbnail` | Product image URL |
+| `category` | Product category (optional, e.g., "Grills") |
+| `delivery` | Delivery info (e.g., "Free by 6/10") |
+| `returns` | Return policy (e.g., "30-day returns") |
+| `location` | Availability note (e.g., "Also nearby") |
+| `extensions[]` | Badges/labels (e.g., "SALE", "LOW PRICE", "14% OFF") |
+| `snippets[]` | Review snippets with `text`, `link`, `source` |
+| `immersive_product_page_token` | Token for the `google_immersive_product` engine (full product details) |
+| `serpapi_link` | SerpApi link to drill into full product details |
+
 ### Extract Local Ads
 
 Local service ads appear in the `local_ads` object for location-based queries:
 
 ```bash
-curl -s "https://serpapi.com/search?engine=google&q=plumbing&api_key=$SERPAPI_KEY"
+curl -s "https://serpapi.com/search?engine=google&q=plumbing&device=mobile&api_key=$SERPAPI_KEY"
 ```
+
+> **Note:** Local ads are more reliably returned with `device=mobile`. Desktop results may not include them for the same query.
 
 The `local_ads` object contains:
 - `title` — summary heading (e.g., "40+ plumbers nearby")
@@ -101,7 +133,22 @@ The `local_ads` object contains:
 - `serpapi_link` — direct link to the full Google Local Services results
 - `ads[]` — array of individual service provider ads
 
-Each local ad includes: `title`, `link`, `rating`, `badge` (e.g., "GOOGLE GUARANTEED"), `service_area`, `hours`, `years_in_business`, `phone`.
+Each local ad includes:
+
+| Field | Description |
+|-------|-------------|
+| `title` | Business name |
+| `link` | Business profile URL |
+| `rating` | Star rating |
+| `rating_count` | Number of ratings (integer) |
+| `badge` | Trust badge (e.g., "GOOGLE GUARANTEED", "GOOGLE SCREENED") |
+| `type` | Type of service advertised |
+| `service_area` | Service area (e.g., "Serves Dracut") |
+| `hours` | Operating hours (e.g., "Open 24/7", "Open now") |
+| `years_in_business` | Tenure (e.g., "22 years in business") |
+| `phone` | Phone number |
+| `thumbnail` | Business thumbnail URL |
+| `highlighted_details[]` | Key details highlighted on the ad (e.g., "Family owned", "Flat $89/hour", "Licensed & insured") |
 
 > **Tip:** For the full local services listing, follow `local_ads.serpapi_link` which points to `engine=google_local_services`.
 
