@@ -16,10 +16,11 @@ metadata:
 - Linux (x86_64): https://domains.vibecodeapp.com/download/linux/amd64/domainer-cli
 - Windows (x86_64): https://domains.vibecodeapp.com/download/windows/amd64/domainer-cli
 
-After downloading, make the binary executable (macOS/Linux):
+After downloading, make the binary executable and install (macOS/Linux):
 
+    mkdir -p ~/.local/bin
     chmod +x domainer-cli
-    mv domainer-cli /usr/local/bin/domainer-cli
+    mv domainer-cli ~/.local/bin/domainer-cli
 </download>
 
 <!-- Everything below is the output of: domainer-cli --help -->
