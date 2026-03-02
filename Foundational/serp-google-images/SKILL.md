@@ -159,13 +159,25 @@ The dedicated parameters (`imgsz`, `imgar`, `image_color`, `image_type`, `licens
 
 ## Pagination
 
-Image results come in batches of ~100 per page. Use the `ijn` parameter:
+Image results come in batches of ~100. Pagination works differently per engine:
+
+### Full Engine (`google_images`)
+
+Use the `ijn` parameter (page number):
 
 - **Page 0 (default):** `ijn=0` — first ~100 images
 - **Page 1:** `ijn=1` — next ~100 images
 - **Page N:** `ijn=N` — up to `ijn=99` (max)
 
-Check `serpapi_pagination.next` for the next page URL. When it's absent, there are no more results.
+### Light Engine (`google_images_light`)
+
+**`ijn` does NOT paginate the light engine** — it returns the same results regardless of `ijn` value. Instead, use the `start=` offset parameter:
+
+- **First page (default):** omit `start` or `start=0` — first ~100 images
+- **Second page:** `start=100` — next ~100 images
+- **Page N:** `start=N*100`
+
+**For both engines:** check `serpapi_pagination.next` for the next page URL. When it's absent, there are no more results. Using `serpapi_pagination.next` is the safest approach — it handles the correct pagination parameter automatically.
 
 ## Suggested Searches (Chips)
 
@@ -256,10 +268,17 @@ Results include `license_details_url` linking to the specific CC license.
 
 ### Collect All Images for a Query (Multi-Page)
 
+**Full engine (`google_images`):**
 1. Start with `ijn=0`, collect `images_results[]`
 2. Check `serpapi_pagination.next` — if present, increment `ijn`
 3. Repeat until no `next` or you have enough results
 4. Each page returns ~100 images; max 100 pages = ~10,000 images
+
+**Light engine (`google_images_light`):**
+1. Start without `start` parameter, collect `images_results[]`
+2. Check `serpapi_pagination.next` — if present, use it (or increment `start` by 100)
+3. Repeat until no `next` or you have enough results
+4. **Do NOT use `ijn`** — it has no effect on the light engine
 
 ### Drill Into a Specific Image
 

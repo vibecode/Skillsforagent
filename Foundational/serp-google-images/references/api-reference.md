@@ -97,10 +97,19 @@ Cannot combine with `period_unit`/`period_value`. Overrides `cdr`, `cd_min`, `cd
 
 **Endpoint:** `GET https://serpapi.com/search?engine=google_images_light`
 
-Accepts the same parameters as the full `google_images` engine.
+Accepts the same parameters as the full `google_images` engine with one critical pagination difference:
 
-**Key differences:**
+**Pagination:** The `ijn` parameter does **not** work on the light engine — it returns identical results regardless of `ijn` value. Use the `start=` offset parameter instead:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `start` | `0` | Result offset. Use `start=100` for page 2, `start=200` for page 3, etc. |
+
+Alternatively, follow the `serpapi_pagination.next` URL which uses the correct pagination parameter automatically.
+
+**Key differences from full engine:**
 - ~2x faster response times
+- Uses `start=` offset pagination instead of `ijn` page numbers
 - Returns `images_results[]` only
 - Does **not** return `shopping_results[]`, `suggested_searches[]`, or `related_searches[]`
 - Ideal for bulk image collection or when speed matters more than rich metadata
