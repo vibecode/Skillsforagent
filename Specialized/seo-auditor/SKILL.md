@@ -1,5 +1,5 @@
 ---
-name: seo-auditor
+name: SEO Auditor
 description: >
   Specialized skill for producing actionable SEO audit reports by crawling a website and
   cross-referencing with competitor research. Use when: (1) auditing a website's SEO health,

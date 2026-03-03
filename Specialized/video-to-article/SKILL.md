@@ -1,5 +1,5 @@
 ---
-name: video-to-article
+name: Video to Article
 description: >
   Convert YouTube videos into well-structured written articles. Use when: (1) turning a video
   into a blog post or article, (2) repurposing video content as written content, (3) creating

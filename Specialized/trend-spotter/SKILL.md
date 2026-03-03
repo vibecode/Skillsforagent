@@ -1,5 +1,5 @@
 ---
-name: trend-spotter
+name: Trend Spotter
 description: >
   Specialized skill for spotting emerging trends by cross-referencing YouTube trending videos with
   web coverage via Exa. Use when: (1) identifying emerging trends or viral topics before they peak,

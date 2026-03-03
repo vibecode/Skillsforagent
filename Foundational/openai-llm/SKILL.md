@@ -1,5 +1,5 @@
 ---
-name: openai
+name: OpenAI LLM
 description: >
   Foundational skill for OpenAI text generation — chat completions via the latest LLMs (GPT-5.2,
   GPT-5.2-pro, GPT-5.1). Use this skill when: (1) generating text with OpenAI GPT models,

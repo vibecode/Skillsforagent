@@ -1,5 +1,5 @@
 ---
-name: firecrawl-setup
+name: Firecrawl Setup
 description: >
   Install and configure the Firecrawl CLI and its official skill for AI agents. Use this
   skill when: (1) setting up Firecrawl for the first time, (2) installing the firecrawl-cli

@@ -1,5 +1,5 @@
 ---
-name: gemini-image
+name: Gemini Image
 description: >
   Foundational skill for Google's Gemini image generation API, also known as Nano Banana. Use
   when: (1) generating images from text prompts, (2) editing or transforming existing images

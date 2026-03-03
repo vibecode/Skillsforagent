@@ -1,5 +1,5 @@
 ---
-name: serp-ads
+name: SERP Ads
 description: >
   Specialized skill for Google Ads intelligence workflows via SerpApi — competitor ad research,
   advertiser discovery, ad creative analysis, ad format tracking, political ad monitoring,

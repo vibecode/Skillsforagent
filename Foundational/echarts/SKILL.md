@@ -1,5 +1,5 @@
 ---
-name: echarts
+name: ECharts
 description: >
   Foundational skill for Apache ECharts — local server-side chart rendering via Node.js.
   Generates PNG or SVG chart images from JSON configuration. No API key, no network calls,

@@ -1,5 +1,5 @@
 ---
-name: serpapi
+name: SerpApi
 description: >
   Foundational skill for the SerpApi search engine API — structured JSON from 30+ engines
   including Google (web, images, maps, flights, hotels, scholar, news, shopping, jobs,

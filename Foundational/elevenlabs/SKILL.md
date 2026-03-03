@@ -1,5 +1,5 @@
 ---
-name: elevenlabs
+name: ElevenLabs
 description: >
   Foundational skill for the ElevenLabs audio AI API — text-to-speech, multi-voice dialogue,
   voice conversion, sound effects, music generation, audio isolation, speech-to-text, dubbing,
