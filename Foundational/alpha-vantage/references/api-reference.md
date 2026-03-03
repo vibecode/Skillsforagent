@@ -336,14 +336,31 @@ Same pattern. `from_symbol`, `to_symbol`, `datatype`.
 
 ## Commodities
 
-All commodity endpoints return time series data. Optional `interval` param: `daily`, `weekly`, `monthly` (default varies).
+### GOLD_SILVER_SPOT
+
+Returns live spot prices for gold and silver.
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| function | Yes | `GOLD_SILVER_SPOT` |
+| symbol | Yes | `GOLD`, `XAU`, `SILVER`, or `XAG` |
+
+### GOLD_SILVER_HISTORY
+
+Returns historical gold and silver prices in daily, weekly, and monthly horizons.
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| function | Yes | `GOLD_SILVER_HISTORY` |
+| symbol | Yes | `GOLD`, `XAU`, `SILVER`, or `XAG` |
+| interval | Yes | `daily`, `weekly`, `monthly` |
+
+### Other Commodity Endpoints
+
+All other commodity endpoints return time series data. Optional `interval` param: `daily`, `weekly`, `monthly` (default varies by endpoint).
 
 | Function | Commodity |
 |----------|-----------|
-| `GOLD_SPOT` | Gold spot price (per troy ounce) |
-| `SILVER_SPOT` | Silver spot price |
-| `GOLD` | Gold historical |
-| `SILVER` | Silver historical |
 | `WTI` | Crude oil (West Texas Intermediate) |
 | `BRENT` | Crude oil (Brent) |
 | `NATURAL_GAS` | Natural gas (Henry Hub) |
@@ -400,7 +417,7 @@ All technical indicators share a common parameter pattern:
 | `DEMA` | time_period, series_type | Double EMA |
 | `TEMA` | time_period, series_type | Triple EMA |
 | `RSI` | time_period, series_type | Relative Strength Index |
-| `MACD` | series_type, fastperiod, slowperiod, signalperiod | Moving Average Convergence Divergence (Premium) |
+| `MACD` | series_type, fastperiod, slowperiod, signalperiod | Moving Average Convergence Divergence (**Premium only**) |
 | `BBANDS` | time_period, series_type, nbdevup, nbdevdn, matype | Bollinger Bands |
 | `STOCH` | fastkperiod, slowkperiod, slowdperiod, slowkmatype, slowdmatype | Stochastic Oscillator |
 | `ADX` | time_period | Average Directional Index |
@@ -408,7 +425,7 @@ All technical indicators share a common parameter pattern:
 | `AROON` | time_period | Aroon Indicator |
 | `OBV` | — | On Balance Volume |
 | `AD` | — | Chaikin A/D Line |
-| `VWAP` | — | Volume Weighted Average Price (Premium) |
+| `VWAP` | — | Volume Weighted Average Price (**Premium only**) |
 | `ATR` | time_period | Average True Range |
 | `MFI` | time_period | Money Flow Index |
 | `SAR` | acceleration, maximum | Parabolic SAR |

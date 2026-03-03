@@ -48,9 +48,10 @@
 #
 #   # Commodities
 #   commodity     --name NAME [--interval daily|weekly|monthly]
-#                 NAME: gold-spot, silver-spot, gold, silver, wti, brent,
-#                       natural-gas, copper, aluminum, wheat, corn, cotton,
-#                       sugar, coffee, all-commodities
+#                 NAME: wti, brent, natural-gas, copper, aluminum, wheat,
+#                       corn, cotton, sugar, coffee, all-commodities
+#   gold-spot     --symbol GOLD|SILVER|XAU|XAG       Live spot price
+#   gold-history  --symbol GOLD|SILVER|XAU|XAG --interval daily|weekly|monthly
 #
 #   # Economic Indicators
 #   economy       --indicator IND [--interval INT]
@@ -371,13 +372,9 @@ case "$CMD" in
 
   # ── Commodities ──
   commodity)
-    [[ -z "${OPTS[name]:-}" ]] && die "--name required (gold-spot, silver-spot, gold, silver, wti, brent, natural-gas, copper, aluminum, wheat, corn, cotton, sugar, coffee, all-commodities)"
+    [[ -z "${OPTS[name]:-}" ]] && die "--name required (wti, brent, natural-gas, copper, aluminum, wheat, corn, cotton, sugar, coffee, all-commodities). For gold/silver use: gold-spot, gold-history"
     # Map friendly names to API functions
     declare -A COMMODITY_MAP=(
-      ["gold-spot"]="GOLD_SPOT"
-      ["silver-spot"]="SILVER_SPOT"
-      ["gold"]="GOLD"
-      ["silver"]="SILVER"
       ["wti"]="WTI"
       ["brent"]="BRENT"
       ["natural-gas"]="NATURAL_GAS"
@@ -391,9 +388,21 @@ case "$CMD" in
       ["all-commodities"]="ALL_COMMODITIES"
     )
     func="${COMMODITY_MAP[${OPTS[name]}]:-}"
-    [[ -z "$func" ]] && die "Unknown commodity: ${OPTS[name]}. Valid: ${!COMMODITY_MAP[*]}"
+    [[ -z "$func" ]] && die "Unknown commodity: ${OPTS[name]}. Valid: ${!COMMODITY_MAP[*]}. For gold/silver use: gold-spot, gold-history"
     params=("function=${func}")
     [[ -n "${OPTS[interval]:-}" ]] && params+=("interval=${OPTS[interval]}")
+    [[ -n "${OPTS[datatype]:-}" ]] && params+=("datatype=${OPTS[datatype]}")
+    call_api "${params[@]}" "${EXTRA_PARAMS[@]+"${EXTRA_PARAMS[@]}"}"
+    ;;
+  gold-spot)
+    [[ -z "${OPTS[symbol]:-}" ]] && die "--symbol required (GOLD, XAU, SILVER, XAG)"
+    call_api "function=GOLD_SILVER_SPOT" "symbol=${OPTS[symbol]}" "${EXTRA_PARAMS[@]+"${EXTRA_PARAMS[@]}"}"
+    ;;
+  gold-history)
+    [[ -z "${OPTS[symbol]:-}" ]] && die "--symbol required (GOLD, XAU, SILVER, XAG)"
+    [[ -z "${OPTS[interval]:-}" ]] && die "--interval required (daily, weekly, monthly)"
+    params=("function=GOLD_SILVER_HISTORY" "symbol=${OPTS[symbol]}" "interval=${OPTS[interval]}")
+    [[ -n "${OPTS[datatype]:-}" ]] && params+=("datatype=${OPTS[datatype]}")
     call_api "${params[@]}" "${EXTRA_PARAMS[@]+"${EXTRA_PARAMS[@]}"}"
     ;;
 

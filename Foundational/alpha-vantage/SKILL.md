@@ -35,7 +35,7 @@ Set `ALPHA_VANTAGE_API_KEY` in your environment. Free keys available at [alphava
 | Free | 25 | 5 |
 | Premium (various) | Varies | 75–1200 |
 
-Free tier is limited. If you get a `"Note"` about rate limits or an `"Information"` message about premium, you've hit the cap. Wait or upgrade.
+Free tier is limited. If you get a `"Note"` about rate limits or an `"Information"` message about premium, you've hit the cap. Wait or upgrade. **Always space calls ≥2 seconds apart on the free tier** — parallel calls will almost always trigger the rate limit.
 
 ### Premium vs Free
 
@@ -151,14 +151,21 @@ bash $SCRIPT crypto-daily --symbol ETH --market USD
 ### Commodities & Economic Indicators
 
 ```bash
-# Commodities
-bash $SCRIPT commodity --name gold-spot
+# Gold & Silver — Spot (live price)
+bash $SCRIPT gold-spot --symbol GOLD
+bash $SCRIPT gold-spot --symbol SILVER
+
+# Gold & Silver — Historical
+bash $SCRIPT gold-history --symbol GOLD --interval daily
+bash $SCRIPT gold-history --symbol SILVER --interval monthly
+
+# Other commodities
 bash $SCRIPT commodity --name wti --interval monthly
 bash $SCRIPT commodity --name brent
+bash $SCRIPT commodity --name natural-gas --interval daily
 
-# Available: gold-spot, silver-spot, gold, silver, wti, brent,
-# natural-gas, copper, aluminum, wheat, corn, cotton, sugar, coffee,
-# all-commodities
+# Available: wti, brent, natural-gas, copper, aluminum, wheat,
+# corn, cotton, sugar, coffee, all-commodities
 
 # Economic indicators
 bash $SCRIPT economy --indicator real-gdp
@@ -180,7 +187,7 @@ bash $SCRIPT indicator --function EMA --symbol IBM --interval daily --time_perio
 
 # Momentum
 bash $SCRIPT indicator --function RSI --symbol AAPL --interval daily --time_period 14 --series_type close
-bash $SCRIPT indicator --function MACD --symbol AAPL --interval daily --series_type close
+bash $SCRIPT indicator --function MACD --symbol AAPL --interval daily --series_type close  # Premium only
 
 # Volatility
 bash $SCRIPT indicator --function BBANDS --symbol MSFT --interval daily --time_period 20 --series_type close
