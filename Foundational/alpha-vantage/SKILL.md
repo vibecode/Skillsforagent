@@ -35,7 +35,28 @@ Set `ALPHA_VANTAGE_API_KEY` in your environment. Free keys available at [alphava
 | Free | 25 | 5 |
 | Premium (various) | Varies | 75–1200 |
 
-Free tier is limited. If you get a `"Note"` about rate limits or an `"Information"` message about premium, you've hit the cap. Wait or upgrade. **Always space calls ≥2 seconds apart on the free tier** — parallel calls will almost always trigger the rate limit.
+Free tier is limited. **Always space calls ≥2 seconds apart on the free tier** — parallel calls will almost always trigger the rate limit.
+
+#### Exit Codes (rate limit detection)
+
+The wrapper script distinguishes between retriable and terminal rate limits:
+
+| Exit Code | Meaning | Action |
+|-----------|---------|--------|
+| 0 | Success (or burst rate limit warning on stderr) | If stderr says `RATE_LIMIT_BURST`, wait 15-60s and retry |
+| 1 | Invalid params / API error | Fix the request |
+| 2 | **Daily limit exhausted** — 25 requests used up | **Stop retrying.** Use an alternative data source or wait until tomorrow |
+| 3 | Premium-only endpoint | Requires paid plan — no amount of waiting helps |
+
+**Important:** When you get exit code 2, do NOT retry. The daily quota is gone. Fall back to alternative sources (Yahoo Finance, FRED, BLS, etc.).
+
+### Demo Key (for testing)
+
+Pass `--demo` to use Alpha Vantage's built-in demo key. Only `GLOBAL_QUOTE` for IBM is guaranteed to work — useful for verifying the script functions correctly:
+
+```bash
+bash $SCRIPT quote --symbol IBM --demo
+```
 
 ### Premium vs Free
 
@@ -50,9 +71,7 @@ Most endpoints work on free tier with the `compact` outputsize (100 data points)
 
 Handles auth, parameter mapping, friendly subcommand names, and JSON formatting.
 
-```bash
-SCRIPT="$(dirname "$0")/scripts/alphavantage.sh"
-```
+The wrapper script is at `scripts/alphavantage.sh` relative to this skill's directory. The agent should resolve the full path based on where this SKILL.md is located.
 
 ### Core Stock Data
 
@@ -187,7 +206,7 @@ bash $SCRIPT indicator --function EMA --symbol IBM --interval daily --time_perio
 
 # Momentum
 bash $SCRIPT indicator --function RSI --symbol AAPL --interval daily --time_period 14 --series_type close
-bash $SCRIPT indicator --function MACD --symbol AAPL --interval daily --series_type close  # Premium only
+# NOTE: MACD and VWAP are premium-only — do not use on free tier
 
 # Volatility
 bash $SCRIPT indicator --function BBANDS --symbol MSFT --interval daily --time_period 20 --series_type close
@@ -208,6 +227,9 @@ bash $SCRIPT daily --symbol IBM --csv
 
 # Skip jq formatting
 bash $SCRIPT quote --symbol IBM --raw
+
+# Use demo API key (only GLOBAL_QUOTE for IBM works)
+bash $SCRIPT quote --symbol IBM --demo
 
 # Pass arbitrary extra parameters
 bash $SCRIPT indicator --function BBANDS --symbol IBM --interval daily \
@@ -230,12 +252,22 @@ Alpha Vantage covers 100,000+ tickers across global exchanges. Use `search` to f
 
 ## Error Handling
 
-| Error | Meaning | Action |
-|-------|---------|--------|
-| `"Error Message"` | Invalid function/params | Check function name and required params |
-| `"Note"` with rate limit text | Rate limit hit | Wait 60s (free) or check plan limits |
-| `"Information"` about premium | Premium-only endpoint | Upgrade plan or use free alternative |
-| Empty/malformed JSON | Symbol not found or API issue | Verify symbol with `search` |
+| Error | Exit Code | Meaning | Action |
+|-------|-----------|---------|--------|
+| `"Error Message"` | 1 | Invalid function/params | Check function name and required params |
+| `"Note"` (burst limit) | 0 | Per-minute rate limit hit | Wait 15-60s and retry. Stderr shows `RATE_LIMIT_BURST` |
+| `"Information"` (daily limit) | 2 | Daily quota (25 req) exhausted | **Stop retrying.** Fall back to alternative sources |
+| `"Information"` (premium) | 3 | Premium-only endpoint | Upgrade plan or use free alternative |
+| Empty/malformed JSON | — | Symbol not found or API issue | Verify symbol with `search` |
+
+### Premium-Only Features (do not attempt on free tier)
+
+- MACD technical indicator
+- VWAP technical indicator
+- Intraday extended (full history)
+- Realtime options
+- Bulk quotes
+- Daily adjusted with full history
 
 ## Raw API Fallback
 

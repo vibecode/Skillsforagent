@@ -67,21 +67,41 @@
 # Global options:
 #   --csv         Return CSV instead of JSON
 #   --raw         Skip jq formatting (output raw JSON)
+#   --demo        Use Alpha Vantage demo key (only GLOBAL_QUOTE for IBM works)
+#
+# Exit codes:
+#   0  Success (or burst rate limit — retriable after 15-60s wait)
+#   1  Error (invalid params, missing args, API error)
+#   2  Daily rate limit exhausted — do NOT retry, wait until tomorrow or use alternative
+#   3  Premium-only endpoint — requires paid plan
 
 set -euo pipefail
 
 BASE="https://www.alphavantage.co/query"
-API_KEY="${ALPHA_VANTAGE_API_KEY:?Set ALPHA_VANTAGE_API_KEY}"
+USE_DEMO="false"
+API_KEY="${ALPHA_VANTAGE_API_KEY:-}"
 
 die() { echo "ERROR: $*" >&2; exit 1; }
 
-# Build URL from params array
+# Build URL from params array (apikey appended last — required for demo key)
 call_api() {
-  local url="${BASE}?apikey=${API_KEY}"
+  local url="${BASE}?"
+  local first=true
   while [[ $# -gt 0 ]]; do
-    url="${url}&${1}"
+    # Skip datatype param for demo key (breaks demo responses)
+    if [[ "$USE_DEMO" == "true" ]] && [[ "$1" == datatype=* ]]; then
+      shift
+      continue
+    fi
+    if [[ "$first" == "true" ]]; then
+      url="${url}${1}"
+      first=false
+    else
+      url="${url}&${1}"
+    fi
     shift
   done
+  url="${url}&apikey=${API_KEY}"
   
   local response
   response=$(curl -sfS "$url" 2>&1) || die "API request failed: $response"
@@ -91,8 +111,31 @@ call_api() {
     echo "$response" >&2
     exit 1
   fi
+  
+  # Check for rate limit / informational messages
+  if echo "$response" | grep -q '"Information"'; then
+    if [[ "$USE_DEMO" == "true" ]] && echo "$response" | grep -q "demo.*API key"; then
+      echo "DEMO_LIMIT: This endpoint is not available with the demo key. Only GLOBAL_QUOTE for IBM works with --demo." >&2
+      echo "$response"
+      exit 1
+    elif echo "$response" | grep -q "standard API rate limit is 25 requests per day"; then
+      echo "RATE_LIMIT_DAILY: Daily API quota (25 requests) exhausted. No more requests possible until reset. Do NOT retry — use an alternative data source or wait until tomorrow." >&2
+      echo "$response"
+      exit 2
+    elif echo "$response" | grep -q "premium"; then
+      echo "PREMIUM_ONLY: This endpoint requires a premium Alpha Vantage plan." >&2
+      echo "$response"
+      exit 3
+    else
+      echo "INFO: $(echo "$response" | grep -o '"Information":"[^"]*"')" >&2
+      echo "$response"
+      exit 2
+    fi
+  fi
+  
   if echo "$response" | grep -q '"Note"'; then
-    echo "WARNING: $(echo "$response" | grep -o '"Note":"[^"]*"')" >&2
+    # Per-second/per-minute burst limit — retriable after a short wait
+    echo "RATE_LIMIT_BURST: Per-minute rate limit hit. Wait 15-60 seconds and retry." >&2
   fi
   
   if [[ "$OUTPUT_CSV" == "true" ]]; then
@@ -118,6 +161,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --csv) OUTPUT_CSV="true"; shift ;;
     --raw) OUTPUT_RAW="true"; shift ;;
+    --demo) USE_DEMO="true"; shift ;;
     --symbol) OPTS[symbol]="$2"; shift 2 ;;
     --symbols) OPTS[symbols]="$2"; shift 2 ;;
     --interval) OPTS[interval]="$2"; shift 2 ;;
@@ -158,6 +202,14 @@ done
 
 DATATYPE="json"
 [[ "$OUTPUT_CSV" == "true" ]] && DATATYPE="csv"
+
+# Resolve API key
+if [[ "$USE_DEMO" == "true" ]]; then
+  API_KEY="demo"
+  echo "NOTE: Using demo API key — only GLOBAL_QUOTE for IBM is guaranteed to work." >&2
+elif [[ -z "$API_KEY" ]]; then
+  die "Set ALPHA_VANTAGE_API_KEY or use --demo for basic testing"
+fi
 
 # Route commands
 case "$CMD" in
