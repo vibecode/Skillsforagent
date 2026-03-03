@@ -27,12 +27,28 @@ This skill builds on:
 
 ### Restaurant ID (rid)
 
-Every OpenTable restaurant has an ID derived from its URL path. Given `https://www.opentable.com/r/nobu-palo-alto`, the `rid` is `nobu-palo-alto`.
+Every OpenTable restaurant has an ID derived from its URL path. The `rid` format depends on the restaurant's URL structure on OpenTable:
+
+**URL format determines the rid:**
+
+| OpenTable URL Format | rid Value | Example |
+|---|---|---|
+| `opentable.com/r/nobu-palo-alto` | `r/nobu-palo-alto` (include `r/` prefix) | Most restaurants |
+| `opentable.com/the-smith-east-village` | `the-smith-east-village` (no prefix) | Some legacy listings |
+
+**⚠️ The `r/` prefix is required** for restaurants whose OpenTable URL uses the `/r/` path format. Omitting it returns no results. Most restaurants use the `/r/` format, so **default to including the `r/` prefix** unless you can confirm the restaurant uses the non-`/r/` URL format.
 
 **How to find rids:**
-- From an OpenTable URL: extract the path after `/r/` (e.g., `r/central-park-boathouse-new-york-2` or just `nobu-palo-alto`)
-- From Google search: search `site:opentable.com "restaurant name"` and extract from the URL
-- The `rid` parameter accepts both formats — with or without the `r/` prefix
+- From an OpenTable URL: check if the path starts with `/r/` — if yes, use `r/slug` (e.g., `r/nobu-palo-alto`); if no, use just the slug (e.g., `the-smith-east-village`)
+- From Google search: search `site:opentable.com "restaurant name"` and extract from the URL, preserving the `/r/` prefix if present
+- **When in doubt, try with the `r/` prefix first** — it's correct for the majority of restaurants
+
+### SerpApi Coverage
+
+**Not all OpenTable restaurants are indexed by SerpApi's engine.** Some restaurants — particularly newer listings or less-reviewed ones — may return no results or timeout even with a correct `rid`. This is an upstream SerpApi limitation. If a restaurant returns no results:
+1. Verify the `rid` is correct (check the OpenTable URL directly)
+2. Confirm the `r/` prefix is included if applicable
+3. If still no results, the restaurant may not be indexed — inform the user and suggest trying alternative restaurants
 
 ### Response Structure
 
