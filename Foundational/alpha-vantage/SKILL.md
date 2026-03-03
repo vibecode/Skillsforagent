@@ -41,22 +41,24 @@ Free tier is limited. **Always space calls ≥2 seconds apart on the free tier**
 
 The wrapper script distinguishes between retriable and terminal rate limits:
 
-| Exit Code | Meaning | Action |
-|-----------|---------|--------|
-| 0 | Success (or burst rate limit warning on stderr) | If stderr says `RATE_LIMIT_BURST`, wait 15-60s and retry |
-| 1 | Invalid params / API error | Fix the request |
-| 2 | **Daily limit exhausted** — 25 requests used up | **Stop retrying.** Use an alternative data source or wait until tomorrow |
-| 3 | Premium-only endpoint | Requires paid plan — no amount of waiting helps |
+| Exit Code | Meaning | Stderr Prefix | Action |
+|-----------|---------|---------------|--------|
+| 0 | Success (or burst rate limit) | `RATE_LIMIT_BURST` if burst-limited | If stderr says `RATE_LIMIT_BURST`, wait 2-15s and retry |
+| 1 | Invalid params / API error / demo limitation | `ERROR` or `DEMO_LIMIT` | Fix the request |
+| 2 | **Daily limit exhausted** — 25 requests used up | `RATE_LIMIT_DAILY` | **Stop retrying.** Use alternative data source or wait until tomorrow |
+| 3 | Premium-only endpoint | `PREMIUM_ONLY` | Requires paid plan — no amount of waiting helps |
 
 **Important:** When you get exit code 2, do NOT retry. The daily quota is gone. Fall back to alternative sources (Yahoo Finance, FRED, BLS, etc.).
 
 ### Demo Key (for testing)
 
-Pass `--demo` to use Alpha Vantage's built-in demo key. Only `GLOBAL_QUOTE` for IBM is guaranteed to work — useful for verifying the script functions correctly:
+Pass `--demo` to use Alpha Vantage's built-in demo key. **Only `GLOBAL_QUOTE` for IBM is guaranteed to work** — useful for verifying the script functions correctly without consuming your API quota:
 
 ```bash
 bash $SCRIPT quote --symbol IBM --demo
 ```
+
+Use `--demo` when: (1) your API key's daily quota is exhausted, (2) you want to verify the script works before using real quota, (3) you need a quick sanity check. Other endpoints will return `DEMO_LIMIT` (exit 1) with the demo key — this is expected.
 
 ### Premium vs Free
 
@@ -71,7 +73,16 @@ Most endpoints work on free tier with the `compact` outputsize (100 data points)
 
 Handles auth, parameter mapping, friendly subcommand names, and JSON formatting.
 
-The wrapper script is at `scripts/alphavantage.sh` relative to this skill's directory. The agent should resolve the full path based on where this SKILL.md is located.
+The wrapper script is at `scripts/alphavantage.sh` relative to this skill's directory:
+
+```bash
+# Set SCRIPT to the absolute path of the wrapper, based on where this skill is installed.
+# If this SKILL.md is at /path/to/alpha-vantage/SKILL.md, then:
+SCRIPT="/path/to/alpha-vantage/scripts/alphavantage.sh"
+
+# Example with a typical OpenClaw skill path:
+bash ~/.openclaw/workspace/skills/alpha-vantage/scripts/alphavantage.sh quote --symbol IBM
+```
 
 ### Core Stock Data
 
@@ -255,19 +266,34 @@ Alpha Vantage covers 100,000+ tickers across global exchanges. Use `search` to f
 | Error | Exit Code | Meaning | Action |
 |-------|-----------|---------|--------|
 | `"Error Message"` | 1 | Invalid function/params | Check function name and required params |
-| `"Note"` (burst limit) | 0 | Per-minute rate limit hit | Wait 15-60s and retry. Stderr shows `RATE_LIMIT_BURST` |
-| `"Information"` (daily limit) | 2 | Daily quota (25 req) exhausted | **Stop retrying.** Fall back to alternative sources |
-| `"Information"` (premium) | 3 | Premium-only endpoint | Upgrade plan or use free alternative |
+| `"Information"` (burst) | 0 | Per-second burst rate limit | Wait 2-15s and retry. Stderr: `RATE_LIMIT_BURST` |
+| `"Information"` (daily) | 2 | Daily quota (25 req) exhausted | **Stop retrying.** Fall back to alternative sources. Stderr: `RATE_LIMIT_DAILY` |
+| `"Information"` (premium) | 3 | Premium-only endpoint | Upgrade plan or use free alternative. Stderr: `PREMIUM_ONLY` |
+| `"Note"` (legacy burst) | 0 | Per-minute rate limit | Wait 15-60s and retry. Stderr: `RATE_LIMIT_BURST` |
 | Empty/malformed JSON | — | Symbol not found or API issue | Verify symbol with `search` |
 
 ### Premium-Only Features (do not attempt on free tier)
 
-- MACD technical indicator
-- VWAP technical indicator
-- Intraday extended (full history)
-- Realtime options
-- Bulk quotes
-- Daily adjusted with full history
+These endpoints return exit code 3 (`PREMIUM_ONLY`) on the free tier — per [official Alpha Vantage docs](https://www.alphavantage.co/documentation/):
+
+| Category | Endpoint/Feature |
+|----------|------------------|
+| **Stock Data** | `TIME_SERIES_INTRADAY` (all intervals) |
+| **Stock Data** | `TIME_SERIES_DAILY_ADJUSTED` |
+| **Stock Data** | `REALTIME_BULK_QUOTES` |
+| **Stock Data** | `outputsize=full` on any time series |
+| **Options** | `REALTIME_OPTIONS` |
+| **Options** | `HISTORICAL_OPTIONS` |
+| **Forex** | `FX_INTRADAY` |
+| **Crypto** | `CRYPTO_INTRADAY` |
+| **Technical** | `MACD` |
+| **Technical** | `VWAP` |
+
+**Free-tier compatible endpoints** (verified against official docs): all economic indicators (`REAL_GDP`, `CPI`, `UNEMPLOYMENT`, `TREASURY_YIELD`, `FEDERAL_FUNDS_RATE`, `INFLATION`, etc.), all commodities (`WTI`, `BRENT`, `GOLD_SILVER_SPOT`, etc.), crypto daily/weekly/monthly (`DIGITAL_CURRENCY_DAILY`, etc.), forex daily/weekly/monthly, fundamentals (`OVERVIEW`, `INCOME_STATEMENT`, etc.), news sentiment, and most technical indicators (except MACD and VWAP).
+
+> **⚠️ Daily limit vs Premium — don't confuse them!** When the free tier's 25 daily requests are exhausted, **all** endpoints return the same daily-limit "Information" message (exit code 2). This is NOT the same as a premium-only error (exit code 3). If you get exit 2, the endpoint may work fine — you're just out of daily quota. Only exit code 3 means the endpoint genuinely requires a premium plan.
+
+> **Note:** Alpha Vantage occasionally changes which endpoints are premium without notice. If an endpoint not listed above returns exit 3, it may have been reclassified. Check the [official docs](https://www.alphavantage.co/documentation/) for the latest premium labels.
 
 ## Raw API Fallback
 

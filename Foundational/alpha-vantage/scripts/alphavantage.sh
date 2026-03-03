@@ -70,10 +70,10 @@
 #   --demo        Use Alpha Vantage demo key (only GLOBAL_QUOTE for IBM works)
 #
 # Exit codes:
-#   0  Success (or burst rate limit — retriable after 15-60s wait)
-#   1  Error (invalid params, missing args, API error)
-#   2  Daily rate limit exhausted — do NOT retry, wait until tomorrow or use alternative
-#   3  Premium-only endpoint — requires paid plan
+#   0  Success (or per-second burst rate limit — wait 2+ seconds and retry)
+#   1  Error (invalid params, missing args, API error, demo key limitation)
+#   2  Daily limit exhausted (25 requests/day on free tier) — stop retrying
+#   3  Premium-only endpoint — requires paid plan ("This is a premium endpoint")
 
 set -euo pipefail
 
@@ -113,28 +113,42 @@ call_api() {
   fi
   
   # Check for rate limit / informational messages
+  # Alpha Vantage uses the "Information" key for: rate limits, premium-only, and demo notices.
+  # There are 3 distinct messages (detection order matters):
+  #   1. Premium: "This is a premium endpoint" — exit 3 (never works on free tier)
+  #   2. Burst:   "spreading out your free API requests" — exit 0 (wait 2-15s and retry)
+  #   3. Daily:   "standard API rate limit is 25 requests per day" — exit 2 (stop, done for today)
+  # All three contain the word "premium" somewhere, so we match specific phrases, not just "premium".
   if echo "$response" | grep -q '"Information"'; then
-    if [[ "$USE_DEMO" == "true" ]] && echo "$response" | grep -q "demo.*API key"; then
+    local info_msg
+    info_msg=$(echo "$response" | grep -o '"Information": *"[^"]*"' | head -1)
+
+    if [[ "$USE_DEMO" == "true" ]] && echo "$info_msg" | grep -q "demo.*API key"; then
       echo "DEMO_LIMIT: This endpoint is not available with the demo key. Only GLOBAL_QUOTE for IBM works with --demo." >&2
       echo "$response"
       exit 1
-    elif echo "$response" | grep -q "standard API rate limit is 25 requests per day"; then
-      echo "RATE_LIMIT_DAILY: Daily API quota (25 requests) exhausted. No more requests possible until reset. Do NOT retry — use an alternative data source or wait until tomorrow." >&2
-      echo "$response"
-      exit 2
-    elif echo "$response" | grep -q "premium"; then
-      echo "PREMIUM_ONLY: This endpoint requires a premium Alpha Vantage plan." >&2
+    elif echo "$info_msg" | grep -q "This is a premium endpoint"; then
+      echo "PREMIUM_ONLY: This endpoint requires a premium Alpha Vantage plan. See SKILL.md Premium-Only Features list." >&2
       echo "$response"
       exit 3
+    elif echo "$info_msg" | grep -q "spreading out your free API requests"; then
+      echo "RATE_LIMIT_BURST: Per-second burst rate limit. Wait 2+ seconds between calls and retry." >&2
+      echo "$response"
+      exit 0
+    elif echo "$info_msg" | grep -q "standard API rate limit is 25 requests per day"; then
+      echo "RATE_LIMIT_DAILY: Daily quota (25 requests) exhausted. Do NOT retry — wait until tomorrow or use a premium key." >&2
+      echo "$response"
+      exit 2
     else
-      echo "INFO: $(echo "$response" | grep -o '"Information":"[^"]*"')" >&2
+      # Unknown "Information" message — treat as daily limit (safer to stop than retry endlessly)
+      echo "RATE_LIMIT_UNKNOWN: API returned an unrecognized informational message. Stopping retries to be safe." >&2
       echo "$response"
       exit 2
     fi
   fi
   
   if echo "$response" | grep -q '"Note"'; then
-    # Per-second/per-minute burst limit — retriable after a short wait
+    # Legacy per-minute burst limit format — retriable after a short wait
     echo "RATE_LIMIT_BURST: Per-minute rate limit hit. Wait 15-60 seconds and retry." >&2
   fi
   

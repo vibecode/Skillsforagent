@@ -18,7 +18,7 @@ Complete endpoint reference for all Alpha Vantage `function=` values. All reques
 
 ## Core Stock APIs
 
-### TIME_SERIES_INTRADAY (Premium)
+### TIME_SERIES_INTRADAY ⚠️ Premium
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
@@ -41,7 +41,7 @@ Complete endpoint reference for all Alpha Vantage `function=` values. All reques
 | outputsize | No | `compact` (100 points, default) or `full` (20+ years, premium) |
 | datatype | No | `json` (default) or `csv` |
 
-### TIME_SERIES_DAILY_ADJUSTED (Premium)
+### TIME_SERIES_DAILY_ADJUSTED ⚠️ Premium
 
 Same as DAILY plus: returns adjusted close, split coefficient, dividend amount.
 
@@ -80,7 +80,7 @@ Returns latest price, volume, change, change%.
 | datatype | No | `json` or `csv` |
 | entitlement | No | Not set=historical, `realtime`, `delayed` |
 
-### REALTIME_BULK_QUOTES (Premium)
+### REALTIME_BULK_QUOTES ⚠️ Premium
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
@@ -260,9 +260,9 @@ Advanced analytics on price data.
 
 ---
 
-## Options Data (Premium)
+## Options Data ⚠️ Premium
 
-### REALTIME_OPTIONS
+### REALTIME_OPTIONS ⚠️ Premium
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
@@ -272,7 +272,7 @@ Advanced analytics on price data.
 | contract | No | Specific option contract ID (e.g., `IBM270115C00390000`) |
 | datatype | No | `json` or `csv` |
 
-### HISTORICAL_OPTIONS
+### HISTORICAL_OPTIONS ⚠️ Premium
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
@@ -295,7 +295,7 @@ Realtime exchange rate for any currency pair (physical or crypto).
 | from_currency | Yes | Source currency code (e.g., `USD`, `BTC`) |
 | to_currency | Yes | Target currency code (e.g., `EUR`, `GBP`) |
 
-### FX_INTRADAY (Premium)
+### FX_INTRADAY ⚠️ Premium
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
@@ -417,7 +417,7 @@ All technical indicators share a common parameter pattern:
 | `DEMA` | time_period, series_type | Double EMA |
 | `TEMA` | time_period, series_type | Triple EMA |
 | `RSI` | time_period, series_type | Relative Strength Index |
-| `MACD` | series_type, fastperiod, slowperiod, signalperiod | Moving Average Convergence Divergence (**Premium only**) |
+| `MACD` | series_type, fastperiod, slowperiod, signalperiod | Moving Average Convergence Divergence ⚠️ **Premium** |
 | `BBANDS` | time_period, series_type, nbdevup, nbdevdn, matype | Bollinger Bands |
 | `STOCH` | fastkperiod, slowkperiod, slowdperiod, slowkmatype, slowdmatype | Stochastic Oscillator |
 | `ADX` | time_period | Average Directional Index |
@@ -425,7 +425,7 @@ All technical indicators share a common parameter pattern:
 | `AROON` | time_period | Aroon Indicator |
 | `OBV` | — | On Balance Volume |
 | `AD` | — | Chaikin A/D Line |
-| `VWAP` | — | Volume Weighted Average Price (**Premium only**) |
+| `VWAP` | — | Volume Weighted Average Price ⚠️ **Premium** |
 | `ATR` | time_period | Average True Range |
 | `MFI` | time_period | Money Flow Index |
 | `SAR` | acceleration, maximum | Parabolic SAR |
