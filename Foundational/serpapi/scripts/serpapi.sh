@@ -41,7 +41,7 @@
 #   google_play         Google Play Store Search
 #
 # Global options:
-#   --key KEY           Override SERPAPI_KEY env var
+#   --key KEY           Override SERPAPI_API_KEY env var
 #   --no-cache          Force fresh results (costs a credit)
 #   --raw               Output raw JSON (skip jq formatting)
 #   --help              Show this help
@@ -68,7 +68,7 @@
 
 set -euo pipefail
 
-API_KEY="${SERPAPI_KEY:?Set SERPAPI_KEY environment variable}"
+API_KEY="${SERPAPI_API_KEY:?Set SERPAPI_API_KEY environment variable}"
 BASE_URL="https://serpapi.com/search"
 USE_JQ=true
 NO_CACHE=""

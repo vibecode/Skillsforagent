@@ -10,7 +10,7 @@ description: >
   papers, (6) Google Trends, (7) Tripadvisor/OpenTable reviews, (8) e-commerce search
   (Walmart, eBay), (9) app store search, (10) Google Ads transparency, (11) any task
   involving serpapi.com. Base SerpApi skill — specialized skills reference it.
-metadata: {"openclaw": {"emoji": "🔍", "requires": {"env": ["SERPAPI_KEY"]}, "primaryEnv": "SERPAPI_KEY"}}
+metadata: {"openclaw": {"emoji": "🔍", "requires": {"env": ["SERPAPI_API_KEY"]}, "primaryEnv": "SERPAPI_API_KEY"}}
 ---
 
 # SerpApi
@@ -19,7 +19,7 @@ Structured JSON data from 30+ search engines via a single API endpoint.
 
 ## Setup
 
-Requires `SERPAPI_KEY` environment variable. All requests go to `https://serpapi.com/search` as GET requests with `engine` and `api_key` parameters.
+Requires `SERPAPI_API_KEY` environment variable. All requests go to `https://serpapi.com/search` as GET requests with `engine` and `api_key` parameters.
 
 ## Wrapper Script
 

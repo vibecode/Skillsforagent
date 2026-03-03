@@ -9,6 +9,9 @@ description: >
   (6) producing a prioritized list of SEO fixes, (7) comparing on-page SEO against competitor
   sites, (8) any task involving SEO analysis, site audit, or search optimization review.
   Builds on: firecrawl-setup (site crawling/scraping), exa (competitor and backlink research).
+dependencies:
+  - firecrawl-setup
+  - exa
 metadata: {"openclaw": {"emoji": "🔍", "requires": {"env": ["FIRECRAWL_API_KEY", "EXA_API_KEY"]}, "primaryEnv": "FIRECRAWL_API_KEY"}}
 ---
 

@@ -9,6 +9,10 @@ description: >
   (9) transcribe and rewrite video content. Combines video metadata extraction with transcript
   retrieval to produce structured articles — not summaries, actual readable articles with
   headings, flow, and quotes.
+dependencies:
+  - yt-dlp
+  - supadata
+  - serpapi
 metadata:
   openclaw:
     emoji: "📝"

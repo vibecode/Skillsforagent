@@ -10,6 +10,9 @@ description: >
   cross-platform trend detection or signal comparison. Requires both serpapi-youtube and exa
   foundational skills. The unique value is cross-platform signal comparison: YouTube heat vs web
   depth reveals where a trend sits in its lifecycle.
+dependencies:
+  - serpapi
+  - exa
 metadata: {"openclaw": {"emoji": "📈", "requires": {"env": ["SERPAPI_API_KEY", "EXA_API_KEY"]}, "primaryEnv": "SERPAPI_API_KEY"}}
 ---
 

@@ -39,7 +39,7 @@ Complete HTTP reference for the fal Model API. Covers synchronous requests, queu
 All requests require the `Authorization` header:
 
 ```
-Authorization: Key $FAL_KEY
+Authorization: Key $FAL_API_KEY
 ```
 
 Key scopes:
@@ -56,7 +56,7 @@ Best for fast models (<10s). Connection stays open until result is returned.
 
 ```bash
 curl -X POST "https://fal.run/{model_id}" \
-  -H "Authorization: Key $FAL_KEY" \
+  -H "Authorization: Key $FAL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"prompt": "a cat"}'
 ```
@@ -65,7 +65,7 @@ With subpath:
 
 ```bash
 curl -X POST "https://fal.run/fal-ai/flux/dev" \
-  -H "Authorization: Key $FAL_KEY" \
+  -H "Authorization: Key $FAL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"prompt": "a cat", "image_size": "landscape_4_3"}'
 ```
@@ -102,7 +102,7 @@ Recommended for all production use and anything >5s. Submit → poll → retriev
 
 ```bash
 curl -X POST "https://queue.fal.run/{model_id}" \
-  -H "Authorization: Key $FAL_KEY" \
+  -H "Authorization: Key $FAL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"prompt": "a cat"}'
 ```
@@ -176,7 +176,7 @@ Get notified when a request completes instead of polling. Append `fal_webhook` q
 
 ```bash
 curl -X POST "https://queue.fal.run/fal-ai/flux/dev?fal_webhook=https://your.app/webhook" \
-  -H "Authorization: Key $FAL_KEY" \
+  -H "Authorization: Key $FAL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"prompt": "a cat"}'
 ```
@@ -265,7 +265,7 @@ Chain multiple models in a pipeline. Same queue endpoints, but with `workflows/`
 
 ```bash
 curl -X POST "https://queue.fal.run/workflows/{owner}/{name}" \
-  -H "Authorization: Key $FAL_KEY" \
+  -H "Authorization: Key $FAL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"prompt": "a cute puppy"}'
 ```
@@ -276,29 +276,29 @@ Workflows support SSE streaming with events: `submit` (step started), `completio
 
 ## Platform APIs
 
-Management APIs at `https://api.fal.ai/v1`. Same `Authorization: Key $FAL_KEY` header.
+Management APIs at `https://api.fal.ai/v1`. Same `Authorization: Key $FAL_API_KEY` header.
 
 ### Model Search
 
 ```bash
 # List all models
-curl "https://api.fal.ai/v1/models?limit=50" -H "Authorization: Key $FAL_KEY"
+curl "https://api.fal.ai/v1/models?limit=50" -H "Authorization: Key $FAL_API_KEY"
 
 # Find specific model(s)
-curl "https://api.fal.ai/v1/models?endpoint_id=fal-ai/flux/dev" -H "Authorization: Key $FAL_KEY"
+curl "https://api.fal.ai/v1/models?endpoint_id=fal-ai/flux/dev" -H "Authorization: Key $FAL_API_KEY"
 
 # Search by query
-curl "https://api.fal.ai/v1/models?query=text-to-video" -H "Authorization: Key $FAL_KEY"
+curl "https://api.fal.ai/v1/models?query=text-to-video" -H "Authorization: Key $FAL_API_KEY"
 
 # Include OpenAPI schema
-curl "https://api.fal.ai/v1/models?endpoint_id=fal-ai/flux/dev&expand=openapi-3.0" -H "Authorization: Key $FAL_KEY"
+curl "https://api.fal.ai/v1/models?endpoint_id=fal-ai/flux/dev&expand=openapi-3.0" -H "Authorization: Key $FAL_API_KEY"
 ```
 
 ### Pricing
 
 ```bash
 curl "https://api.fal.ai/v1/models/pricing?endpoint_id=fal-ai/flux/dev" \
-  -H "Authorization: Key $FAL_KEY"
+  -H "Authorization: Key $FAL_API_KEY"
 ```
 
 Returns: `{prices: [{endpoint_id, unit_price, unit, currency}]}`
@@ -307,7 +307,7 @@ Returns: `{prices: [{endpoint_id, unit_price, unit, currency}]}`
 
 ```bash
 curl -X POST "https://api.fal.ai/v1/models/pricing/estimate" \
-  -H "Authorization: Key $FAL_KEY" \
+  -H "Authorization: Key $FAL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "estimate_type": "unit_price",

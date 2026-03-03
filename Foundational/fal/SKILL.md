@@ -2,7 +2,7 @@
 name: fal
 description: >
   Foundational skill for the fal.ai Model API — 600+ generative media models (image, video, audio, LLMs) accessible via HTTP. Use this skill when: (1) generating images from text or other images (FLUX, SDXL, etc.), (2) generating video from text or images, (3) speech-to-text or text-to-speech, (4) running LLMs via fal, (5) any task involving fal.ai model endpoints, (6) discovering available fal models or checking pricing, (7) chaining models via fal workflows, (8) understanding fal API patterns (sync vs queue, file handling, error handling). This is the base fal skill — specialized skills may reference it for specific model categories or workflows.
-metadata: {"openclaw": {"emoji": "⚡", "requires": {"env": ["FAL_KEY"]}, "primaryEnv": "FAL_KEY"}}
+metadata: {"openclaw": {"emoji": "⚡", "requires": {"env": ["FAL_API_KEY"]}, "primaryEnv": "FAL_API_KEY"}}
 ---
 
 # fal Model API
@@ -14,7 +14,7 @@ Access 600+ generative media models via simple HTTP requests. Two execution mode
 All requests use the same header:
 
 ```
-Authorization: Key $FAL_KEY
+Authorization: Key $FAL_API_KEY
 ```
 
 ## Model Discovery
@@ -26,15 +26,15 @@ fal has 600+ models that change frequently. Always use the live Platform API to 
 ```bash
 # Search by keyword (text-to-video, image generation, speech-to-text, etc.)
 curl "https://api.fal.ai/v1/models?query=text-to-video&limit=10" \
-  -H "Authorization: Key $FAL_KEY"
+  -H "Authorization: Key $FAL_API_KEY"
 
 # List all available models (paginated)
 curl "https://api.fal.ai/v1/models?limit=50" \
-  -H "Authorization: Key $FAL_KEY"
+  -H "Authorization: Key $FAL_API_KEY"
 
 # Paginate with cursor
 curl "https://api.fal.ai/v1/models?limit=50&cursor=CURSOR_FROM_PREVIOUS" \
-  -H "Authorization: Key $FAL_KEY"
+  -H "Authorization: Key $FAL_API_KEY"
 ```
 
 ### Get a Model's Input/Output Schema
@@ -43,7 +43,7 @@ Before calling any model, fetch its OpenAPI schema to know exactly what paramete
 
 ```bash
 curl "https://api.fal.ai/v1/models?endpoint_id=fal-ai/flux/dev&expand=openapi-3.0" \
-  -H "Authorization: Key $FAL_KEY"
+  -H "Authorization: Key $FAL_API_KEY"
 ```
 
 This returns the full OpenAPI 3.0 spec — input parameters, types, defaults, required fields, and output schema. This is the authoritative source for any model's interface.
@@ -52,7 +52,7 @@ This returns the full OpenAPI 3.0 spec — input parameters, types, defaults, re
 
 ```bash
 curl "https://api.fal.ai/v1/models/pricing?endpoint_id=fal-ai/flux/dev" \
-  -H "Authorization: Key $FAL_KEY"
+  -H "Authorization: Key $FAL_API_KEY"
 ```
 
 ### When to Use Discovery
@@ -72,7 +72,7 @@ For a quick reference of commonly used model IDs, see [references/models.md](ref
 
 ```bash
 curl -X POST "https://fal.run/fal-ai/flux/dev" \
-  -H "Authorization: Key $FAL_KEY" \
+  -H "Authorization: Key $FAL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"prompt": "a cat in a spacesuit", "image_size": "landscape_4_3"}'
 ```
@@ -86,7 +86,7 @@ Returns the model output directly (images, video URLs, text, etc.).
 **Step 1: Submit**
 ```bash
 curl -X POST "https://queue.fal.run/fal-ai/flux/dev" \
-  -H "Authorization: Key $FAL_KEY" \
+  -H "Authorization: Key $FAL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"prompt": "a cat in a spacesuit"}'
 ```

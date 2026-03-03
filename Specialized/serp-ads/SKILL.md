@@ -12,7 +12,9 @@ description: >
   (8) investigating ad creative formats and messaging patterns, (9) any task involving
   the Google Ads Transparency Center. This skill builds on the foundational serpapi skill
   for all API details.
-metadata: {"openclaw": {"emoji": "📢", "requires": {"env": ["SERPAPI_KEY"]}, "primaryEnv": "SERPAPI_KEY"}}
+dependencies:
+  - serpapi
+metadata: {"openclaw": {"emoji": "📢", "requires": {"env": ["SERPAPI_API_KEY"]}, "primaryEnv": "SERPAPI_API_KEY"}}
 ---
 
 # Google Ads Intelligence Workflows
