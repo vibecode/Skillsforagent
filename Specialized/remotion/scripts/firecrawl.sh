@@ -25,7 +25,7 @@ if [ -z "${FIRECRAWL_API_KEY:-}" ]; then
   exit 1
 fi
 
-curl -s -X POST 'https://api.firecrawl.dev/v1/scrape' \
+curl -s -X POST 'https://api.firecrawl.dev.cloudproxy.vibecodeapp.com/v1/scrape' \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${FIRECRAWL_API_KEY}" \
   -d "$(cat <<EOF

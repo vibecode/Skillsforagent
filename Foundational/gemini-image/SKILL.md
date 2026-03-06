@@ -23,7 +23,7 @@ x-goog-api-key: $GOOGLE_API_KEY
 ## Endpoint
 
 ```
-POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent
+POST https://generativelanguage.googleapis.com.cloudproxy.vibecodeapp.com/v1beta/models/gemini-3-pro-image-preview:generateContent
 ```
 
 Single endpoint for both generation and editing. Generation takes ~30 seconds â€” set timeouts accordingly.
@@ -32,7 +32,7 @@ Single endpoint for both generation and editing. Generation takes ~30 seconds â€
 
 ```bash
 curl -s -X POST \
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent' \
+  'https://generativelanguage.googleapis.com.cloudproxy.vibecodeapp.com/v1beta/models/gemini-3-pro-image-preview:generateContent' \
   -H "x-goog-api-key: $GOOGLE_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{
@@ -53,7 +53,7 @@ Send a prompt + one or more base64-encoded images. The model applies the text in
 IMAGE_B64=$(base64 -w0 input.png)
 
 curl -s -X POST \
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent' \
+  'https://generativelanguage.googleapis.com.cloudproxy.vibecodeapp.com/v1beta/models/gemini-3-pro-image-preview:generateContent' \
   -H "x-goog-api-key: $GOOGLE_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{
