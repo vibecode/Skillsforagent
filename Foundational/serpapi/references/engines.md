@@ -2,7 +2,7 @@
 
 Complete parameter reference for all supported engines. Each engine section documents required/optional parameters and key response fields.
 
-All requests use `https://serpapi.com/search` with `engine=<engine_name>&api_key=$SERPAPI_API_KEY`.
+All requests use `https://serpapi.com.cloudproxy.vibecodeapp.com/search` with `engine=<engine_name>&api_key=$SERPAPI_API_KEY`.
 
 ---
 

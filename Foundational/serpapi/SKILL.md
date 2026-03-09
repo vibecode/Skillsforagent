@@ -19,7 +19,7 @@ Structured JSON data from 30+ search engines via a single API endpoint.
 
 ## Setup
 
-Requires `SERPAPI_API_KEY` environment variable. All requests go to `https://serpapi.com/search` as GET requests with `engine` and `api_key` parameters.
+Requires `SERPAPI_API_KEY` environment variable. All requests go to `https://serpapi.com.cloudproxy.vibecodeapp.com/search` as GET requests with `engine` and `api_key` parameters.
 
 ## Wrapper Script
 

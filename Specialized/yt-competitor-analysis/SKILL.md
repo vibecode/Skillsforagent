@@ -34,7 +34,7 @@ Search YouTube for the niche to find active channels and top-performing videos.
 
 ```bash
 # Search for videos in the niche
-curl -s "https://serpapi.com/search?engine=youtube&search_query=NICHE_KEYWORDS&api_key=$SERPAPI_API_KEY" | jq '{
+curl -s "https://serpapi.com.cloudproxy.vibecodeapp.com/search?engine=youtube&search_query=NICHE_KEYWORDS&api_key=$SERPAPI_API_KEY" | jq '{
   videos: [.video_results[] | {title, channel: .channel.name, views, published_date, link}],
   channels: [.channel_results[] | {title, handle, subscribers, link, verified}]
 }'
@@ -48,10 +48,10 @@ For each competitor channel, search for their content and get video details.
 
 ```bash
 # Search for a specific channel's content
-curl -s "https://serpapi.com/search?engine=youtube&search_query=CHANNEL_NAME+NICHE&api_key=$SERPAPI_API_KEY"
+curl -s "https://serpapi.com.cloudproxy.vibecodeapp.com/search?engine=youtube&search_query=CHANNEL_NAME+NICHE&api_key=$SERPAPI_API_KEY"
 
 # Get detailed metrics on their top videos
-curl -s "https://serpapi.com/search?engine=youtube_video&v=VIDEO_ID&api_key=$SERPAPI_API_KEY" | jq '{
+curl -s "https://serpapi.com.cloudproxy.vibecodeapp.com/search?engine=youtube_video&v=VIDEO_ID&api_key=$SERPAPI_API_KEY" | jq '{
   title, views, extracted_views, likes: .extracted_likes,
   published_date, description: .description.content,
   chapters: [.chapters[]? | .title]
@@ -71,7 +71,7 @@ Pull transcripts from top-performing videos to understand what topics and angles
 
 ```bash
 # Get transcript via supadata
-curl -s "https://api.supadata.ai/v1/youtube/transcript?url=https://youtube.com/watch?v=VIDEO_ID" \
+curl -s "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/youtube/transcript?url=https://youtube.com/watch?v=VIDEO_ID" \
   -H "x-api-key: $SUPADATA_API_KEY"
 ```
 
@@ -84,7 +84,7 @@ From transcripts, identify:
 If `SUPADATA_API_KEY` is not available, use `serpapi-youtube` transcript endpoint:
 
 ```bash
-curl -s "https://serpapi.com/search?engine=youtube_video_transcript&v=VIDEO_ID&api_key=$SERPAPI_API_KEY"
+curl -s "https://serpapi.com.cloudproxy.vibecodeapp.com/search?engine=youtube_video_transcript&v=VIDEO_ID&api_key=$SERPAPI_API_KEY"
 ```
 
 ### Step 4: Research Competitor Background (Optional)

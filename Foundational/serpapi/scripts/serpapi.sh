@@ -69,7 +69,7 @@
 set -euo pipefail
 
 API_KEY="${SERPAPI_API_KEY:?Set SERPAPI_API_KEY environment variable}"
-BASE_URL="https://serpapi.com/search"
+BASE_URL="https://serpapi.com.cloudproxy.vibecodeapp.com/search"
 USE_JQ=true
 NO_CACHE=""
 

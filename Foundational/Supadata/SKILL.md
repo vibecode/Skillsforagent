@@ -15,7 +15,7 @@ metadata:
 
 # Supadata API
 
-Base URL: `https://api.supadata.ai/v1`
+Base URL: `https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1`
 Auth header: `x-api-key: ${SUPADATA_API_KEY}`
 
 All requests require the `x-api-key` header. Always URL-encode the `url` parameter.
@@ -44,7 +44,7 @@ Error format: `{"error": "code", "message": "...", "details": "...", "documentat
 Returns org ID, plan name, max credits, used credits.
 
 ```bash
-curl "https://api.supadata.ai/v1/me" -H "x-api-key: ${SUPADATA_API_KEY}"
+curl "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/me" -H "x-api-key: ${SUPADATA_API_KEY}"
 ```
 
 ---
@@ -64,7 +64,7 @@ Get transcript from YouTube, TikTok, Instagram, X/Twitter, Facebook, or file URL
 | mode | string | No | `native` (existing only), `generate` (AI), `auto` (default: native with AI fallback) |
 
 ```bash
-curl "https://api.supadata.ai/v1/transcript?url=https%3A%2F%2Fyoutu.be%2FdQw4w9WgXcQ&text=true&lang=en" \
+curl "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/transcript?url=https%3A%2F%2Fyoutu.be%2FdQw4w9WgXcQ&text=true&lang=en" \
   -H "x-api-key: ${SUPADATA_API_KEY}"
 ```
 
@@ -91,7 +91,7 @@ Poll async transcript. Response same as above plus `"status": "queued|active|com
 | url | string | Yes | Post/video URL (URL-encode it) |
 
 ```bash
-curl "https://api.supadata.ai/v1/metadata?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DdQw4w9WgXcQ" \
+curl "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/metadata?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DdQw4w9WgXcQ" \
   -H "x-api-key: ${SUPADATA_API_KEY}"
 ```
 
@@ -114,7 +114,7 @@ Extract structured data from what is **seen and heard** in a video using AI. Alw
 Both prompt and schema can be provided together.
 
 ```bash
-curl -X POST "https://api.supadata.ai/v1/extract" \
+curl -X POST "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/extract" \
   -H "x-api-key: ${SUPADATA_API_KEY}" -H "Content-Type: application/json" \
   -d '{"url": "https://youtube.com/watch?v=abc", "prompt": "List all products mentioned with prices"}'
 ```
@@ -138,7 +138,7 @@ Poll extraction job. Response: `{"status": "completed", "data": {...}, "schema":
 | lang | string | No | ISO 639-1 preference (default: en) |
 
 ```bash
-curl "https://api.supadata.ai/v1/web/scrape?url=https%3A%2F%2Fsupadata.ai" \
+curl "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/web/scrape?url=https%3A%2F%2Fsupadata.ai" \
   -H "x-api-key: ${SUPADATA_API_KEY}"
 ```
 
@@ -149,7 +149,7 @@ Returns: url, content (markdown), name, description, countCharacters, urls (foun
 Returns all URLs found on a website: `{"urls": [...]}`. **Cost:** 1 credit.
 
 ```bash
-curl "https://api.supadata.ai/v1/web/map?url=https%3A%2F%2Fsupadata.ai" -H "x-api-key: ${SUPADATA_API_KEY}"
+curl "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/web/map?url=https%3A%2F%2Fsupadata.ai" -H "x-api-key: ${SUPADATA_API_KEY}"
 ```
 
 ### POST /web/crawl
@@ -162,7 +162,7 @@ Async crawl of entire website. Crawler follows only child links — use top-leve
 | limit | number | No | Max pages (default: 100) |
 
 ```bash
-curl -X POST "https://api.supadata.ai/v1/web/crawl" \
+curl -X POST "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/web/crawl" \
   -H "x-api-key: ${SUPADATA_API_KEY}" -H "Content-Type: application/json" \
   -d '{"url": "https://supadata.ai", "limit": 50}'
 ```
@@ -187,7 +187,7 @@ Returns: `{"status": "scraping|completed|failed|cancelled", "pages": [{"url": ".
 | chunkSize | number | No | Max chars per chunk |
 
 ```bash
-curl "https://api.supadata.ai/v1/youtube/transcript?videoId=dQw4w9WgXcQ&lang=en&text=true" \
+curl "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/youtube/transcript?videoId=dQw4w9WgXcQ&lang=en&text=true" \
   -H "x-api-key: ${SUPADATA_API_KEY}"
 ```
 
@@ -198,7 +198,7 @@ Same response format as GET /transcript. **Cost:** 1 credit.
 Translate a YouTube transcript. Same params as above plus `lang` is **required** (target language).
 
 ```bash
-curl "https://api.supadata.ai/v1/youtube/transcript/translate?videoId=dQw4w9WgXcQ&lang=es&text=true" \
+curl "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/youtube/transcript/translate?videoId=dQw4w9WgXcQ&lang=es&text=true" \
   -H "x-api-key: ${SUPADATA_API_KEY}"
 ```
 
@@ -218,7 +218,7 @@ Batch transcripts for multiple videos. Provide ONE of: `videoIds` (array), `play
 | text | boolean | Plain text mode |
 
 ```bash
-curl -X POST "https://api.supadata.ai/v1/youtube/transcript/batch" \
+curl -X POST "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/youtube/transcript/batch" \
   -H "x-api-key: ${SUPADATA_API_KEY}" -H "Content-Type: application/json" \
   -d '{"videoIds": ["dQw4w9WgXcQ", "xvFZjo5PgG0"], "lang": "en", "text": true}'
 ```
@@ -232,7 +232,7 @@ curl -X POST "https://api.supadata.ai/v1/youtube/transcript/batch" \
 ### GET /youtube/video
 
 ```bash
-curl "https://api.supadata.ai/v1/youtube/video?id=dQw4w9WgXcQ" -H "x-api-key: ${SUPADATA_API_KEY}"
+curl "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/youtube/video?id=dQw4w9WgXcQ" -H "x-api-key: ${SUPADATA_API_KEY}"
 ```
 
 Returns title, description, duration, views, likes, channel, publish date, tags. **Cost:** 1 credit.
@@ -242,7 +242,7 @@ Returns title, description, duration, views, likes, channel, publish date, tags.
 Same input structure as transcript/batch (videoIds, playlistId, or channelId + limit).
 
 ```bash
-curl -X POST "https://api.supadata.ai/v1/youtube/video/batch" \
+curl -X POST "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/youtube/video/batch" \
   -H "x-api-key: ${SUPADATA_API_KEY}" -H "Content-Type: application/json" \
   -d '{"videoIds": ["dQw4w9WgXcQ", "xvFZjo5PgG0"]}'
 ```
@@ -273,7 +273,7 @@ Returns batch results for transcript or video metadata jobs:
 Accepts: channel URL, @handle, or channel ID. Returns: id, name, description, subscriberCount, videoCount, thumbnail, banner. **Cost:** 1 credit.
 
 ```bash
-curl "https://api.supadata.ai/v1/youtube/channel?id=@RickAstley" -H "x-api-key: ${SUPADATA_API_KEY}"
+curl "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/youtube/channel?id=@RickAstley" -H "x-api-key: ${SUPADATA_API_KEY}"
 ```
 
 ### GET /youtube/channel/videos
@@ -291,7 +291,7 @@ Returns: `{"videoIds": [...], "shortIds": [...], "liveIds": [...]}`. Latest-firs
 Returns: id, title, description, videoCount, viewCount, lastUpdated, channel. **Cost:** 1 credit.
 
 ```bash
-curl "https://api.supadata.ai/v1/youtube/playlist?id=PLlaN88a7y2_plecYoJxvRFTLHVbIVAOoc" \
+curl "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/youtube/playlist?id=PLlaN88a7y2_plecYoJxvRFTLHVbIVAOoc" \
   -H "x-api-key: ${SUPADATA_API_KEY}"
 ```
 
@@ -322,7 +322,7 @@ Returns: `{"videoIds": [...], "shortIds": [...], "liveIds": [...]}`. **Cost:** 1
 | nextPageToken | string | No | Pagination token |
 
 ```bash
-curl "https://api.supadata.ai/v1/youtube/search?query=machine%20learning&type=video&limit=20&sortBy=views" \
+curl "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/youtube/search?query=machine%20learning&type=video&limit=20&sortBy=views" \
   -H "x-api-key: ${SUPADATA_API_KEY}"
 ```
 
@@ -335,12 +335,12 @@ Returns: `{"query": "...", "results": [{"type": "video", "id": "...", "title": "
 Endpoints that return `{"jobId": "..."}`: /transcript (large videos), /extract, /web/crawl, /youtube/transcript/batch, /youtube/video/batch.
 
 ```bash
-JOB_ID=$(curl -s -X POST "https://api.supadata.ai/v1/extract" \
+JOB_ID=$(curl -s -X POST "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/extract" \
   -H "x-api-key: ${SUPADATA_API_KEY}" -H "Content-Type: application/json" \
   -d '{"url": "https://youtube.com/watch?v=abc", "prompt": "summarize"}' | jq -r '.jobId')
 
 while true; do
-  RESULT=$(curl -s "https://api.supadata.ai/v1/extract/${JOB_ID}" -H "x-api-key: ${SUPADATA_API_KEY}")
+  RESULT=$(curl -s "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/extract/${JOB_ID}" -H "x-api-key: ${SUPADATA_API_KEY}")
   STATUS=$(echo $RESULT | jq -r '.status')
   [ "$STATUS" = "completed" ] || [ "$STATUS" = "failed" ] && { echo "$RESULT"; break; }
   sleep 1
