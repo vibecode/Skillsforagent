@@ -7,6 +7,8 @@ description: >
   (2) creating or editing charts, (3) building dashboards, (4) managing cohorts or experiments,
   (5) searching Amplitude content, (6) any task involving Amplitude analytics.
   Requires amplitude-cli (`amp` command) and AMPLITUDE_ACCESS_TOKEN (OAuth via Nango).
+integration_dependencies:
+  - amplitude
 metadata: {"openclaw": {"emoji": "📊", "requires": {"env": ["AMPLITUDE_ACCESS_TOKEN"], "bin": ["amp"]}, "primaryEnv": "AMPLITUDE_ACCESS_TOKEN"}}
 ---
 
