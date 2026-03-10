@@ -12,7 +12,15 @@ metadata: {"openclaw": {"emoji": "📊", "requires": {"env": ["AMPLITUDE_ACCESS_
 
 # Amplitude
 
-Full Amplitude analytics via the `amp` CLI (amplitude-cli package). Auth is handled automatically — `AMPLITUDE_ACCESS_TOKEN` is injected via Nango OAuth.
+Full Amplitude analytics via the `amp` CLI (amplitude-cli package). All commands go through Amplitude's MCP server using OAuth. Auth is handled automatically — `AMPLITUDE_ACCESS_TOKEN` is injected via Nango.
+
+## Architecture
+
+```
+amp CLI → Amplitude MCP server (OAuth)
+```
+
+Single transport, single auth method. No API keys needed.
 
 ## CLI: `amp`
 
@@ -26,14 +34,30 @@ amp --help              # full command list
 
 ### Auth
 ```bash
-amp auth status                          # show auth status (API keys + OAuth)
+amp auth status                          # show auth status
 amp auth login [--region us|eu]          # OAuth login (interactive, for humans)
 amp auth logout                          # revoke tokens
-amp auth setup                           # save API key + secret to ~/.amplituderc
 amp auth tools                           # list available MCP tools
 ```
 
-### Charts (requires OAuth)
+### Events
+```bash
+amp events list                          # list all event types
+amp events list -s "purchase"            # search events by name
+amp events props <event-type>            # get properties for an event type
+```
+
+### Analytics Queries
+```bash
+amp query segment -e <event> [options]   # event segmentation
+amp query funnel -e <e1> <e2> ...        # funnel analysis
+amp query retention --start-event <e> --return-event <e>  # retention
+amp query revenue [options]              # revenue analysis
+amp query sessions [options]             # session analytics
+amp query chart <chart-id>              # get data from a saved chart
+```
+
+### Charts
 ```bash
 amp charts search <query>                # search charts
 amp charts get <chartId>                 # get chart definition
@@ -43,37 +67,31 @@ amp charts discover <query>              # discover events and properties
 amp charts event-props <event-type>      # get properties for an event type
 ```
 
-### Dashboards (requires OAuth)
+### Dashboards
 ```bash
 amp dashboards search <query>            # search dashboards
 amp dashboards get <dashboardId>         # get dashboard with all charts
-amp dashboards create '<json>'           # create dashboard
-```
-
-### Analytics Queries
-```bash
-amp query segment <event> [options]      # event segmentation
-amp query funnel <event1> <event2> ...   # funnel analysis
-amp query retention <start> <return>     # retention analysis
-amp query export [options]               # raw event export
+amp dashboards create --name 'name' --definition '<json>'  # create dashboard
 ```
 
 ### Users
 ```bash
 amp users search <query>                 # search users
-amp users activity <userId>              # user activity stream
+amp users activity <amplitudeId>         # user activity stream
 ```
 
 ### Cohorts
 ```bash
 amp cohorts list                         # list all cohorts
 amp cohorts get <cohortId>               # get cohort definition
+amp cohorts create --name 'name' --definition '<json>'  # create cohort
 ```
 
-### Experiments (requires OAuth)
+### Experiments
 ```bash
+amp experiments search <query>           # search experiments
 amp experiments get <experimentId>       # get experiment details
-amp experiments query <experimentId>     # query experiment results with stats
+amp experiments results <experimentId>   # query results with stats
 ```
 
 ## Available MCP Tools
@@ -139,8 +157,8 @@ The CLI wraps these MCP server tools (accessible via `amp auth tools`):
 ## Key Patterns
 
 ### Chart → Dashboard Workflow
-1. `amp query segment ...` or use MCP `query_dataset` → returns `editId` (temporary)
-2. `amp charts create` / MCP `save_chart_edits` → permanent `chartId`
+1. `amp query segment ...` or `amp charts create` → returns `editId` (temporary)
+2. `amp charts create --save --name "..."` → permanent `chartId`
 3. `amp dashboards create` → uses permanent `chartId`
 
 **⚠️ Dashboards require SAVED chart IDs. Never use `editId` directly.**
@@ -160,6 +178,4 @@ The CLI wraps these MCP server tools (accessible via `amp auth tools`):
 | Var | Required | Description |
 |-----|----------|-------------|
 | `AMPLITUDE_ACCESS_TOKEN` | Yes | OAuth token (auto-injected via Nango) |
-| `AMPLITUDE_API_KEY` | No | API key for read-only REST queries |
-| `AMPLITUDE_SECRET_KEY` | No | Secret key for read-only REST queries |
 | `AMPLITUDE_REGION` | No | `us` (default) or `eu` |
