@@ -12,7 +12,7 @@ Complete reference for `/answer` and `/research/v1` endpoints.
 
 ## Answer
 
-**Endpoint:** `POST https://api.exa.ai/answer`
+**Endpoint:** `POST https://api.exa.ai.cloudproxy.vibecodeapp.com/answer`
 
 Search-grounded AI answer with citations. Performs a search and synthesizes results into an answer.
 
@@ -87,14 +87,14 @@ data: {"answer": "'s latest", "citations": [...]}
 
 ## Research
 
-**Endpoint:** `POST https://api.exa.ai/research/v1`
+**Endpoint:** `POST https://api.exa.ai.cloudproxy.vibecodeapp.com/research/v1`
 
 Async multi-step research. The system explores the web, gathers sources, synthesizes findings, and returns results with citations.
 
 ### Create Task
 
 ```bash
-curl -X POST 'https://api.exa.ai/research/v1' \
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/research/v1' \
   -H 'x-api-key: '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{
@@ -126,11 +126,11 @@ curl -X POST 'https://api.exa.ai/research/v1' \
 ### Poll Status
 
 ```bash
-curl 'https://api.exa.ai/research/v1/{researchId}' \
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/research/v1/{researchId}' \
   -H 'x-api-key: '"$EXA_API_KEY"
 
 # With events (progress log):
-curl 'https://api.exa.ai/research/v1/{researchId}?events=true' \
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/research/v1/{researchId}?events=true' \
   -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
@@ -173,7 +173,7 @@ curl 'https://api.exa.ai/research/v1/{researchId}?events=true' \
 ### Stream Status (SSE)
 
 ```bash
-curl 'https://api.exa.ai/research/v1/{researchId}?stream=true' \
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/research/v1/{researchId}?stream=true' \
   -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
@@ -182,7 +182,7 @@ Returns SSE events with the full research object as it progresses.
 ### List Tasks
 
 ```bash
-curl 'https://api.exa.ai/research/v1' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/research/v1' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 ### Models
@@ -208,7 +208,7 @@ Exa provides drop-in OpenAI SDK compatibility.
 ### Answer via Chat Completions
 
 ```bash
-curl https://api.exa.ai/chat/completions \
+curl https://api.exa.ai.cloudproxy.vibecodeapp.com/chat/completions \
   -H 'Authorization: Bearer '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{
@@ -221,7 +221,7 @@ curl https://api.exa.ai/chat/completions \
 ### Research via Chat Completions
 
 ```bash
-curl https://api.exa.ai/chat/completions \
+curl https://api.exa.ai.cloudproxy.vibecodeapp.com/chat/completions \
   -H 'Authorization: Bearer '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{
@@ -234,7 +234,7 @@ curl https://api.exa.ai/chat/completions \
 ### Research via Responses API
 
 ```bash
-curl https://api.exa.ai/responses \
+curl https://api.exa.ai.cloudproxy.vibecodeapp.com/responses \
   -H 'x-api-key: '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{"model": "exa-research", "input": "Summarize CRISPR impact on gene therapy"}'

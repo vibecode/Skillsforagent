@@ -2,7 +2,7 @@
 
 Complete reference for the Websets API — async entity sourcing at scale.
 
-**Base URL:** `https://api.exa.ai/websets/v0`
+**Base URL:** `https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0`
 **Auth:** `x-api-key: $EXA_API_KEY`
 
 ## Table of Contents
@@ -42,7 +42,7 @@ Complete reference for the Websets API — async entity sourcing at scale.
 ### Create
 
 ```bash
-curl -X POST 'https://api.exa.ai/websets/v0/websets' \
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets' \
   -H 'x-api-key: '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{
@@ -72,7 +72,7 @@ curl -X POST 'https://api.exa.ai/websets/v0/websets' \
 ### Preview (Dry Run)
 
 ```bash
-curl -X POST 'https://api.exa.ai/websets/v0/websets/preview' \
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/preview' \
   -H 'x-api-key: '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{"search": {"query": "AI safety researchers", "count": 10}}'
@@ -84,22 +84,22 @@ Returns detected entity type, generated criteria, and available enrichment colum
 
 ```bash
 # By ID or externalId
-curl 'https://api.exa.ai/websets/v0/websets/{id}' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{id}' -H 'x-api-key: '"$EXA_API_KEY"
 
 # With items expanded
-curl 'https://api.exa.ai/websets/v0/websets/{id}?expand=items' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{id}?expand=items' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 ### List
 
 ```bash
-curl 'https://api.exa.ai/websets/v0/websets?limit=50' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets?limit=50' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 ### Update
 
 ```bash
-curl -X POST 'https://api.exa.ai/websets/v0/websets/{id}' \
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{id}' \
   -H 'x-api-key: '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{"metadata": {"stage": "reviewed"}}'
@@ -108,13 +108,13 @@ curl -X POST 'https://api.exa.ai/websets/v0/websets/{id}' \
 ### Cancel
 
 ```bash
-curl -X POST 'https://api.exa.ai/websets/v0/websets/{id}/cancel' -H 'x-api-key: '"$EXA_API_KEY"
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{id}/cancel' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 ### Delete
 
 ```bash
-curl -X DELETE 'https://api.exa.ai/websets/v0/websets/{id}' -H 'x-api-key: '"$EXA_API_KEY"
+curl -X DELETE 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{id}' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 ---
@@ -126,7 +126,7 @@ Add new searches to an existing Webset.
 ### Create Search
 
 ```bash
-curl -X POST 'https://api.exa.ai/websets/v0/websets/{websetId}/searches' \
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/searches' \
   -H 'x-api-key: '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{
@@ -141,8 +141,8 @@ curl -X POST 'https://api.exa.ai/websets/v0/websets/{websetId}/searches' \
 ### Get / Cancel Search
 
 ```bash
-curl 'https://api.exa.ai/websets/v0/websets/{websetId}/searches/{searchId}' -H 'x-api-key: '"$EXA_API_KEY"
-curl -X POST 'https://api.exa.ai/websets/v0/websets/{websetId}/searches/{searchId}/cancel' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/searches/{searchId}' -H 'x-api-key: '"$EXA_API_KEY"
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/searches/{searchId}/cancel' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 Search response includes `progress: {found: int, completion: 0-100}`.
@@ -154,19 +154,19 @@ Search response includes `progress: {found: int, completion: 0-100}`.
 ### List Items
 
 ```bash
-curl 'https://api.exa.ai/websets/v0/websets/{websetId}/items?limit=100' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/items?limit=100' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 ### Get Item
 
 ```bash
-curl 'https://api.exa.ai/websets/v0/websets/{websetId}/items/{itemId}' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/items/{itemId}' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 ### Delete Item
 
 ```bash
-curl -X DELETE 'https://api.exa.ai/websets/v0/websets/{websetId}/items/{itemId}' -H 'x-api-key: '"$EXA_API_KEY"
+curl -X DELETE 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/items/{itemId}' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 ### Item Structure
@@ -232,7 +232,7 @@ All include: `type`, `url`, `description`, `content` (optional).
 ### Create Enrichment
 
 ```bash
-curl -X POST 'https://api.exa.ai/websets/v0/websets/{websetId}/enrichments' \
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/enrichments' \
   -H 'x-api-key: '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{"description": "What is the company annual revenue?", "format": "text"}'
@@ -254,9 +254,9 @@ For `options`, provide choices: `"options": [{"label": "B2C"}, {"label": "B2B"},
 ### Get / Delete / Cancel Enrichment
 
 ```bash
-curl 'https://api.exa.ai/websets/v0/websets/{websetId}/enrichments/{enrichmentId}' -H 'x-api-key: '"$EXA_API_KEY"
-curl -X DELETE 'https://api.exa.ai/websets/v0/websets/{websetId}/enrichments/{enrichmentId}' -H 'x-api-key: '"$EXA_API_KEY"
-curl -X POST 'https://api.exa.ai/websets/v0/websets/{websetId}/enrichments/{enrichmentId}/cancel' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/enrichments/{enrichmentId}' -H 'x-api-key: '"$EXA_API_KEY"
+curl -X DELETE 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/enrichments/{enrichmentId}' -H 'x-api-key: '"$EXA_API_KEY"
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/enrichments/{enrichmentId}/cancel' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 ---
@@ -268,7 +268,7 @@ Scheduled re-searches to keep Websets updated with fresh data.
 ### Create Monitor
 
 ```bash
-curl -X POST 'https://api.exa.ai/websets/v0/websets/{websetId}/monitors' \
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/monitors' \
   -H 'x-api-key: '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{"cadence": "daily"}'
@@ -278,20 +278,20 @@ curl -X POST 'https://api.exa.ai/websets/v0/websets/{websetId}/monitors' \
 
 ```bash
 # List
-curl 'https://api.exa.ai/websets/v0/websets/{websetId}/monitors' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/monitors' -H 'x-api-key: '"$EXA_API_KEY"
 # Get
-curl 'https://api.exa.ai/websets/v0/websets/{websetId}/monitors/{monitorId}' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/monitors/{monitorId}' -H 'x-api-key: '"$EXA_API_KEY"
 # Update
-curl -X POST 'https://api.exa.ai/websets/v0/websets/{websetId}/monitors/{monitorId}' ...
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/monitors/{monitorId}' ...
 # Delete
-curl -X DELETE 'https://api.exa.ai/websets/v0/websets/{websetId}/monitors/{monitorId}' -H 'x-api-key: '"$EXA_API_KEY"
+curl -X DELETE 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/monitors/{monitorId}' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 ### Monitor Runs
 
 ```bash
-curl 'https://api.exa.ai/websets/v0/websets/{websetId}/monitors/{monitorId}/runs' -H 'x-api-key: '"$EXA_API_KEY"
-curl 'https://api.exa.ai/websets/v0/websets/{websetId}/monitors/{monitorId}/runs/{runId}' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/monitors/{monitorId}/runs' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/monitors/{monitorId}/runs/{runId}' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 ---
@@ -304,15 +304,15 @@ Upload external data into a Webset (e.g., CSV of companies to enrich).
 
 ```bash
 # Create
-curl -X POST 'https://api.exa.ai/websets/v0/websets/{websetId}/imports' ...
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/imports' ...
 # List
-curl 'https://api.exa.ai/websets/v0/websets/{websetId}/imports' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/imports' -H 'x-api-key: '"$EXA_API_KEY"
 # Get
-curl 'https://api.exa.ai/websets/v0/websets/{websetId}/imports/{importId}' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/imports/{importId}' -H 'x-api-key: '"$EXA_API_KEY"
 # Update
-curl -X POST 'https://api.exa.ai/websets/v0/websets/{websetId}/imports/{importId}' ...
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/imports/{importId}' ...
 # Delete
-curl -X DELETE 'https://api.exa.ai/websets/v0/websets/{websetId}/imports/{importId}' -H 'x-api-key: '"$EXA_API_KEY"
+curl -X DELETE 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/imports/{importId}' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 ---
@@ -324,7 +324,7 @@ Get notified when events happen in your Websets.
 ### Create Webhook
 
 ```bash
-curl -X POST 'https://api.exa.ai/websets/v0/webhooks' \
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/webhooks' \
   -H 'x-api-key: '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{
@@ -339,15 +339,15 @@ Returns `secret` for signature verification (only on creation).
 
 ```bash
 # List
-curl 'https://api.exa.ai/websets/v0/webhooks' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/webhooks' -H 'x-api-key: '"$EXA_API_KEY"
 # Get
-curl 'https://api.exa.ai/websets/v0/webhooks/{webhookId}' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/webhooks/{webhookId}' -H 'x-api-key: '"$EXA_API_KEY"
 # Update
-curl -X PATCH 'https://api.exa.ai/websets/v0/webhooks/{webhookId}' ...
+curl -X PATCH 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/webhooks/{webhookId}' ...
 # Delete
-curl -X DELETE 'https://api.exa.ai/websets/v0/webhooks/{webhookId}' -H 'x-api-key: '"$EXA_API_KEY"
+curl -X DELETE 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/webhooks/{webhookId}' -H 'x-api-key: '"$EXA_API_KEY"
 # List attempts
-curl 'https://api.exa.ai/websets/v0/webhooks/{webhookId}/attempts' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/webhooks/{webhookId}/attempts' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 ### Signature Verification
@@ -378,10 +378,10 @@ Webhooks are signed with the `secret` returned at creation. Verify the signature
 ### List Events
 
 ```bash
-curl 'https://api.exa.ai/websets/v0/events?limit=50' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/events?limit=50' -H 'x-api-key: '"$EXA_API_KEY"
 
 # Get specific event
-curl 'https://api.exa.ai/websets/v0/events/{eventId}' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/events/{eventId}' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 ---
@@ -391,13 +391,13 @@ curl 'https://api.exa.ai/websets/v0/events/{eventId}' -H 'x-api-key: '"$EXA_API_
 ### Schedule Export
 
 ```bash
-curl -X POST 'https://api.exa.ai/websets/v0/websets/{websetId}/exports' -H 'x-api-key: '"$EXA_API_KEY"
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/exports' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 ### Get Export
 
 ```bash
-curl 'https://api.exa.ai/websets/v0/websets/{websetId}/exports/{exportId}' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{websetId}/exports/{exportId}' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 ---
@@ -408,10 +408,10 @@ All list endpoints use cursor-based pagination:
 
 ```bash
 # First page
-curl 'https://api.exa.ai/websets/v0/websets?limit=50' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets?limit=50' -H 'x-api-key: '"$EXA_API_KEY"
 
 # Next page (use nextCursor from previous response)
-curl 'https://api.exa.ai/websets/v0/websets?limit=50&cursor=CURSOR' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets?limit=50&cursor=CURSOR' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 Response always includes:
@@ -430,7 +430,7 @@ Max `limit`: 200.
 ## Team Info
 
 ```bash
-curl 'https://api.exa.ai/websets/v0/team' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/team' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 Returns concurrency usage and limits.
