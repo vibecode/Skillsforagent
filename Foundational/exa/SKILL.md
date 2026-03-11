@@ -18,7 +18,7 @@ Web search, content extraction, AI answers, research, and entity sourcing — al
 
 ## Authentication
 
-All endpoints at `https://api.exa.ai`. Same header everywhere:
+All endpoints at `https://api.exa.ai.cloudproxy.vibecodeapp.com`. Same header everywhere:
 
 ```
 x-api-key: $EXA_API_KEY
@@ -39,7 +39,7 @@ x-api-key: $EXA_API_KEY
 ## Search
 
 ```bash
-curl -X POST 'https://api.exa.ai/search' \
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/search' \
   -H 'x-api-key: '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{
@@ -79,7 +79,7 @@ curl -X POST 'https://api.exa.ai/search' \
 Extract content from URLs you already have (no search needed):
 
 ```bash
-curl -X POST 'https://api.exa.ai/contents' \
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/contents' \
   -H 'x-api-key: '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{
@@ -120,7 +120,7 @@ All three can be requested together. Use `highlights` for agentic workflows to m
 ## Find Similar
 
 ```bash
-curl -X POST 'https://api.exa.ai/findSimilar' \
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/findSimilar' \
   -H 'x-api-key: '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{"url": "https://arxiv.org/abs/2307.06435", "contents": {"text": true}}'
@@ -133,7 +133,7 @@ Same filters and content options as search. Takes `url` instead of `query`.
 Search-grounded AI answer with citations:
 
 ```bash
-curl -X POST 'https://api.exa.ai/answer' \
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/answer' \
   -H 'x-api-key: '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{"query": "What is the latest valuation of SpaceX?", "text": true}'
@@ -147,17 +147,17 @@ Multi-step research with web exploration and synthesis:
 
 ```bash
 # 1. Submit
-curl -X POST 'https://api.exa.ai/research/v1' \
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/research/v1' \
   -H 'x-api-key: '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{"instructions": "Analyze the AI safety landscape", "model": "exa-research"}'
 
 # 2. Poll (returns status: pending → running → completed)
-curl 'https://api.exa.ai/research/v1/{researchId}' \
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/research/v1/{researchId}' \
   -H 'x-api-key: '"$EXA_API_KEY"
 
 # Or stream status updates:
-curl 'https://api.exa.ai/research/v1/{researchId}?stream=true' \
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/research/v1/{researchId}?stream=true' \
   -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
@@ -169,7 +169,7 @@ Async platform for finding, verifying, and enriching entities at scale. Full lif
 
 ```bash
 # Create a Webset
-curl -X POST 'https://api.exa.ai/websets/v0/websets' \
+curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets' \
   -H 'x-api-key: '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{
@@ -184,10 +184,10 @@ curl -X POST 'https://api.exa.ai/websets/v0/websets' \
   }'
 
 # Check status
-curl 'https://api.exa.ai/websets/v0/websets/{id}' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{id}' -H 'x-api-key: '"$EXA_API_KEY"
 
 # List items (when status is "idle")
-curl 'https://api.exa.ai/websets/v0/websets/{id}/items' -H 'x-api-key: '"$EXA_API_KEY"
+curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{id}/items' -H 'x-api-key: '"$EXA_API_KEY"
 ```
 
 Entity types: `company`, `person`, `article`, `research_paper`, `custom`. Auto-detected from query, or specify explicitly. Enrichment formats: `text`, `date`, `number`, `options`, `email`, `phone`.
@@ -226,13 +226,13 @@ Drop-in replacement using the OpenAI SDK pattern:
 
 ```bash
 # Answer (model: exa)
-curl https://api.exa.ai/chat/completions \
+curl https://api.exa.ai.cloudproxy.vibecodeapp.com/chat/completions \
   -H 'Authorization: Bearer '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{"model": "exa", "messages": [{"role": "user", "content": "Latest AI news"}]}'
 
 # Research (model: exa-research or exa-research-pro)
-curl https://api.exa.ai/chat/completions \
+curl https://api.exa.ai.cloudproxy.vibecodeapp.com/chat/completions \
   -H 'Authorization: Bearer '"$EXA_API_KEY" \
   -H 'Content-Type: application/json' \
   -d '{"model": "exa-research", "messages": [{"role": "user", "content": "Analyze CRISPR developments"}], "stream": true}'
