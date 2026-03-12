@@ -1,5 +1,5 @@
 ---
-name: Gemini Image
+name: gemini-image
 description: >
   Foundational skill for Google's Gemini image generation API, also known as Nano Banana. Use
   when: (1) generating images from text prompts, (2) editing or transforming existing images
@@ -12,148 +12,93 @@ metadata: {"openclaw": {"emoji": "🎨", "requires": {"env": ["GOOGLE_API_KEY"]}
 
 # Gemini Image Generation (Nano Banana)
 
-Generate and edit images via Google's Gemini API. Also known as Nano Banana. One endpoint, two patterns: text-to-image and image editing.
+Generate and edit images via Google's Gemini API using the `scripts/gemini-image.sh` wrapper. Also known as Nano Banana. Two commands: text-to-image and image editing.
 
 ## Authentication
 
-```
-x-goog-api-key: $GOOGLE_API_KEY
-```
+Set `GOOGLE_API_KEY` in your environment. The script handles auth headers automatically.
 
-## Endpoint
+## Quick Reference
 
-```
-POST https://generativelanguage.googleapis.com.cloudproxy.vibecodeapp.com/v1beta/models/gemini-3-pro-image-preview:generateContent
-```
-
-Single endpoint for both generation and editing. Generation takes ~30 seconds — set timeouts accordingly.
-
-## Text-to-Image
+### Text-to-Image
 
 ```bash
-curl -s -X POST \
-  'https://generativelanguage.googleapis.com.cloudproxy.vibecodeapp.com/v1beta/models/gemini-3-pro-image-preview:generateContent' \
-  -H "x-goog-api-key: $GOOGLE_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "contents": [{"parts": [{"text": "A photorealistic sunset over mountains"}]}],
-    "generationConfig": {
-      "responseModalities": ["Image"],
-      "imageConfig": {"aspectRatio": "16:9"}
-    }
-  }'
+bash scripts/gemini-image.sh generate "A photorealistic sunset over mountains" --aspect 16:9 --output sunset.png
 ```
 
-## Image Editing
-
-Send a prompt + one or more base64-encoded images. The model applies the text instruction to the image(s).
+### Image Editing
 
 ```bash
-# Encode an image to base64
-IMAGE_B64=$(base64 -w0 input.png)
-
-curl -s -X POST \
-  'https://generativelanguage.googleapis.com.cloudproxy.vibecodeapp.com/v1beta/models/gemini-3-pro-image-preview:generateContent' \
-  -H "x-goog-api-key: $GOOGLE_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "contents": [{"parts": [
-      {"text": "Remove the background and replace with a beach scene"},
-      {"inlineData": {"mimeType": "image/png", "data": "'"$IMAGE_B64"'"}}
-    ]}],
-    "generationConfig": {
-      "responseModalities": ["Image"],
-      "imageConfig": {"aspectRatio": "16:9"}
-    }
-  }'
+bash scripts/gemini-image.sh edit "Remove the background and replace with a beach scene" \
+  --image photo.png --output edited.png
 ```
 
-Supports up to **14 reference images** in a single request — add multiple `inlineData` parts.
+### Multi-Image Editing
 
-## Generation Config
-
-| Parameter | Values | Default |
-|-----------|--------|---------|
-| `responseModalities` | `["Image"]` | Required for image output |
-| `imageConfig.aspectRatio` | `"1:1"`, `"16:9"`, `"9:16"` | — |
-| `imageConfig.imageSize` | `"1K"`, `"2K"`, `"4K"` | — |
-
-## Response Format
-
-```json
-{
-  "candidates": [{
-    "content": {
-      "parts": [{
-        "inlineData": {
-          "data": "<base64-encoded-image>",
-          "mimeType": "image/png"
-        }
-      }]
-    }
-  }]
-}
-```
-
-Extract the image:
+Supports up to **14 reference images** in a single request:
 
 ```bash
-# With jq — extract base64 from response
-IMAGE_B64=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].inlineData.data')
+bash scripts/gemini-image.sh edit "Combine these into a collage" \
+  --image a.png --image b.png --image c.png --output collage.png
 ```
+
+## Script Commands
+
+| Command | Description |
+|---------|-------------|
+| `generate "prompt"` | Text-to-image generation |
+| `edit "instruction" --image PATH` | Edit image(s) with text instruction |
+
+## Options
+
+| Option | Values | Description |
+|--------|--------|-------------|
+| `--aspect RATIO` | `1:1`, `16:9`, `9:16` | Aspect ratio |
+| `--size SIZE` | `1K`, `2K`, `4K` | Image resolution |
+| `--output PATH` | file path | Save decoded image to file (default: prints base64 to stdout) |
+| `--image PATH` | file path | Input image for editing (repeatable, up to 14) |
+| `--json` | — | Output full JSON response instead of extracted image |
 
 ## Working with Output
 
-The API returns images as base64. Three ways to use it:
+By default, the script prints raw base64 to stdout (useful for piping). Use `--output` to save directly to a file.
 
-### Save to File
-
-Default save location is `~/Photos/` when not specified otherwise.
-
-```bash
-echo "$IMAGE_B64" | base64 -d > ~/Photos/generated-image.png
-```
+Default save location when not specified: `~/Photos/`
 
 ### Upload to Cloud Storage
 
-Use the `cloud-storage` skill for a CDN URL. Save to a temp file first, then upload:
+Save to file first, then use the `cloud-storage` skill for a CDN URL:
 
 ```bash
-echo "$IMAGE_B64" | base64 -d > /tmp/generated.png
-curl -s -X POST https://storage.vibecodeapp.com/v1/files/upload \
-  -F "file=@/tmp/generated.png"
-# Returns: {"file": {"url": "https://staticfiles.net/..."}}
+bash scripts/gemini-image.sh generate "A cat in a top hat" --output /tmp/cat.png
+# Then upload with cloud-storage skill
 ```
 
-### Use Base64 Directly
+### Iterative Editing
 
-Pass to another API, embed as a data URI, or feed back into this API for iterative editing:
-
-```
-data:image/png;base64,<base64-data>
-```
-
-## Preparing Input Images
-
-### From a local file
+Save a generated image, then edit it:
 
 ```bash
-base64 -w0 image.png
+bash scripts/gemini-image.sh generate "A simple logo" --output /tmp/logo.png
+bash scripts/gemini-image.sh edit "Make it blue and add a gradient" --image /tmp/logo.png --output /tmp/logo-v2.png
 ```
-
-### From a URL
-
-```bash
-curl -s "https://example.com/photo.jpg" | base64 -w0
-```
-
-### From a previous generation
-
-The base64 output from one generation can be passed directly as `inlineData.data` in the next request — no decoding needed.
 
 ## Important Notes
 
-- **~30 second generation time** — set HTTP timeouts to at least 60 seconds
-- **All field names are camelCase** — `inlineData`, `mimeType`, `aspectRatio`, `responseModalities`, `imageConfig`. Never snake_case.
-- **Up to 14 reference images** per request
-- **Image output is always base64** in the response — decode or upload as needed
+- **~30 second generation time** — the script sets a 120-second timeout
+- **All field names are camelCase** internally — the script handles this
+- **Up to 14 reference images** per edit request
+- **Model may return text** instead of an image if it refuses a prompt — the script reports this as an error
+
+## Error Handling
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `Set GOOGLE_API_KEY` | Missing env var | Export GOOGLE_API_KEY |
+| `API request failed` | Bad key, network, or quota | Check key validity and quota |
+| `Model returned text instead of image` | Prompt was refused or too ambiguous | Rephrase the prompt |
+| `Image not found` | --image path doesn't exist | Check the file path |
+
+## References
+
+- [references/api-reference.md](references/api-reference.md) — Raw API endpoint details, request/response schemas, manual curl usage
