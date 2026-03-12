@@ -9,7 +9,7 @@ description: >
   Requires amplitude-cli (`amp` command) and AMPLITUDE_ACCESS_TOKEN (OAuth via Nango).
 integration_dependencies:
   - amplitude
-metadata: {"openclaw": {"emoji": "📊", "requires": {"env": ["AMPLITUDE_ACCESS_TOKEN"], "bin": ["amp"]}, "primaryEnv": "AMPLITUDE_ACCESS_TOKEN"}}
+metadata: {"openclaw": {"emoji": "📊", "requires": {"env": ["AMPLITUDE_ACCESS_TOKEN"], "bin": ["amp"]}, "primaryEnv": "AMPLITUDE_ACCESS_TOKEN", "install": [{"id": "node", "kind": "node", "package": "amplitude-cli", "global": true, "bins": ["amp"], "label": "Install Amplitude CLI (npm)"}]}}
 ---
 
 # Amplitude
