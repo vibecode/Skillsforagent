@@ -14,7 +14,7 @@ description: >
   for all API details.
 dependencies:
   - serpapi
-metadata: {"openclaw": {"emoji": "📢", "requires": {"env": ["SERPAPI_API_KEY"]}, "primaryEnv": "SERPAPI_API_KEY"}}
+metadata: {"openclaw": {"emoji": "📢"}}
 ---
 
 # Google Ads Intelligence Workflows

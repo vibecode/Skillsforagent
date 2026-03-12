@@ -13,7 +13,7 @@ description: >
 dependencies:
   - serpapi
   - exa
-metadata: {"openclaw": {"emoji": "📈", "requires": {"env": ["SERPAPI_API_KEY", "EXA_API_KEY"]}, "primaryEnv": "SERPAPI_API_KEY"}}
+metadata: {"openclaw": {"emoji": "📈"}}
 ---
 
 # Trend Spotter

@@ -12,7 +12,9 @@ description: >
   trends over time, (9) curating a mood board of dining or travel options, (10) any
   Tripadvisor-based travel research or planning task. This skill builds on the foundational
   serpapi skill for all API details.
-metadata: {"openclaw": {"emoji": "🦉", "requires": {"env": ["SERPAPI_KEY"]}, "primaryEnv": "SERPAPI_KEY"}}
+dependencies:
+  - serpapi
+metadata: {"openclaw": {"emoji": "🦉"}}
 ---
 
 # Tripadvisor Travel Workflows

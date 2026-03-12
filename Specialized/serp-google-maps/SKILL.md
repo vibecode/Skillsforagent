@@ -11,7 +11,9 @@ description: >
   (8) checking business hours or contact details, (9) any local search or place discovery
   task involving Google Maps. This skill builds on the foundational serpapi skill for all
   API details.
-metadata: {"openclaw": {"emoji": "📍", "requires": {"env": ["SERPAPI_KEY"]}, "primaryEnv": "SERPAPI_KEY"}}
+dependencies:
+  - serpapi
+metadata: {"openclaw": {"emoji": "📍"}}
 ---
 
 # Google Maps Local Search Workflows

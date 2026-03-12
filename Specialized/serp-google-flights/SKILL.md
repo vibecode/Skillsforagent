@@ -9,7 +9,9 @@ description: >
   price trends and insights for a route, (7) getting booking links for selected flights,
   (8) resolving airport codes from city names, (9) any travel planning task involving flight
   search or airfare. This skill builds on the foundational serpapi skill for all API details.
-metadata: {"openclaw": {"emoji": "✈️", "requires": {"env": ["SERPAPI_KEY"]}, "primaryEnv": "SERPAPI_KEY"}}
+dependencies:
+  - serpapi
+metadata: {"openclaw": {"emoji": "✈️"}}
 ---
 
 # Google Flights Workflows

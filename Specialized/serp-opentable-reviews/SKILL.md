@@ -11,7 +11,9 @@ description: >
   photos from reviews, (9) analyzing reviewer demographics and patterns, (10) any task
   involving OpenTable restaurant reviews. This skill builds on the foundational serpapi skill
   for all API details.
-metadata: {"openclaw": {"emoji": "🍽️", "requires": {"env": ["SERPAPI_KEY"]}, "primaryEnv": "SERPAPI_KEY"}}
+dependencies:
+  - serpapi
+metadata: {"openclaw": {"emoji": "🍽️"}}
 ---
 
 # OpenTable Review Workflows

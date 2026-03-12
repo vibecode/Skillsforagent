@@ -11,7 +11,7 @@ dependencies:
   - serpapi
   - supadata
   - exa
-metadata: {"openclaw": {"emoji": "📊", "requires": {"env": ["SERPAPI_API_KEY"]}, "primaryEnv": "SERPAPI_API_KEY"}}
+metadata: {"openclaw": {"emoji": "📊"}}
 ---
 
 # YouTube Competitor Analysis
