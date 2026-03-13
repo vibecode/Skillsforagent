@@ -26,7 +26,7 @@ Header:   xi-api-key: ${ELEVENLABS_API_KEY}
 
 The cloud proxy handles credentials. Use `$ELEVENLABS_API_KEY` as-is.
 
-> **Proxy key limitation:** Cloud proxy keys may lack `voices_read` and `models_read` scopes. If `voices` or `models` commands return HTTP 401, use the static voice ID table built into the wrapper script (18 common voices including Rachel, Adam, etc.) and the model table in this doc. TTS, sound effects, music, and all generation endpoints work regardless.
+> **Proxy key limitation:** Cloud proxy keys may lack `voices_read` and `models_read` scopes. If `voices` or `models` commands return HTTP 401, use the static voice ID table built into the wrapper script (19 verified premade voices including Rachel, Adam, Sarah, Brian, etc.) and the model table in this doc. TTS, sound effects, music, and all generation endpoints work regardless.
 
 ## Wrapper Script
 

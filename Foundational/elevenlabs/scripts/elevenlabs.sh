@@ -35,24 +35,29 @@ MODEL_DIALOGUE="eleven_v3"
 die() { echo "ERROR: $*" >&2; exit 1; }
 
 # Static voice ID table — fallback when /voices API is inaccessible
+# Verified working 2026-03-13. IDs sourced from ElevenLabs premade voices docs.
+# Retired voices removed: Josh, Sam, Emily, Charlotte (all return 404 as of 2026-03).
+# Replacements added: Alice, Bill, Brian, Chris, Daniel, Sarah.
+# "Bella" renamed to "Sarah" (same ID, ElevenLabs renamed the voice).
 declare -A VOICE_IDS=(
-  ["rachel"]="21m00Tcm4TlvDq8ikWAM"
   ["adam"]="pNInz6obpgDQGcFmaJgB"
+  ["alice"]="Xb7hH8MSUJpSbSDYk0k2"
   ["antoni"]="ErXwobaYiN019PkySvjV"
-  ["bella"]="EXAVITQu4vr4xnSDxMaL"
+  ["arnold"]="VR6AewLTigWG4xSOukaG"
+  ["bill"]="pqHfZKP75CvOlQylNhV4"
+  ["brian"]="nPczCjzI2devNBz1zQrb"
+  ["callum"]="N2lVS1w4EtoT3dr4eOWO"
+  ["charlie"]="IKne3meq5aSn9XLyUdCD"
+  ["chris"]="iP95p4xoKVk53GoZ742B"
+  ["daniel"]="onwK4e9ZLuTAKqWW03F9"
   ["domi"]="AZnzlk1XvdvUeBnXmlld"
   ["elli"]="MF3mGyEYCl7XYWbV9V6O"
-  ["josh"]="TxGEqnHWrfWFTfGW9XjX"
-  ["arnold"]="VR6AewLTigWG4xSOukaG"
-  ["sam"]="yoZ06aMxZJJ28mfd3POQ"
-  ["emily"]="LcfcDJNUP1GQjkzn1xUU"
-  ["charlie"]="IKne3meq5aSn9XLyUdCD"
   ["george"]="JBFqnCBsd6RMkjVDRZzb"
-  ["callum"]="N2lVS1w4EtoT3dr4eOWO"
-  ["charlotte"]="XB0fDUnXU5powFXDhCwa"
   ["liam"]="TX3LPaxmHKxFdv7VOQHJ"
   ["lily"]="pFZP5JQG7iQjIQuC4Bku"
   ["matilda"]="XrExE9yKIg1WjnnlVkGX"
+  ["rachel"]="21m00Tcm4TlvDq8ikWAM"
+  ["sarah"]="EXAVITQu4vr4xnSDxMaL"
   ["will"]="bIHbv24MWmeRgasZH58o"
 )
 
