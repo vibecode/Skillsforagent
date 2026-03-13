@@ -1,5 +1,5 @@
 ---
-name: ElevenLabs
+name: elevenlabs
 description: >
   Foundational skill for the ElevenLabs audio AI API — text-to-speech, multi-voice dialogue,
   voice conversion, sound effects, music generation, audio isolation, speech-to-text, dubbing,
@@ -105,7 +105,7 @@ All commands accept `--format <output_format>` (default: `mp3_44100_128`).
 ## Model Discovery
 
 ```bash
-curl -s "${BASE}/models" -H "xi-api-key: ${ELEVENLABS_API_KEY}" | jq '.[] | {model_id, name, can_do_text_to_speech, can_do_voice_conversion}'
+bash $SCRIPT models
 ```
 
 Key models (convenience, not exhaustive — always query live):
@@ -145,33 +145,6 @@ Control voice characteristics per-request:
 | `style` | 0.0–1.0 | 0.0 | Style amplification (adds latency >0) |
 | `speed` | 0.7–1.2 | 1.0 | Playback speed |
 | `use_speaker_boost` | boolean | true | Similarity boost (slight latency cost) |
-
-## Raw API Usage
-
-When the script doesn't cover your use case, use curl directly:
-
-```bash
-BASE="https://api.elevenlabs.io.cloudproxy.vibecodeapp.com/v1"
-KEY="$ELEVENLABS_API_KEY"
-
-# TTS
-curl -X POST "${BASE}/text-to-speech/21m00Tcm4TlvDq8ikWAM?output_format=mp3_44100_128" \
-  -H "xi-api-key: ${KEY}" -H "Content-Type: application/json" \
-  -d '{"text": "Hello world", "model_id": "eleven_multilingual_v2"}' \
-  -o output.mp3
-
-# Sound effect
-curl -X POST "${BASE}/sound-generation?output_format=mp3_44100_128" \
-  -H "xi-api-key: ${KEY}" -H "Content-Type: application/json" \
-  -d '{"text": "Explosion in the distance", "duration_seconds": 5}' \
-  -o boom.mp3
-
-# Audio isolation (multipart)
-curl -X POST "${BASE}/audio-isolation" \
-  -H "xi-api-key: ${KEY}" \
-  -F "audio=@noisy_audio.mp3" \
-  -o clean.mp3
-```
 
 ## Error Handling
 
