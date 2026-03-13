@@ -16,11 +16,11 @@ Analyze YouTube competitors in any niche — find who's creating content, what's
 
 ## Foundational Skills Used
 
-This skill builds on three foundational skills. Load them for API details and wrapper scripts:
+This skill builds on three foundational skills. Load each skill for API details and usage:
 
-- **serpapi** — YouTube search, video details, channel data, transcripts (via `scripts/serpapi.sh`)
-- **supadata** — Video transcripts and metadata extraction (via `scripts/supadata.sh`)
-- **exa** — Web research for company/creator background info (via `scripts/exa.sh`)
+- **serpapi** — YouTube search, video details, channel data, transcripts (wrapper: `scripts/serpapi.sh`)
+- **supadata** — Video transcripts and metadata extraction (wrapper: `scripts/supadata.sh`)
+- **exa** — Web research for company/creator background info (load the exa skill for its search/answer interface)
 
 ## Workflow
 
@@ -85,11 +85,12 @@ From transcripts, identify:
 
 ### Step 4: Research Competitor Background (Optional)
 
-Use the **exa** skill to find company/creator info beyond YouTube:
+Use the **exa** skill to find company/creator info beyond YouTube. Load the exa skill for API details and wrapper script usage.
 
-```bash
-bash scripts/exa.sh search --query "CHANNEL_NAME company" --category company --numResults 5
-```
+Search for competitor background using exa's search command with the `company` category filter:
+- Query: `"CHANNEL_NAME YouTube creator background company"`
+- Use the `--category company` filter to focus on business entities
+- Use the `/answer` endpoint for synthesized insights about competitor businesses
 
 This adds: company size, funding, product offerings, social presence, target audience.
 
