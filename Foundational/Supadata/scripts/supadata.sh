@@ -118,16 +118,13 @@ done
 
 [[ -n "$API_KEY" ]] || die "Set SUPADATA_API_KEY environment variable or pass --key"
 
-# Build query string from PARAMS (URL-encodes values)
+# Build query string from PARAMS (URL-encodes all values)
 build_qs() {
   local qs=""
   for p in "${PARAMS[@]}"; do
     local k="${p%%=*}"
     local v="${p#*=}"
-    # URL-encode the 'url' parameter, pass others as-is
-    if [[ "$k" == "url" ]]; then
-      v=$(urlencode "$v")
-    fi
+    v=$(urlencode "$v")
     if [[ -z "$qs" ]]; then
       qs="?${k}=${v}"
     else
