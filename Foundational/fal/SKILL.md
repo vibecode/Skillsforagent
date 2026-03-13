@@ -25,15 +25,15 @@ fal has 600+ models that change frequently. Always use the live Platform API to 
 
 ```bash
 # Search by keyword (text-to-video, image generation, speech-to-text, etc.)
-curl "https://api.fal.ai/v1/models?query=text-to-video&limit=10" \
+curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models?query=text-to-video&limit=10" \
   -H "Authorization: Key $FAL_API_KEY"
 
 # List all available models (paginated)
-curl "https://api.fal.ai/v1/models?limit=50" \
+curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models?limit=50" \
   -H "Authorization: Key $FAL_API_KEY"
 
 # Paginate with cursor
-curl "https://api.fal.ai/v1/models?limit=50&cursor=CURSOR_FROM_PREVIOUS" \
+curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models?limit=50&cursor=CURSOR_FROM_PREVIOUS" \
   -H "Authorization: Key $FAL_API_KEY"
 ```
 
@@ -42,7 +42,7 @@ curl "https://api.fal.ai/v1/models?limit=50&cursor=CURSOR_FROM_PREVIOUS" \
 Before calling any model, fetch its OpenAPI schema to know exactly what parameters it accepts:
 
 ```bash
-curl "https://api.fal.ai/v1/models?endpoint_id=fal-ai/flux/dev&expand=openapi-3.0" \
+curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models?endpoint_id=fal-ai/flux/dev&expand=openapi-3.0" \
   -H "Authorization: Key $FAL_API_KEY"
 ```
 
@@ -51,7 +51,7 @@ This returns the full OpenAPI 3.0 spec — input parameters, types, defaults, re
 ### Check Pricing
 
 ```bash
-curl "https://api.fal.ai/v1/models/pricing?endpoint_id=fal-ai/flux/dev" \
+curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models/pricing?endpoint_id=fal-ai/flux/dev" \
   -H "Authorization: Key $FAL_API_KEY"
 ```
 
@@ -68,10 +68,10 @@ For a quick reference of commonly used model IDs, see [references/models.md](ref
 
 ### Sync — Fast, Simple
 
-`POST https://fal.run/{model_id}` — send request, get result directly. Best for fast models (<10s).
+`POST https://fal.run.cloudproxy.vibecodeapp.com/{model_id}` — send request, get result directly. Best for fast models (<10s).
 
 ```bash
-curl -X POST "https://fal.run/fal-ai/flux/dev" \
+curl -X POST "https://fal.run.cloudproxy.vibecodeapp.com/fal-ai/flux/dev" \
   -H "Authorization: Key $FAL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"prompt": "a cat in a spacesuit", "image_size": "landscape_4_3"}'
@@ -81,11 +81,11 @@ Returns the model output directly (images, video URLs, text, etc.).
 
 ### Queue — Reliable, Recommended
 
-`POST https://queue.fal.run/{model_id}` — submit, poll, retrieve. Built-in retries, cancellation, status tracking. Use for anything slow (video gen, batch ops) or when reliability matters.
+`POST https://queue.fal.run.cloudproxy.vibecodeapp.com/{model_id}` — submit, poll, retrieve. Built-in retries, cancellation, status tracking. Use for anything slow (video gen, batch ops) or when reliability matters.
 
 **Step 1: Submit**
 ```bash
-curl -X POST "https://queue.fal.run/fal-ai/flux/dev" \
+curl -X POST "https://queue.fal.run.cloudproxy.vibecodeapp.com/fal-ai/flux/dev" \
   -H "Authorization: Key $FAL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"prompt": "a cat in a spacesuit"}'
@@ -94,23 +94,23 @@ Returns `request_id`, `status_url`, `response_url`, `cancel_url`.
 
 **Step 2: Poll status**
 ```bash
-curl "https://queue.fal.run/fal-ai/flux/dev/requests/{request_id}/status?logs=1"
+curl "https://queue.fal.run.cloudproxy.vibecodeapp.com/fal-ai/flux/dev/requests/{request_id}/status?logs=1"
 ```
 Status progression: `IN_QUEUE` (202) → `IN_PROGRESS` (202) → `COMPLETED` (200)
 
 **Step 3: Get result**
 ```bash
-curl "https://queue.fal.run/fal-ai/flux/dev/requests/{request_id}"
+curl "https://queue.fal.run.cloudproxy.vibecodeapp.com/fal-ai/flux/dev/requests/{request_id}"
 ```
 
 **Cancel** (while `IN_QUEUE`):
 ```bash
-curl -X PUT "https://queue.fal.run/fal-ai/flux/dev/requests/{request_id}/cancel"
+curl -X PUT "https://queue.fal.run.cloudproxy.vibecodeapp.com/fal-ai/flux/dev/requests/{request_id}/cancel"
 ```
 
 **SSE streaming** (real-time status updates):
 ```bash
-curl "https://queue.fal.run/fal-ai/flux/dev/requests/{request_id}/status/stream?logs=1"
+curl "https://queue.fal.run.cloudproxy.vibecodeapp.com/fal-ai/flux/dev/requests/{request_id}/status/stream?logs=1"
 ```
 
 ## Which Mode to Use

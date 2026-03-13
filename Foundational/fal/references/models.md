@@ -1,6 +1,6 @@
 # fal Popular Models Quick Reference
 
-Common model endpoint IDs organized by category. Each model has its own input schema — use the Platform API to discover exact parameters: `GET https://api.fal.ai/v1/models?endpoint_id={id}&expand=openapi-3.0`
+Common model endpoint IDs organized by category. Each model has its own input schema — use the Platform API to discover exact parameters: `GET https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models?endpoint_id={id}&expand=openapi-3.0`
 
 Browse all models: https://fal.ai/models
 
@@ -88,7 +88,7 @@ To get the exact input/output schema for any model:
 
 ```bash
 # Get OpenAPI schema for a model
-curl "https://api.fal.ai/v1/models?endpoint_id=fal-ai/flux/dev&expand=openapi-3.0" \
+curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models?endpoint_id=fal-ai/flux/dev&expand=openapi-3.0" \
   -H "Authorization: Key $FAL_API_KEY"
 ```
 
@@ -97,6 +97,6 @@ The response includes the full OpenAPI 3.0 spec with input parameters, types, de
 You can also search by category:
 
 ```bash
-curl "https://api.fal.ai/v1/models?query=text-to-video&limit=10" \
+curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models?query=text-to-video&limit=10" \
   -H "Authorization: Key $FAL_API_KEY"
 ```

@@ -55,7 +55,7 @@ For consuming models, use API scope.
 Best for fast models (<10s). Connection stays open until result is returned.
 
 ```bash
-curl -X POST "https://fal.run/{model_id}" \
+curl -X POST "https://fal.run.cloudproxy.vibecodeapp.com/{model_id}" \
   -H "Authorization: Key $FAL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"prompt": "a cat"}'
@@ -64,7 +64,7 @@ curl -X POST "https://fal.run/{model_id}" \
 With subpath:
 
 ```bash
-curl -X POST "https://fal.run/fal-ai/flux/dev" \
+curl -X POST "https://fal.run.cloudproxy.vibecodeapp.com/fal-ai/flux/dev" \
   -H "Authorization: Key $FAL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"prompt": "a cat", "image_size": "landscape_4_3"}'
@@ -101,7 +101,7 @@ Recommended for all production use and anything >5s. Submit → poll → retriev
 ### Submit
 
 ```bash
-curl -X POST "https://queue.fal.run/{model_id}" \
+curl -X POST "https://queue.fal.run.cloudproxy.vibecodeapp.com/{model_id}" \
   -H "Authorization: Key $FAL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"prompt": "a cat"}'
@@ -112,19 +112,19 @@ curl -X POST "https://queue.fal.run/{model_id}" \
 ```json
 {
   "request_id": "80e732af-660e-45cd-bd63-580e4f2a94cc",
-  "response_url": "https://queue.fal.run/fal-ai/fast-sdxl/requests/80e732af-...",
-  "status_url": "https://queue.fal.run/fal-ai/fast-sdxl/requests/80e732af-.../status",
-  "cancel_url": "https://queue.fal.run/fal-ai/fast-sdxl/requests/80e732af-.../cancel"
+  "response_url": "https://queue.fal.run.cloudproxy.vibecodeapp.com/fal-ai/fast-sdxl/requests/80e732af-...",
+  "status_url": "https://queue.fal.run.cloudproxy.vibecodeapp.com/fal-ai/fast-sdxl/requests/80e732af-.../status",
+  "cancel_url": "https://queue.fal.run.cloudproxy.vibecodeapp.com/fal-ai/fast-sdxl/requests/80e732af-.../cancel"
 }
 ```
 
 ### Poll Status
 
 ```bash
-curl "https://queue.fal.run/{model_id}/requests/{request_id}/status"
+curl "https://queue.fal.run.cloudproxy.vibecodeapp.com/{model_id}/requests/{request_id}/status"
 
 # With logs:
-curl "https://queue.fal.run/{model_id}/requests/{request_id}/status?logs=1"
+curl "https://queue.fal.run.cloudproxy.vibecodeapp.com/{model_id}/requests/{request_id}/status?logs=1"
 ```
 
 **Status types:**
@@ -142,7 +142,7 @@ Log entries: `{message, level, source, timestamp}` — levels: `STDERR`, `STDOUT
 Real-time status updates via Server-Sent Events. Connection stays open until `COMPLETED`.
 
 ```bash
-curl "https://queue.fal.run/{model_id}/requests/{request_id}/status/stream?logs=1"
+curl "https://queue.fal.run.cloudproxy.vibecodeapp.com/{model_id}/requests/{request_id}/status/stream?logs=1"
 ```
 
 Events are `data:` lines with JSON status objects (same format as poll).
@@ -150,7 +150,7 @@ Events are `data:` lines with JSON status objects (same format as poll).
 ### Get Result
 
 ```bash
-curl "https://queue.fal.run/{model_id}/requests/{request_id}"
+curl "https://queue.fal.run.cloudproxy.vibecodeapp.com/{model_id}/requests/{request_id}"
 ```
 
 Returns the model output directly. HTTP status mirrors the model's status (200 success, 4xx/5xx errors). Returns 404 if request not found, 400 if not yet completed.
@@ -162,7 +162,7 @@ Returns the model output directly. HTTP status mirrors the model's status (200 s
 Cancel a queued request (only works if status is `IN_QUEUE`):
 
 ```bash
-curl -X PUT "https://queue.fal.run/{model_id}/requests/{request_id}/cancel"
+curl -X PUT "https://queue.fal.run.cloudproxy.vibecodeapp.com/{model_id}/requests/{request_id}/cancel"
 ```
 
 - `202` → `{"status": "CANCELLATION_REQUESTED"}` (may still execute if late in queue)
@@ -175,7 +175,7 @@ curl -X PUT "https://queue.fal.run/{model_id}/requests/{request_id}/cancel"
 Get notified when a request completes instead of polling. Append `fal_webhook` query param to queue submit:
 
 ```bash
-curl -X POST "https://queue.fal.run/fal-ai/flux/dev?fal_webhook=https://your.app/webhook" \
+curl -X POST "https://queue.fal.run.cloudproxy.vibecodeapp.com/fal-ai/flux/dev?fal_webhook=https://your.app/webhook" \
   -H "Authorization: Key $FAL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"prompt": "a cat"}'
@@ -264,7 +264,7 @@ Model outputs contain fal CDN URLs:
 Chain multiple models in a pipeline. Same queue endpoints, but with `workflows/` prefix:
 
 ```bash
-curl -X POST "https://queue.fal.run/workflows/{owner}/{name}" \
+curl -X POST "https://queue.fal.run.cloudproxy.vibecodeapp.com/workflows/{owner}/{name}" \
   -H "Authorization: Key $FAL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"prompt": "a cute puppy"}'
@@ -276,28 +276,28 @@ Workflows support SSE streaming with events: `submit` (step started), `completio
 
 ## Platform APIs
 
-Management APIs at `https://api.fal.ai/v1`. Same `Authorization: Key $FAL_API_KEY` header.
+Management APIs at `https://api.fal.ai.cloudproxy.vibecodeapp.com/v1`. Same `Authorization: Key $FAL_API_KEY` header.
 
 ### Model Search
 
 ```bash
 # List all models
-curl "https://api.fal.ai/v1/models?limit=50" -H "Authorization: Key $FAL_API_KEY"
+curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models?limit=50" -H "Authorization: Key $FAL_API_KEY"
 
 # Find specific model(s)
-curl "https://api.fal.ai/v1/models?endpoint_id=fal-ai/flux/dev" -H "Authorization: Key $FAL_API_KEY"
+curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models?endpoint_id=fal-ai/flux/dev" -H "Authorization: Key $FAL_API_KEY"
 
 # Search by query
-curl "https://api.fal.ai/v1/models?query=text-to-video" -H "Authorization: Key $FAL_API_KEY"
+curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models?query=text-to-video" -H "Authorization: Key $FAL_API_KEY"
 
 # Include OpenAPI schema
-curl "https://api.fal.ai/v1/models?endpoint_id=fal-ai/flux/dev&expand=openapi-3.0" -H "Authorization: Key $FAL_API_KEY"
+curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models?endpoint_id=fal-ai/flux/dev&expand=openapi-3.0" -H "Authorization: Key $FAL_API_KEY"
 ```
 
 ### Pricing
 
 ```bash
-curl "https://api.fal.ai/v1/models/pricing?endpoint_id=fal-ai/flux/dev" \
+curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models/pricing?endpoint_id=fal-ai/flux/dev" \
   -H "Authorization: Key $FAL_API_KEY"
 ```
 
@@ -306,7 +306,7 @@ Returns: `{prices: [{endpoint_id, unit_price, unit, currency}]}`
 ### Cost Estimate
 
 ```bash
-curl -X POST "https://api.fal.ai/v1/models/pricing/estimate" \
+curl -X POST "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models/pricing/estimate" \
   -H "Authorization: Key $FAL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
