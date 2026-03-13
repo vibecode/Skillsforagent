@@ -1,16 +1,12 @@
 ---
-name: YouTube Competitor Analysis
+name: yt-competitor-analysis
 description: >
   Specialized skill for YouTube competitor analysis and content gap research. Use when:
   (1) analyzing competitors in a YouTube niche, (2) finding top-performing channels and videos
   for a topic, (3) identifying content gaps and opportunities in a market, (4) extracting
   competitor video strategies (topics, posting frequency, engagement), (5) researching what
   content is working in a space, (6) building a competitive landscape report for YouTube
-  marketing. References foundational skills: serpapi-youtube, supadata, exa.
-dependencies:
-  - serpapi
-  - supadata
-  - exa
+  marketing. This skill builds on: serpapi, supadata, exa.
 metadata: {"openclaw": {"emoji": "📊"}}
 ---
 
@@ -20,11 +16,11 @@ Analyze YouTube competitors in any niche — find who's creating content, what's
 
 ## Foundational Skills Used
 
-This skill builds on three foundational skills. Read them if you need endpoint details:
+This skill builds on three foundational skills. Load each skill for API details and usage:
 
-- **serpapi-youtube** — YouTube search, video details, channel data
-- **supadata** — Video transcripts and metadata extraction
-- **exa** — Web research for company/creator background info
+- **serpapi** — YouTube search, video details, channel data, transcripts (wrapper: `scripts/serpapi.sh`)
+- **supadata** — Video transcripts and metadata extraction (wrapper: `scripts/supadata.sh`)
+- **exa** — Web research for company/creator background info (load the exa skill for its search/answer interface)
 
 ## Workflow
 
@@ -32,13 +28,13 @@ This skill builds on three foundational skills. Read them if you need endpoint d
 
 Search YouTube for the niche to find active channels and top-performing videos.
 
+Use the **serpapi** skill's `youtube` engine to search:
+
 ```bash
-# Search for videos in the niche
-curl -s "https://serpapi.com.cloudproxy.vibecodeapp.com/search?engine=youtube&search_query=NICHE_KEYWORDS&api_key=$SERPAPI_API_KEY" | jq '{
-  videos: [.video_results[] | {title, channel: .channel.name, views, published_date, link}],
-  channels: [.channel_results[] | {title, handle, subscribers, link, verified}]
-}'
+bash scripts/serpapi.sh youtube --search_query "NICHE_KEYWORDS"
 ```
+
+This returns video results (title, channel, views, date, link) and channel results (title, handle, subscribers).
 
 Run multiple searches with variations of the niche keywords to build a complete picture. Extract unique channel names from the video results.
 
@@ -46,17 +42,17 @@ Run multiple searches with variations of the niche keywords to build a complete 
 
 For each competitor channel, search for their content and get video details.
 
+Use the **serpapi** skill to search a channel's content and get video metrics:
+
 ```bash
 # Search for a specific channel's content
-curl -s "https://serpapi.com.cloudproxy.vibecodeapp.com/search?engine=youtube&search_query=CHANNEL_NAME+NICHE&api_key=$SERPAPI_API_KEY"
+bash scripts/serpapi.sh youtube --search_query "CHANNEL_NAME NICHE"
 
 # Get detailed metrics on their top videos
-curl -s "https://serpapi.com.cloudproxy.vibecodeapp.com/search?engine=youtube_video&v=VIDEO_ID&api_key=$SERPAPI_API_KEY" | jq '{
-  title, views, extracted_views, likes: .extracted_likes,
-  published_date, description: .description.content,
-  chapters: [.chapters[]? | .title]
-}'
+bash scripts/serpapi.sh youtube_video --v "VIDEO_ID"
 ```
+
+The video details include: title, views, likes, published date, description, and chapters.
 
 Collect for each competitor:
 - **Top videos** (by views)
@@ -69,10 +65,16 @@ Collect for each competitor:
 
 Pull transcripts from top-performing videos to understand what topics and angles work.
 
+Use the **supadata** skill to get transcripts:
+
 ```bash
-# Get transcript via supadata
-curl -s "https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1/youtube/transcript?url=https://youtube.com/watch?v=VIDEO_ID" \
-  -H "x-api-key: $SUPADATA_API_KEY"
+bash scripts/supadata.sh yt-transcript --url "https://youtube.com/watch?v=VIDEO_ID"
+```
+
+If `SUPADATA_API_KEY` is not available, use the **serpapi** skill's transcript engine as fallback:
+
+```bash
+bash scripts/serpapi.sh youtube_video_transcript --v "VIDEO_ID"
 ```
 
 From transcripts, identify:
@@ -81,28 +83,14 @@ From transcripts, identify:
 - **Content format** (tutorial, review, listicle, interview, etc.)
 - **Call-to-actions** used
 
-If `SUPADATA_API_KEY` is not available, use `serpapi-youtube` transcript endpoint:
-
-```bash
-curl -s "https://serpapi.com.cloudproxy.vibecodeapp.com/search?engine=youtube_video_transcript&v=VIDEO_ID&api_key=$SERPAPI_API_KEY"
-```
-
 ### Step 4: Research Competitor Background (Optional)
 
-Use Exa to find company/creator info beyond YouTube.
+Use the **exa** skill to find company/creator info beyond YouTube. Load the exa skill for API details and wrapper script usage.
 
-```bash
-# Search for the company/creator
-curl -X POST 'https://api.exa.ai/search' \
-  -H 'x-api-key: '"$EXA_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "query": "CHANNEL_NAME company",
-    "category": "company",
-    "numResults": 5,
-    "contents": {"highlights": {"maxCharacters": 2000}}
-  }'
-```
+Search for competitor background using exa's search command with the `company` category filter:
+- Query: `"CHANNEL_NAME YouTube creator background company"`
+- Use the `--category company` filter to focus on business entities
+- Use the `/answer` endpoint for synthesized insights about competitor businesses
 
 This adds: company size, funding, product offerings, social presence, target audience.
 
@@ -114,7 +102,7 @@ Compare findings across competitors to find:
 2. **Format gaps** — if everyone does tutorials, maybe reviews or comparisons are missing
 3. **Engagement outliers** — videos that overperform relative to channel size (indicates untapped demand)
 4. **Recency gaps** — topics where the top videos are old and due for an update
-5. **Audience questions** — from comments on competitor videos (use serpapi-youtube video API with comment pagination)
+5. **Audience questions** — from comments on competitor videos (use the serpapi skill's `youtube_video` engine with comment pagination)
 
 ## Output Format
 
@@ -160,5 +148,5 @@ Structure the analysis as:
 - **Cast a wide net first.** Search 5-10 keyword variations before narrowing to competitors.
 - **Views ≠ quality.** A video with 50K views on a 5K subscriber channel is more interesting than 500K views on a 5M subscriber channel. Look at view-to-subscriber ratios.
 - **Check recent performance.** A channel's last 10 videos matter more than their all-time hits. Algorithms and audiences change.
-- **Comments reveal demand.** Questions in comments on competitor videos are free content ideas. Use the serpapi-youtube video API to paginate through comments.
+- **Comments reveal demand.** Questions in comments on competitor videos are free content ideas. Use the serpapi skill's `youtube_video` engine to paginate through comments.
 - **Don't over-research.** 3-5 competitors is usually enough to spot patterns. More than that and you're stalling.
