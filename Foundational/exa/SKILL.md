@@ -1,5 +1,5 @@
 ---
-name: Exa
+name: exa
 description: >
   Foundational skill for the Exa API — web search, content extraction, similar link discovery,
   AI-powered answers, multi-step research, and Websets (async entity sourcing at scale). Use
@@ -14,84 +14,68 @@ metadata: {"openclaw": {"emoji": "🔍", "requires": {"env": ["EXA_API_KEY"]}, "
 
 # Exa API
 
-Web search, content extraction, AI answers, research, and entity sourcing — all via HTTP.
+Wrapper script: `scripts/exa.sh`
+Run: `bash scripts/exa.sh <command> [options]`
 
-## Authentication
+Auth: Set `EXA_API_KEY` env var. The script handles auth headers automatically.
 
-All endpoints at `https://api.exa.ai.cloudproxy.vibecodeapp.com`. Same header everywhere:
+## Quick Reference
 
-```
-x-api-key: $EXA_API_KEY
-```
+### Search
 
-## Endpoints Overview
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/search` | POST | Web search with inline content retrieval |
-| `/contents` | POST | Extract content from known URLs |
-| `/findSimilar` | POST | Find pages similar to a URL |
-| `/answer` | POST | Search-grounded AI answer with citations |
-| `/research/v1` | POST | Async multi-step research tasks |
-| `/websets/v0/...` | CRUD | Entity sourcing at scale (Websets) |
-| `/chat/completions` | POST | OpenAI-compatible interface |
-
-## Search
+Web search with inline content retrieval:
 
 ```bash
-curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/search' \
-  -H 'x-api-key: '"$EXA_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "query": "AI startups that raised Series A in 2025",
-    "type": "auto",
-    "numResults": 10,
-    "contents": {
-      "highlights": {"maxCharacters": 4000}
-    }
-  }'
+# Basic search
+bash scripts/exa.sh search --query "AI startups that raised Series A in 2025" --numResults 10
+
+# With inline content (highlights for fewer tokens)
+bash scripts/exa.sh search --query "AI safety research papers" --numResults 5 \
+  --contents '{"highlights":{"maxCharacters":4000}}'
+
+# Category-filtered search
+bash scripts/exa.sh search --query "agtech companies in the US" --category company --numResults 20
+
+# Domain-filtered with date range
+bash scripts/exa.sh search --query "transformer architecture" \
+  --includeDomains '["arxiv.org","openreview.net"]' \
+  --startPublishedDate "2024-01-01T00:00:00Z"
+
+# Deep search with structured output
+bash scripts/exa.sh search --query "AI safety leaders at major labs" --type deep \
+  --outputSchema '{"type":"object","properties":{"leader":{"type":"string"},"organization":{"type":"string"}},"required":["leader","organization"]}' \
+  --contents '{"text":true}'
 ```
 
-**Key parameters:** `query` (required), `type`, `numResults` (max 100), `category`, `contents`, `includeDomains`/`excludeDomains`, `startPublishedDate`/`endPublishedDate`, `includeText`/`excludeText`, `maxAgeHours`, `subpages`/`subpageTarget`, `moderation`.
+**Search types:** `auto` (default, fast), `instant` (<200ms), `neural` (semantic), `fast` (hybrid), `deep` (thorough, supports `outputSchema`), `deep-reasoning`, `deep-max` (most thorough).
 
-### Search Types
+**Categories:** `company`, `people`, `research paper`, `news`, `tweet`, `personal site`, `financial report`.
 
-| Type | Speed | Best For |
-|------|-------|----------|
-| `auto` (default) | Fast | General — intelligently selects method |
-| `instant` | <200ms | Autocomplete, live suggestions |
-| `neural` | Fast | Semantic similarity |
-| `fast` | Fast | Quick keyword + neural hybrid |
-| `deep` | Slower | Comprehensive research, supports `outputSchema` |
-| `deep-reasoning` | Slower | Complex reasoning with structured output |
-| `deep-max` | Slowest | Maximum thoroughness |
+**Key params:** `query` (required), `type`, `numResults` (max 100), `category`, `contents`, `includeDomains`/`excludeDomains`, `startPublishedDate`/`endPublishedDate`, `includeText`/`excludeText`, `maxAgeHours`, `subpages`/`subpageTarget`, `moderation`.
 
-### Categories
+### Content Extraction
 
-`company`, `people`, `research paper`, `news`, `tweet`, `personal site`, `financial report`
-
-```json
-{"query": "agtech companies in the US", "category": "company", "numResults": 20}
-```
-
-## Content Extraction
-
-Extract content from URLs you already have (no search needed):
+Extract content from URLs you already have:
 
 ```bash
-curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/contents' \
-  -H 'x-api-key: '"$EXA_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "ids": ["https://example.com/article"],
-    "text": true,
-    "highlights": {"query": "key findings", "maxCharacters": 2000}
-  }'
+# Full markdown text
+bash scripts/exa.sh contents --ids '["https://example.com/article"]' --text true
+
+# Highlights (10x fewer tokens, best for agentic workflows)
+bash scripts/exa.sh contents --ids '["https://example.com/article"]' \
+  --highlights '{"query":"key findings","maxCharacters":2000}'
+
+# Structured summary via JSON schema
+bash scripts/exa.sh contents --ids '["https://example.com"]' \
+  --summary '{"query":"Company info","schema":{"type":"object","properties":{"name":{"type":"string"},"industry":{"type":"string"}},"required":["name"]}}'
+
+# Subpage crawling
+bash scripts/exa.sh contents --ids '["https://docs.example.com"]' \
+  --subpages 10 --subpageTarget '["api","reference","guide"]' \
+  --text '{"maxCharacters":5000}'
 ```
 
-**Required:** `ids` (array of URLs). Supports same content options as search.
-
-### Content Modes
+**Content modes (all combinable):**
 
 | Mode | Type | Best For |
 |------|------|----------|
@@ -99,156 +83,153 @@ curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/contents' \
 | `highlights` | Extractive excerpts | Agent workflows, factual lookups (10x fewer tokens) |
 | `summary` | LLM-generated | Quick overviews, structured extraction via JSON schema |
 
-All three can be requested together. Use `highlights` for agentic workflows to minimize token usage.
+### Find Similar
 
-**Structured summary example:**
-
-```json
-{
-  "ids": ["https://example.com"],
-  "summary": {
-    "query": "Company info",
-    "schema": {
-      "type": "object",
-      "properties": {"name": {"type": "string"}, "industry": {"type": "string"}},
-      "required": ["name"]
-    }
-  }
-}
-```
-
-## Find Similar
+Find pages similar to a URL:
 
 ```bash
-curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/findSimilar' \
-  -H 'x-api-key: '"$EXA_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{"url": "https://arxiv.org/abs/2307.06435", "contents": {"text": true}}'
+bash scripts/exa.sh find-similar --url "https://arxiv.org/abs/2307.06435" --contents '{"text":true}'
 ```
 
-Same filters and content options as search. Takes `url` instead of `query`.
+Same filters and content options as search. Takes `--url` instead of `--query`.
 
-## Answer
+### Answer
 
 Search-grounded AI answer with citations:
 
 ```bash
-curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/answer' \
-  -H 'x-api-key: '"$EXA_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{"query": "What is the latest valuation of SpaceX?", "text": true}'
+# Basic answer
+bash scripts/exa.sh answer --query "What is the latest valuation of SpaceX?" --text true
+
+# Structured answer
+bash scripts/exa.sh answer --query "Top 3 AI labs by funding" \
+  --outputSchema '{"type":"object","properties":{"labs":{"type":"array","items":{"type":"object","properties":{"name":{"type":"string"},"funding":{"type":"string"}}}}}}'
 ```
 
-Returns `answer` (string or structured object) + `citations[]`. Supports `stream: true` (SSE), `outputSchema` for structured JSON, `text: true` for source content.
+Returns `answer` (string or structured object) + `citations[]`. Supports `--stream true` (SSE).
 
-## Research (Async)
+Rate limit: 10 QPS.
+
+### Research (Async)
 
 Multi-step research with web exploration and synthesis:
 
 ```bash
-# 1. Submit
-curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/research/v1' \
-  -H 'x-api-key: '"$EXA_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{"instructions": "Analyze the AI safety landscape", "model": "exa-research"}'
+# Start research task
+bash scripts/exa.sh research --instructions "Analyze the current state of AI safety research" --model exa-research
 
-# 2. Poll (returns status: pending → running → completed)
-curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/research/v1/{researchId}' \
-  -H 'x-api-key: '"$EXA_API_KEY"
+# Poll status (returns pending → running → completed)
+bash scripts/exa.sh research-poll --researchId abc123
 
-# Or stream status updates:
-curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/research/v1/{researchId}?stream=true' \
-  -H 'x-api-key: '"$EXA_API_KEY"
+# Poll with events (progress log)
+bash scripts/exa.sh research-poll --researchId abc123 --events true
+
+# Stream status updates (SSE)
+bash scripts/exa.sh research-poll --researchId abc123 --stream true
+
+# List all research tasks
+bash scripts/exa.sh research-list
 ```
 
-**Models:** `exa-research-fast` (cheapest), `exa-research` (balanced), `exa-research-pro` (most thorough). Supports `outputSchema`. Max 15 concurrent tasks.
+**Models:** `exa-research-fast` (cheapest), `exa-research` (balanced, default), `exa-research-pro` (most thorough).
 
-## Websets (Entity Sourcing)
+Supports `--outputSchema` for structured output. Max 15 concurrent tasks.
 
-Async platform for finding, verifying, and enriching entities at scale. Full lifecycle: create → search → verify against criteria → enrich with custom data → export.
+**Completed response** includes `output.content` (markdown), `output.parsed` (if schema provided), and `costDollars`.
+
+### Chat Completions (OpenAI-Compatible)
+
+Drop-in replacement using the OpenAI SDK pattern. Uses `Authorization: Bearer` (handled by script).
 
 ```bash
-# Create a Webset
-curl -X POST 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets' \
-  -H 'x-api-key: '"$EXA_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "search": {
-      "query": "Marketing agencies in the US that focus on consumer products",
-      "count": 25
-    },
-    "enrichments": [
-      {"description": "What city is this agency based in?", "format": "text"},
-      {"description": "How many employees?", "format": "number"}
-    ]
-  }'
+# Answer via chat
+bash scripts/exa.sh chat --model exa --messages '[{"role":"user","content":"Latest AI news"}]'
 
-# Check status
-curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{id}' -H 'x-api-key: '"$EXA_API_KEY"
-
-# List items (when status is "idle")
-curl 'https://api.exa.ai.cloudproxy.vibecodeapp.com/websets/v0/websets/{id}/items' -H 'x-api-key: '"$EXA_API_KEY"
+# Research via chat (streaming)
+bash scripts/exa.sh chat --model exa-research --messages '[{"role":"user","content":"Analyze CRISPR developments"}]' --stream true
 ```
 
-Entity types: `company`, `person`, `article`, `research_paper`, `custom`. Auto-detected from query, or specify explicitly. Enrichment formats: `text`, `date`, `number`, `options`, `email`, `phone`.
+**Model mapping:** `exa` → answer, `exa-research`/`exa-research-pro` → research.
 
 ## Content Freshness
 
-Control cache vs live crawl with `maxAgeHours` (applies to search, contents, findSimilar):
+Control cache vs live crawl with `maxAgeHours` (works with search, contents, find-similar):
 
 | Value | Behavior |
 |-------|----------|
 | `24` | Cache if <24h old, else livecrawl |
 | `0` | Always livecrawl |
 | `-1` | Cache only (fastest) |
-| Omit | Livecrawl as fallback (recommended default) |
+| Omit | Livecrawl as fallback (recommended) |
 
-Pair with `livecrawlTimeout` (ms) to prevent hanging: `"livecrawlTimeout": 12000`
+Pair with `livecrawlTimeout` (ms): `--livecrawlTimeout 12000`
 
-## Subpage Crawling
+## Websets (Entity Sourcing)
 
-Discover and extract content from linked pages:
-
-```json
-{
-  "ids": ["https://docs.example.com"],
-  "subpages": 10,
-  "subpageTarget": ["api", "reference", "guide"],
-  "text": {"maxCharacters": 5000}
-}
-```
-
-Works with both `/search` and `/contents`.
-
-## OpenAI-Compatible Interface
-
-Drop-in replacement using the OpenAI SDK pattern:
+Async platform for finding, verifying, and enriching entities at scale. Full lifecycle: create → search → verify → enrich → export.
 
 ```bash
-# Answer (model: exa)
-curl https://api.exa.ai.cloudproxy.vibecodeapp.com/chat/completions \
-  -H 'Authorization: Bearer '"$EXA_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{"model": "exa", "messages": [{"role": "user", "content": "Latest AI news"}]}'
+# Preview (dry run — see detected entity type, criteria, enrichments)
+bash scripts/exa.sh webset-preview --search '{"query":"AI safety researchers","count":10}'
 
-# Research (model: exa-research or exa-research-pro)
-curl https://api.exa.ai.cloudproxy.vibecodeapp.com/chat/completions \
-  -H 'Authorization: Bearer '"$EXA_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '{"model": "exa-research", "messages": [{"role": "user", "content": "Analyze CRISPR developments"}], "stream": true}'
+# Create a Webset
+bash scripts/exa.sh webset-create \
+  --search '{"query":"Marketing agencies in the US focusing on consumer products","count":25}' \
+  --enrichments '[{"description":"What city?","format":"text"},{"description":"Employee count?","format":"number"}]'
+
+# Check status
+bash scripts/exa.sh webset-get --id ws_abc123
+
+# Get with items expanded
+bash scripts/exa.sh webset-get --id ws_abc123 --expand items
+
+# List items (when status is "idle")
+bash scripts/exa.sh webset-items --id ws_abc123 --limit 100
+
+# Get single item
+bash scripts/exa.sh webset-item --id ws_abc123 --itemId item_xyz
+
+# Add enrichment column after creation
+bash scripts/exa.sh webset-enrichment-add --id ws_abc123 --description "Annual revenue?" --format text
+
+# Add another search to existing Webset
+bash scripts/exa.sh webset-search --id ws_abc123 --query "Fintech startups" --count 50
+
+# Set up a monitor (scheduled re-search)
+bash scripts/exa.sh webset-monitor-create --id ws_abc123 --cadence daily
+
+# Export
+bash scripts/exa.sh webset-export --id ws_abc123
+
+# Delete
+bash scripts/exa.sh webset-delete --id ws_abc123
 ```
 
-Note: `/chat/completions` uses `Authorization: Bearer` (not `x-api-key`).
+**Entity types:** `company`, `person`, `article`, `research_paper`, `custom`. Auto-detected from query, or specify in search config.
+
+**Enrichment formats:** `text`, `date`, `number`, `options`, `email`, `phone`. Max 5 criteria, 10 enrichments, 20 options per enrichment.
+
+**Webhooks:** Create webhooks to get notified on events (item created, webset idle, etc.):
+
+```bash
+bash scripts/exa.sh webset-webhook-create --events '["webset.item.created","webset.idle"]' --url "https://your.app/webhook"
+```
 
 ## Error Handling
 
-All errors: `{requestId, error, tag}`. Include `requestId` when debugging.
+All errors return `{requestId, error, tag}`. Include `requestId` when debugging.
 
-Key tags: `INVALID_API_KEY` (401), `NO_MORE_CREDITS` (402), `INVALID_REQUEST_BODY` (400), `CONTENT_FILTER_ERROR` (403), `UNABLE_TO_GENERATE_RESPONSE` (501).
+| Tag | HTTP | Meaning |
+|-----|------|---------|
+| `INVALID_API_KEY` | 401 | Bad API key |
+| `NO_MORE_CREDITS` | 402 | Out of credits |
+| `INVALID_REQUEST_BODY` | 400 | Bad request |
+| `CONTENT_FILTER_ERROR` | 403 | Moderation block |
+| `UNABLE_TO_GENERATE_RESPONSE` | 501 | Generation failed |
 
 Content-specific per-URL errors appear in `statuses[]`: `CRAWL_NOT_FOUND` (404), `CRAWL_TIMEOUT` (408), `CRAWL_LIVECRAWL_TIMEOUT` (408), `SOURCE_NOT_AVAILABLE` (403).
 
-Rate limits: `/search` 10 QPS, `/contents` 100 QPS, `/answer` 10 QPS, `/research` 15 concurrent.
+**Rate limits:** `/search` 10 QPS, `/contents` 100 QPS, `/answer` 10 QPS, `/research` 15 concurrent.
 
 ## References
 
@@ -256,4 +237,3 @@ Rate limits: `/search` 10 QPS, `/contents` 100 QPS, `/answer` 10 QPS, `/research
 - **Research & Answer API reference** (async patterns, structured output): read [references/research-answer-api.md](references/research-answer-api.md)
 - **Websets API reference** (full CRUD lifecycle, enrichments, webhooks, events): read [references/websets-api.md](references/websets-api.md)
 - **Docs**: https://exa.ai/docs
-- **Full docs index**: https://exa.ai/docs/llms.txt
