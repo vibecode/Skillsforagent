@@ -88,6 +88,7 @@ bash scripts/gemini-image.sh edit "Make it blue and add a gradient" --image /tmp
 - **~30 second generation time** — the script sets a 120-second timeout
 - **All field names are camelCase** internally — the script handles this
 - **Up to 14 reference images** per edit request
+- **API returns JPEG data** regardless of the file extension you specify in `--output`. Files saved as `.png` will actually contain JPEG data. Images display correctly but `file` will report JPEG
 - **Model may return text** instead of an image if it refuses a prompt — the script reports this as an error
 
 ## Error Handling

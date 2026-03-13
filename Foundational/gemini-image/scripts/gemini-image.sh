@@ -58,12 +58,17 @@ cmd_generate() {
 EOF
   )
 
+  local tmpbody
+  tmpbody=$(mktemp /tmp/gemini-body-XXXXXX.json)
+  echo "$body" > "$tmpbody"
+
   local response
   response=$(curl -sf --max-time 120 -X POST \
     "${BASE}/models/${MODEL}:generateContent" \
     -H "x-goog-api-key: ${API_KEY}" \
     -H "Content-Type: application/json" \
-    -d "$body") || die "API request failed (check GOOGLE_API_KEY and network)"
+    -d @"$tmpbody") || { rm -f "$tmpbody"; die "API request failed (check GOOGLE_API_KEY and network)"; }
+  rm -f "$tmpbody"
 
   handle_response "$response" "$output" "$json_mode"
 }
@@ -118,12 +123,17 @@ cmd_edit() {
 EOF
   )
 
+  local tmpbody
+  tmpbody=$(mktemp /tmp/gemini-body-XXXXXX.json)
+  echo "$body" > "$tmpbody"
+
   local response
   response=$(curl -sf --max-time 120 -X POST \
     "${BASE}/models/${MODEL}:generateContent" \
     -H "x-goog-api-key: ${API_KEY}" \
     -H "Content-Type: application/json" \
-    -d "$body") || die "API request failed (check GOOGLE_API_KEY and network)"
+    -d @"$tmpbody") || { rm -f "$tmpbody"; die "API request failed (check GOOGLE_API_KEY and network)"; }
+  rm -f "$tmpbody"
 
   handle_response "$response" "$output" "$json_mode"
 }
