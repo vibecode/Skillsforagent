@@ -60,22 +60,30 @@ bash skills/cloudflare-tunnel/scripts/tunnel.sh start 3000
 
 ## Fetching Brand Data with Firecrawl
 
-**MANDATORY:** When a video mentions or features any product/company, use Firecrawl to scrape the product's website for brand data, colors, screenshots, and copy BEFORE designing the video. This ensures visual accuracy and brand consistency.
+**This skill builds on: firecrawl-setup** (foundational). The agent must have the Firecrawl CLI installed and authenticated — use the `firecrawl-setup` skill if not already set up.
 
-API Key: Set `FIRECRAWL_API_KEY` in `.env` (see TOOLS.md).
+**MANDATORY:** When a video mentions or features any product/company, use the Firecrawl CLI to scrape the product's website for brand data, colors, screenshots, and copy BEFORE designing the video. This ensures visual accuracy and brand consistency.
 
 ### Usage
 
+Use the Firecrawl CLI to scrape and extract brand data:
+
 ```bash
-bash scripts/firecrawl.sh "https://example.com"
+# Scrape with structured extraction
+firecrawl scrape "https://example.com" --formats extract,screenshot \
+  --extract-schema '{"type":"object","properties":{"brandName":{"type":"string"},"tagline":{"type":"string"},"headline":{"type":"string"},"description":{"type":"string"},"features":{"type":"array","items":{"type":"string"}},"logoUrl":{"type":"string"},"faviconUrl":{"type":"string"},"primaryColors":{"type":"array","items":{"type":"string"}},"ctaText":{"type":"string"},"socialLinks":{"type":"object"}}}'
+
+# Simple scrape for markdown content
+firecrawl scrape "https://example.com" --only-main-content
 ```
 
-Returns structured brand data: brandName, tagline, headline, description, features, logoUrl, faviconUrl, primaryColors, ctaText, socialLinks, plus screenshot URL and OG image URL.
+Returns structured brand data: brandName, tagline, headline, description, features, logoUrl, faviconUrl, primaryColors, ctaText, socialLinks, plus screenshot URL.
 
 ### Download Assets After Scraping
 
 ```bash
 mkdir -p public/images/brand
+# Download brand assets identified from the scrape
 curl -s "https://example.com/favicon.svg" -o public/images/brand/logo.svg
 curl -s "${OG_IMAGE_URL}" -o public/images/brand/og-image.png
 curl -sL "${SCREENSHOT_URL}" -o public/images/brand/screenshot.png
@@ -266,7 +274,7 @@ Before delivering, verify:
 
 ## Implementation Steps
 
-1. **Firecrawl brand scrape** — If featuring a product, scrape its site first
+1. **Firecrawl brand scrape** — If featuring a product, use the Firecrawl CLI (`firecrawl scrape`) to scrape its site first
 2. **Director's treatment** — Write vibe, camera style, emotional arc
 3. **Visual direction** — Colors, fonts, brand feel, animation style
 4. **Scene breakdown** — List every scene with description, duration, text, transitions
