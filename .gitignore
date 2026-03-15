@@ -1,0 +1,5 @@
+-e 
+# Eval workspaces and cache
+*-workspace/
+__pycache__/
+*.pyc
