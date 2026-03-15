@@ -20,7 +20,7 @@ At a high level, the process of creating a skill goes like this:
 
 - Decide what the skill should do and roughly how it should do it
 - Write a draft of the skill
-- Create a few test prompts and run them via sub-agent sessions (using `sessions_spawn`)
+- Create a few test prompts and run them via `claude -p` or sub-agent sessions
 - Help the user evaluate the results both qualitatively and quantitatively
   - While runs happen in the background, draft some quantitative evals if there aren't any. Then explain them to the user.
   - Use the `eval-viewer/generate_review.py` script to show the user the results, and also let them look at the quantitative metrics
@@ -169,9 +169,15 @@ Put results in `<skill-name>-workspace/` as a sibling to the skill directory. Wi
 
 ### Step 1: Spawn all runs (with-skill AND baseline) in the same turn
 
-For each test case, spawn two sub-agent sessions in the same turn — one with the skill, one without. Launch everything at once so it all finishes around the same time.
+For each test case, launch two runs — one with the skill, one without. Use `claude -p` for individual runs or `sessions_spawn` for parallel sub-agent sessions. Launch everything at once so it all finishes around the same time.
 
-**With-skill run** (using `sessions_spawn`):
+**With-skill run** (using `claude -p`):
+
+```bash
+claude -p "Read the skill at <path-to-skill>/SKILL.md and follow its instructions to complete this task: <eval prompt>. Save outputs to <workspace>/iteration-<N>/eval-<ID>/with_skill/outputs/"
+```
+
+Or via `sessions_spawn`:
 
 ```
 Execute this task:
@@ -179,7 +185,6 @@ Execute this task:
 - Task: <eval prompt>
 - Input files: <eval files if any, or "none">
 - Save outputs to: <workspace>/iteration-<N>/eval-<ID>/with_skill/outputs/
-- Outputs to save: <what the user cares about>
 
 Before starting, read the skill at <path-to-skill>/SKILL.md and follow its instructions.
 ```
@@ -335,17 +340,32 @@ Present the eval set using the HTML template:
 3. Write to a file and share with the user
 4. User can edit, toggle, add/remove entries, then click "Export Eval Set"
 
-### Step 3: Run the optimization
+### Step 3: Run the optimization loop
 
-Since OpenClaw doesn't have `claude -p`, run the description optimization loop manually:
+Tell the user: "This will take some time — I'll run the optimization loop in the background and check on it periodically."
 
-1. Evaluate the current description against all queries by spawning sub-agent sessions for each query and checking if the skill triggers
-2. Identify failures (missed triggers and false triggers)
-3. Propose improved descriptions that generalize from failures without overfitting
-4. Re-evaluate and iterate up to 5 times
-5. Select the best description by test score
+Save the eval set to the workspace, then run in the background:
 
-Keep descriptions under 1024 characters. Focus on user intent, not implementation details. Use imperative phrasing ("Use this skill for...").
+```bash
+python -m scripts.run_loop \
+  --eval-set <path-to-trigger-eval.json> \
+  --skill-path <path-to-skill> \
+  --model <model-id-powering-this-session> \
+  --max-iterations 5 \
+  --verbose
+```
+
+Use the model ID from your system prompt (the one powering the current session) so the triggering test matches what the user actually experiences.
+
+While it runs, periodically tail the output to give the user updates on which iteration it's on and what the scores look like.
+
+This handles the full optimization loop automatically. It splits the eval set into 60% train and 40% held-out test, evaluates the current description (running each query 3 times to get a reliable trigger rate), then calls `claude -p` to propose improvements based on what failed. It re-evaluates each new description on both train and test, iterating up to 5 times. When it's done, it produces an HTML report showing the results per iteration and returns JSON with `best_description` — selected by test score rather than train score to avoid overfitting.
+
+### How skill triggering works
+
+Understanding the triggering mechanism helps design better eval queries. Skills appear in the agent's `available_skills` list with their name + description, and the agent decides whether to consult a skill based on that description. The important thing to know is that agents only consult skills for tasks they can't easily handle on their own — simple, one-step queries like "read this PDF" may not trigger a skill even if the description matches perfectly. Complex, multi-step, or specialized queries reliably trigger skills when the description matches.
+
+This means your eval queries should be substantive enough that an agent would actually benefit from consulting a skill. Simple queries like "read file X" are poor test cases — they won't trigger skills regardless of description quality.
 
 ### Step 4: Apply the result
 
@@ -398,7 +418,7 @@ The references/ directory:
 
 1. Figure out what the skill is about
 2. Draft or edit the skill
-3. Run the skill on test prompts via sub-agent sessions
+3. Run the skill on test prompts via `claude -p` or sub-agent sessions
 4. Evaluate outputs with the user (viewer + quantitative evals)
 5. Repeat until satisfied
 6. Validate and package the final skill

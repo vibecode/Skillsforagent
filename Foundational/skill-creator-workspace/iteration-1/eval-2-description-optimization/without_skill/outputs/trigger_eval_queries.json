@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "query": "Generate a photorealistic image of a golden retriever playing in autumn leaves",
+    "should_trigger": true,
+    "rationale": "Clear text-to-image generation request. Core use case."
+  },
+  {
+    "id": 2,
+    "query": "I need a hero banner for my website — something with mountains and a sunrise, minimal and modern",
+    "should_trigger": true,
+    "rationale": "Creative image generation request. User wants a new image created, even though they don't say 'generate'."
+  },
+  {
+    "id": 3,
+    "query": "Take this photo of my office and make it look like a watercolor painting",
+    "should_trigger": true,
+    "rationale": "AI-powered style transfer / creative transformation of an existing image."
+  },
+  {
+    "id": 4,
+    "query": "Can you remove my ex from this group photo and fill in the background naturally?",
+    "should_trigger": true,
+    "rationale": "AI inpainting — requires generative model to reconstruct missing content."
+  },
+  {
+    "id": 5,
+    "query": "Create a product mockup showing my app running on an iPhone in a coffee shop setting",
+    "should_trigger": true,
+    "rationale": "Image generation with specific creative direction."
+  },
+  {
+    "id": 6,
+    "query": "I uploaded company-logo.png — can you generate 5 variations of it with different color schemes and artistic styles?",
+    "should_trigger": true,
+    "rationale": "AI-powered creative variation generation from a reference image."
+  },
+  {
+    "id": 7,
+    "query": "Design me an icon set for a weather app — sun, rain, snow, clouds, thunderstorm",
+    "should_trigger": true,
+    "rationale": "Multiple image generation requests with creative direction."
+  },
+  {
+    "id": 8,
+    "query": "I have a black and white photo from the 1940s. Can you colorize it realistically?",
+    "should_trigger": true,
+    "rationale": "AI colorization requires generative understanding of scene content."
+  },
+  {
+    "id": 9,
+    "query": "Use Gemini's image model to create a fantasy landscape with floating islands",
+    "should_trigger": true,
+    "rationale": "Explicitly names the Gemini image model."
+  },
+  {
+    "id": 10,
+    "query": "Combine these three reference photos into a single scene where all the people are at a beach party",
+    "should_trigger": true,
+    "rationale": "Multi-reference image composition — requires AI to blend and generate new content."
+  },
+  {
+    "id": 11,
+    "query": "Resize this image to 800x600 pixels",
+    "should_trigger": false,
+    "rationale": "Mechanical resize operation. ImageMagick/sharp can handle this without AI."
+  },
+  {
+    "id": 12,
+    "query": "I need to make all the product photos in /images/catalog/ exactly 500x500 for our Shopify store",
+    "should_trigger": false,
+    "rationale": "Batch resize operation. Scripting task with ImageMagick, not AI generation."
+  },
+  {
+    "id": 13,
+    "query": "Convert this PNG screenshot to JPEG and compress it under 200KB",
+    "should_trigger": false,
+    "rationale": "Format conversion and compression. Standard CLI tools, no generation needed."
+  },
+  {
+    "id": 14,
+    "query": "Crop this photo to a 1:1 square aspect ratio, centered on the face",
+    "should_trigger": false,
+    "rationale": "Geometric crop operation. May need face detection but not generative AI."
+  },
+  {
+    "id": 15,
+    "query": "Can you reduce the file size of header-image.png? It's 8MB and making my site slow",
+    "should_trigger": false,
+    "rationale": "Image compression/optimization. Use tools like pngquant, jpegoptim, or sharp."
+  },
+  {
+    "id": 16,
+    "query": "Rotate this image 90 degrees clockwise and flip it horizontally",
+    "should_trigger": false,
+    "rationale": "Geometric transformation. ImageMagick `convert -rotate 90 -flop`."
+  },
+  {
+    "id": 17,
+    "query": "I have a 4000x3000 image — can you make it 16:9 for my YouTube thumbnail?",
+    "should_trigger": false,
+    "rationale": "Aspect ratio change via crop/resize. This is the key false-positive case — '16:9' appears in both the current description and resize requests."
+  },
+  {
+    "id": 18,
+    "query": "Add a watermark with our company logo in the bottom-right corner of all images in this folder",
+    "should_trigger": false,
+    "rationale": "Image compositing/overlay. Use ImageMagick composite, not generative AI."
+  },
+  {
+    "id": 19,
+    "query": "Strip the EXIF metadata from these photos before I upload them",
+    "should_trigger": false,
+    "rationale": "Metadata operation. `exiftool` or ImageMagick, zero generation involved."
+  },
+  {
+    "id": 20,
+    "query": "Make this image slightly brighter and increase the contrast a bit",
+    "should_trigger": false,
+    "rationale": "Basic color adjustment. ImageMagick `-brightness-contrast` handles this. Not a creative AI task."
+  }
+]

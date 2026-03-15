@@ -1,0 +1,47 @@
+{
+  "eval_id": 1,
+  "eval_name": "sales-regional-quarterly",
+  "prompt": "I have a CSV of our Q1-Q4 sales data. Can you generate a report showing how each region performed and the overall trend? The file is at sales_data.csv.",
+  "assertions": [
+    {
+      "name": "has-key-findings-with-numbers",
+      "description": "Report contains a 'Key Findings' section with specific numbers (not generic statements)",
+      "type": "content_check"
+    },
+    {
+      "name": "region-bar-chart-exists",
+      "description": "A bar chart PNG showing revenue by region exists and has axis labels and a title",
+      "type": "file_and_content_check"
+    },
+    {
+      "name": "trend-line-chart-exists",
+      "description": "A line chart PNG showing the quarterly trend exists and has axis labels and a title",
+      "type": "file_and_content_check"
+    },
+    {
+      "name": "summary-stats-table",
+      "description": "The report includes a summary table with total revenue, record count, and averages",
+      "type": "content_check"
+    },
+    {
+      "name": "pivot-table-region-quarter",
+      "description": "A pivot table showing region × quarter breakdown with totals is present",
+      "type": "content_check"
+    },
+    {
+      "name": "summary-csv-saved",
+      "description": "A summary.csv file is saved with the aggregated data",
+      "type": "file_exists"
+    },
+    {
+      "name": "numbers-formatted",
+      "description": "Numbers in the report are formatted with commas and/or dollar signs for readability",
+      "type": "content_check"
+    },
+    {
+      "name": "notes-section-exists",
+      "description": "The report includes a Notes section mentioning any data quality observations",
+      "type": "content_check"
+    }
+  ]
+}

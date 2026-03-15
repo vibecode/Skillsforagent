@@ -1,0 +1,38 @@
+{
+  "skill_name": "skill-creator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I've been doing this same workflow every time someone asks me to generate a report from a CSV — reading the file, pivoting the data, making a chart. Can we turn this into a reusable skill so any agent on our platform can do it?",
+      "expected_output": "The agent should recognize this as a skill creation request, capture the workflow intent, interview about edge cases, and produce a draft SKILL.md with frontmatter",
+      "files": [],
+      "expectations": [
+        "The agent initiates the skill creation workflow (captures intent, asks clarifying questions)",
+        "The agent produces or offers to produce a SKILL.md draft with valid YAML frontmatter",
+        "The agent suggests test cases for the new skill"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I have this skill for image generation but it keeps triggering on requests that are just about resizing images, not generating them. The description needs work. Can you help optimize it so it only fires on actual image generation requests?",
+      "expected_output": "The agent should recognize this as a description optimization task, offer to generate trigger eval queries, and walk through the optimization workflow",
+      "files": [],
+      "expectations": [
+        "The agent identifies this as a skill description optimization task",
+        "The agent proposes generating should-trigger and should-not-trigger eval queries",
+        "The agent discusses the distinction between image generation vs image manipulation triggers"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "We built a skill for our Stripe integration last week but it feels like the instructions are too verbose and the agent wastes time on unnecessary steps. Can we run some tests on it and tighten it up?",
+      "expected_output": "The agent should recognize this as a skill improvement task, propose test cases, and plan to run evals to identify what's bloating the execution",
+      "files": [],
+      "expectations": [
+        "The agent treats this as a skill improvement/iteration task (not creation from scratch)",
+        "The agent asks to see the current skill or asks for its path",
+        "The agent proposes running test cases to identify inefficiencies"
+      ]
+    }
+  ]
+}

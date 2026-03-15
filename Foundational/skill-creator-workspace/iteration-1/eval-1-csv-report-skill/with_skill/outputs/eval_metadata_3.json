@@ -1,0 +1,42 @@
+{
+  "eval_id": 3,
+  "eval_name": "messy-inventory-data-cleaning",
+  "prompt": "I've got this messy CSV of product inventory (inventory.csv). Some cells are blank, headers have extra spaces, and dates are in mixed formats. Can you clean it up and give me a report on stock levels by category?",
+  "assertions": [
+    {
+      "name": "handles-dirty-csv",
+      "description": "The agent successfully reads and processes the CSV despite data quality issues",
+      "type": "execution_check"
+    },
+    {
+      "name": "headers-cleaned",
+      "description": "Headers are cleaned (stripped whitespace) before analysis",
+      "type": "execution_check"
+    },
+    {
+      "name": "missing-values-documented",
+      "description": "Missing values are documented in the report rather than silently dropped",
+      "type": "content_check"
+    },
+    {
+      "name": "category-stock-chart",
+      "description": "A chart showing stock levels by category exists as a PNG",
+      "type": "file_and_content_check"
+    },
+    {
+      "name": "notes-mention-data-issues",
+      "description": "The report's Notes section mentions specific data quality issues found",
+      "type": "content_check"
+    },
+    {
+      "name": "summary-csv-produced",
+      "description": "A summary.csv with aggregated data is produced",
+      "type": "file_exists"
+    },
+    {
+      "name": "total-and-breakdown",
+      "description": "The report includes total inventory count and breakdown by category",
+      "type": "content_check"
+    }
+  ]
+}

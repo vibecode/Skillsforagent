@@ -1,0 +1,51 @@
+{
+  "skill_name": "csv-report",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I have a CSV of our Q1-Q4 sales data. Can you generate a report showing how each region performed and the overall trend? The file is at sales_data.csv.",
+      "expected_output": "A Markdown report with: executive summary, revenue breakdown by region (bar chart), quarterly trend (line chart), summary stats table, and pivoted data. Charts saved as PNGs.",
+      "files": ["evals/files/sales_data.csv"],
+      "expectations": [
+        "Report contains a 'Key Findings' section with specific numbers (not generic statements)",
+        "A bar chart PNG showing revenue by region exists and has axis labels and a title",
+        "A line chart PNG showing the quarterly trend exists and has axis labels and a title",
+        "The report includes a summary table with total revenue, record count, and averages",
+        "A pivot table showing region × quarter breakdown with totals is present",
+        "A summary.csv file is saved with the aggregated data",
+        "Numbers in the report are formatted with commas and/or dollar signs",
+        "The report includes a Notes section mentioning any data quality observations"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Here's a CSV export of our customer survey results (survey_results.csv). It has columns for respondent_id, department, satisfaction_score (1-10), response_date, and comments. Can you analyze it and make some charts?",
+      "expected_output": "A report analyzing satisfaction scores by department with distribution chart (histogram), department comparison (bar chart), trend over time if dates span multiple periods, and key stats like average score and response rate per department.",
+      "files": ["evals/files/survey_results.csv"],
+      "expectations": [
+        "Report includes average satisfaction score across all respondents",
+        "A chart comparing satisfaction by department exists as a PNG",
+        "A distribution chart (histogram or similar) of satisfaction scores exists",
+        "The report identifies the highest and lowest performing departments by name",
+        "Charts have titles, axis labels, and readable formatting",
+        "The report handles the 1-10 scale appropriately (treats as numeric measure, not category)",
+        "report.md file is saved in the output directory"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I've got this messy CSV of product inventory (inventory.csv). Some cells are blank, headers have extra spaces, and dates are in mixed formats. Can you clean it up and give me a report on stock levels by category?",
+      "expected_output": "The agent should handle data quality issues gracefully — clean headers, parse dates, note missing values — and still produce a useful report with stock level analysis by category, chart(s), and documented caveats about the data issues.",
+      "files": ["evals/files/inventory.csv"],
+      "expectations": [
+        "The agent successfully reads and processes the CSV despite data quality issues",
+        "Headers are cleaned (stripped whitespace) before analysis",
+        "Missing values are documented in the report rather than silently dropped",
+        "A chart showing stock levels by category exists as a PNG",
+        "The report's Notes section mentions specific data quality issues found",
+        "A summary.csv with aggregated data is produced",
+        "The report includes total inventory count and breakdown by category"
+      ]
+    }
+  ]
+}
