@@ -246,7 +246,7 @@ Once all runs are done:
    ```
    For iteration 2+, also pass `--previous-workspace <workspace>/iteration-<N-1>`.
 
-   Use `--static <output_path>` to write a standalone HTML file. Feedback will be downloaded as `feedback.json` when the user clicks "Submit All Reviews".
+   Use `--static <output_path>` to write a standalone HTML file. To share it with the user, write it to the Public directory (e.g., `~/.openclaw/workspace/Public/eval-review.html`) and send them the URL. Feedback will be downloaded as `feedback.json` when the user clicks "Submit All Reviews".
 
 5. **Tell the user**: "I've generated the results viewer. There are two tabs — 'Outputs' lets you click through each test case and leave feedback, 'Benchmark' shows the quantitative comparison."
 
@@ -337,7 +337,7 @@ Present the eval set using the HTML template:
    - `__EVAL_DATA_PLACEHOLDER__` → JSON array of eval items
    - `__SKILL_NAME_PLACEHOLDER__` → skill name
    - `__SKILL_DESCRIPTION_PLACEHOLDER__` → current description
-3. Write to a file and share with the user
+3. Write to the Public directory (e.g., `~/.openclaw/workspace/Public/eval-review.html`) and send the user the URL
 4. User can edit, toggle, add/remove entries, then click "Export Eval Set"
 
 ### Step 3: Run the optimization loop
