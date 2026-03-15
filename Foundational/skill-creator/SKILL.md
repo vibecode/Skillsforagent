@@ -109,15 +109,6 @@ cloud-deploy/
 ```
 The agent reads only the relevant reference file.
 
-#### OpenClaw Skill Conventions
-
-Skills in the Chorus ecosystem follow these additional conventions:
-
-- **Wrapper scripts**: For API skills, include a shell script (e.g., `scripts/myapi.sh`) that handles auth, error handling, and JSON formatting
-- **Cloud proxy**: External APIs should use the cloud proxy pattern: `https://api.service.com.cloudproxy.vibecodeapp.com/v1` with env var for API key
-- **Metadata field**: Include `metadata: {"openclaw": {"emoji": "🔧", "requires": {"env": ["API_KEY"]}, "primaryEnv": "API_KEY"}}` for OpenClaw integration
-- **No secrets in skills**: Auth goes through env vars, never hardcoded
-
 #### Principle of Lack of Surprise
 
 Skills must not contain malware, exploit code, or any content that could compromise system security. A skill's contents should not surprise the user in their intent. Don't create misleading skills or skills designed to facilitate unauthorized access or data exfiltration.
