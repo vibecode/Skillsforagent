@@ -116,21 +116,15 @@ Use `composition_plan` for detailed control over song structure. Cannot combine 
 
 ### Generate a Plan First
 
-Use `POST /v1/music/plan` with a `prompt` to get an AI-generated composition plan, then modify it before generating:
+Use the wrapper script's `music-plan` command to generate from a composition plan:
 
 ```bash
-# 1. Get a plan
-curl -X POST "${BASE}/music/plan" \
-  -H "xi-api-key: ${KEY}" -H "Content-Type: application/json" \
-  -d '{"prompt": "Upbeat pop song about summer"}' > plan.json
+# 1. Generate a plan (save as JSON, then edit as needed)
+# Use the API's /v1/music/plan endpoint via the script's plan workflow:
+bash $SCRIPT music --prompt "Upbeat pop song about summer" --out song.mp3
 
-# 2. Edit plan.json as needed
-
-# 3. Generate from plan
-curl -X POST "${BASE}/music?output_format=mp3_44100_128" \
-  -H "xi-api-key: ${KEY}" -H "Content-Type: application/json" \
-  -d "{\"composition_plan\": $(cat plan.json), \"model_id\": \"music_v1\"}" \
-  -o song.mp3
+# For full plan control: create a composition plan JSON, then generate from it
+bash $SCRIPT music-plan --plan plan.json --out song.mp3
 ```
 
 ---
