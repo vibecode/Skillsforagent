@@ -1,5 +1,5 @@
 ---
-name: gemini-llm
+name: Gemini LLM
 description: >
   Foundational skill for the Google Gemini API — multimodal AI for text, vision, audio, video,
   code, reasoning, structured output, function calling, embeddings, caching, and file uploads.

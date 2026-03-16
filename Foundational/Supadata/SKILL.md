@@ -1,5 +1,5 @@
 ---
-name: supadata
+name: SupaData
 description: >
   Supadata API for pulling transcripts, metadata, and structured data from videos on YouTube, TikTok, Instagram, X/Twitter, and Facebook. Also scrapes and crawls websites to markdown. Use when asked to "get a transcript", "pull captions", "transcribe a video", "get video info", "get video metadata", "extract data from a video", "scrape a webpage", "crawl a website", "map a site", "search YouTube", or when needing channel info, playlist info, batch transcripts, or batch video metadata. Supports file URLs (MP4, MP3, WAV, etc.) for transcription.
 metadata:

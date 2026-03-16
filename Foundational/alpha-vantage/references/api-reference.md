@@ -1,6 +1,6 @@
 # Alpha Vantage API Reference
 
-Complete endpoint reference for all Alpha Vantage `function=` values. All requests are GET to `https://www.alphavantage.co/query` with `apikey` required on every call.
+Complete endpoint reference for all Alpha Vantage `function=` values. All requests are GET to `https://www.alphavantage.co.cloudproxy.vibecodeapp.com/query` with `apikey` required on every call.
 
 ## Table of Contents
 

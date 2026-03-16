@@ -1,5 +1,5 @@
 ---
-name: remotion-generator
+name: Remotion Generator
 description: AI video production workflow using Remotion. Use when creating videos, short films, commercials, or motion graphics. Triggers on requests to make promotional videos, product demos, social media videos, animated explainers, or any programmatic video content. Produces polished motion graphics, not slideshows.
 ---
 
