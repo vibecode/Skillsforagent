@@ -79,22 +79,30 @@ bash scripts/fal.sh run --model fal-ai/flux/dev/image-to-image \
 
 Best for slow operations (video gen, batch) or when reliability matters. Submit → poll → retrieve.
 
+**Important:** The queue submit response returns `status_url`, `response_url`, and `cancel_url`. Use these with `--status-url`, `--response-url`, `--cancel-url` — they contain the correct normalized model path. Alternatively, pass `--model` and the script auto-normalizes sub-paths.
+
 ```bash
 # Step 1: Submit to queue
 bash scripts/fal.sh queue --model fal-ai/wan/v2.2-a14b/text-to-video \
   --prompt "a timelapse of a flower blooming"
 # Returns: request_id, status_url, response_url, cancel_url
 
-# Step 2: Poll status (with logs)
+# Step 2: Poll status — use --status-url from queue response (preferred)
+bash scripts/fal.sh status --status-url "STATUS_URL_FROM_RESPONSE" --logs
+# OR use --model + --request-id (auto-normalizes sub-paths)
 bash scripts/fal.sh status --model fal-ai/wan/v2.2-a14b/text-to-video \
   --request-id REQUEST_ID --logs
 # Status: IN_QUEUE → IN_PROGRESS → COMPLETED
 
-# Step 3: Get result
+# Step 3: Get result — use --response-url from queue response (preferred)
+bash scripts/fal.sh result --response-url "RESPONSE_URL_FROM_RESPONSE"
+# OR use --model + --request-id
 bash scripts/fal.sh result --model fal-ai/wan/v2.2-a14b/text-to-video \
   --request-id REQUEST_ID
 
-# Cancel (while IN_QUEUE)
+# Cancel — use --cancel-url from queue response (preferred)
+bash scripts/fal.sh cancel --cancel-url "CANCEL_URL_FROM_RESPONSE"
+# OR use --model + --request-id
 bash scripts/fal.sh cancel --model fal-ai/wan/v2.2-a14b/text-to-video \
   --request-id REQUEST_ID
 ```

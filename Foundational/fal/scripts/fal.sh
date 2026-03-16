@@ -34,7 +34,15 @@
 # Queue management options:
 #   --model MODEL_ID     Model endpoint ID (required for status/result/cancel)
 #   --request-id ID      Request ID from queue submit response
+#   --status-url URL     Use exact status_url from queue response (preferred)
+#   --response-url URL   Use exact response_url from queue response (preferred)
+#   --cancel-url URL     Use exact cancel_url from queue response (preferred)
 #   --logs               Include logs in status polling (adds ?logs=1)
+#
+# NOTE: For models with sub-paths (e.g. fal-ai/wan/v2.2-a14b/text-to-video),
+#   fal normalizes queue URLs to the base model (fal-ai/wan). The script handles
+#   this automatically, but passing --status-url/--response-url from the queue
+#   response is the most reliable approach.
 #
 # Platform API options (search, schema, pricing, estimate):
 #   --query TEXT         Search query for model search (e.g. "text-to-video")
@@ -97,6 +105,9 @@ DATA=""
 PROMPT=""
 IMAGE_URL=""
 REQUEST_ID=""
+STATUS_URL=""
+RESPONSE_URL=""
+CANCEL_URL=""
 REQUEST_TIMEOUT=""
 NO_RETRY=""
 EXPIRE=""
@@ -123,6 +134,9 @@ while [[ $# -gt 0 ]]; do
     --prompt)       PROMPT="$2"; shift 2 ;;
     --image_url|--image-url) IMAGE_URL="$2"; shift 2 ;;
     --request-id)   REQUEST_ID="$2"; shift 2 ;;
+    --status-url)   STATUS_URL="$2"; shift 2 ;;
+    --response-url) RESPONSE_URL="$2"; shift 2 ;;
+    --cancel-url)   CANCEL_URL="$2"; shift 2 ;;
     --request-timeout) REQUEST_TIMEOUT="$2"; shift 2 ;;
     --no-retry)     NO_RETRY=1; shift ;;
     --expire)       EXPIRE="$2"; shift 2 ;;
@@ -174,6 +188,14 @@ build_headers() {
   printf '%s\n' "${hdrs[@]+"${hdrs[@]}"}"
 }
 
+# ---------- Model path normalization ----------
+# fal normalizes queue management URLs to the base model path (first 2 segments).
+# e.g. fal-ai/wan/v2.2-a14b/text-to-video → fal-ai/wan
+# This is required for status/result/cancel on models with sub-paths.
+base_model() {
+  echo "$1" | cut -d'/' -f1-2
+}
+
 # ---------- Commands ----------
 
 cmd_run() {
@@ -212,10 +234,17 @@ cmd_queue() {
 }
 
 cmd_status() {
-  [[ -z "$MODEL" ]] && die "status requires --model MODEL_ID"
-  [[ -z "$REQUEST_ID" ]] && die "status requires --request-id ID"
-
-  local url="${QUEUE_BASE}/${MODEL}/requests/${REQUEST_ID}/status"
+  local url=""
+  if [[ -n "$STATUS_URL" ]]; then
+    # Prefer explicit URL from queue response
+    url="$STATUS_URL"
+  else
+    [[ -z "$MODEL" ]] && die "status requires --model MODEL_ID or --status-url URL"
+    [[ -z "$REQUEST_ID" ]] && die "status requires --request-id ID"
+    local bm
+    bm=$(base_model "$MODEL")
+    url="${QUEUE_BASE}/${bm}/requests/${REQUEST_ID}/status"
+  fi
   [[ -n "$LOGS" ]] && url="${url}?logs=1"
 
   curl -sS --max-time "$TIMEOUT" \
@@ -224,22 +253,40 @@ cmd_status() {
 }
 
 cmd_result() {
-  [[ -z "$MODEL" ]] && die "result requires --model MODEL_ID"
-  [[ -z "$REQUEST_ID" ]] && die "result requires --request-id ID"
+  local url=""
+  if [[ -n "$RESPONSE_URL" ]]; then
+    # Prefer explicit URL from queue response
+    url="$RESPONSE_URL"
+  else
+    [[ -z "$MODEL" ]] && die "result requires --model MODEL_ID or --response-url URL"
+    [[ -z "$REQUEST_ID" ]] && die "result requires --request-id ID"
+    local bm
+    bm=$(base_model "$MODEL")
+    url="${QUEUE_BASE}/${bm}/requests/${REQUEST_ID}"
+  fi
 
   curl -sS --max-time "$TIMEOUT" \
     -H "Authorization: Key $API_KEY" \
-    "${QUEUE_BASE}/${MODEL}/requests/${REQUEST_ID}" | fmt
+    "$url" | fmt
 }
 
 cmd_cancel() {
-  [[ -z "$MODEL" ]] && die "cancel requires --model MODEL_ID"
-  [[ -z "$REQUEST_ID" ]] && die "cancel requires --request-id ID"
+  local url=""
+  if [[ -n "$CANCEL_URL" ]]; then
+    # Prefer explicit URL from queue response
+    url="$CANCEL_URL"
+  else
+    [[ -z "$MODEL" ]] && die "cancel requires --model MODEL_ID or --cancel-url URL"
+    [[ -z "$REQUEST_ID" ]] && die "cancel requires --request-id ID"
+    local bm
+    bm=$(base_model "$MODEL")
+    url="${QUEUE_BASE}/${bm}/requests/${REQUEST_ID}/cancel"
+  fi
 
   curl -sS --max-time "$TIMEOUT" \
     -X PUT \
     -H "Authorization: Key $API_KEY" \
-    "${QUEUE_BASE}/${MODEL}/requests/${REQUEST_ID}/cancel" | fmt
+    "$url" | fmt
 }
 
 cmd_search() {
