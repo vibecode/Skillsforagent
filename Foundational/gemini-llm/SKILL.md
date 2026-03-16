@@ -1,5 +1,5 @@
 ---
-name: Gemini LLM
+name: gemini-llm
 description: >
   Foundational skill for the Google Gemini API — multimodal AI for text, vision, audio, video,
   code, reasoning, structured output, function calling, embeddings, caching, and file uploads.
@@ -27,7 +27,7 @@ The cloud proxy handles credentials. Use `$GOOGLE_API_KEY` as-is.
 
 ## Wrapper Script
 
-The fastest way to use this API. Handles auth, model selection, file uploads, JSON extraction, and streaming.
+All API operations go through the wrapper script. It handles auth, model selection, file uploads, JSON extraction, and streaming.
 
 ```bash
 SCRIPT="$(dirname "$0")/scripts/gemini.sh"  # or use full skill path
@@ -108,8 +108,7 @@ bash $SCRIPT cache-delete --name "cachedContents/abc123"
 ## Model Discovery
 
 ```bash
-curl -s "${BASE}/models" -H "x-goog-api-key: ${GOOGLE_API_KEY}" | \
-  jq '.models[] | {name, displayName, supportedGenerationMethods}'
+bash $SCRIPT models
 ```
 
 Key models (convenience, not exhaustive — always query live):
@@ -145,42 +144,42 @@ Key models (convenience, not exhaustive — always query live):
 
 ## Generation Config
 
-Pass in `generationConfig` to control output:
+Pass generation parameters via script flags (`--temperature`, `--top-p`, `--top-k`, `--max-tokens`, `--stop`):
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `temperature` | float | 1.0 | Randomness (0.0–2.0) |
-| `topP` | float | — | Nucleus sampling |
-| `topK` | int | — | Top-K sampling |
-| `maxOutputTokens` | int | — | Max response length |
-| `candidateCount` | int | 1 | Number of candidates |
-| `stopSequences` | string[] | — | Stop generation at these |
-| `responseMimeType` | string | — | `"application/json"` for JSON mode |
-| `responseSchema` | object | — | JSON Schema for structured output |
-| `thinkingConfig` | object | — | Control reasoning behavior |
+```bash
+bash $SCRIPT generate --model gemini-2.5-flash --prompt "Creative story" \
+  --temperature 1.5 --top-p 0.9 --max-tokens 4096
+```
+
+| Parameter | Script Flag | Type | Default | Description |
+|-----------|-------------|------|---------|-------------|
+| `temperature` | `--temperature` | float | 1.0 | Randomness (0.0–2.0) |
+| `topP` | `--top-p` | float | — | Nucleus sampling |
+| `topK` | `--top-k` | int | — | Top-K sampling |
+| `maxOutputTokens` | `--max-tokens` | int | — | Max response length |
+| `stopSequences` | `--stop` | JSON array | — | Stop generation at these |
+| `responseMimeType` | `--json-schema` | — | — | Set automatically when using `--json-schema` |
+| `responseSchema` | `--json-schema` | JSON | — | JSON Schema for structured output |
+| `thinkingConfig` | `--thinking-budget` / `--thinking-level` | — | — | Control reasoning behavior |
 
 ## Thinking / Reasoning
 
-### Gemini 2.5 models — use `thinkingBudget`:
+### Gemini 2.5 models — use `--thinking-budget`:
 
-```json
-"generationConfig": {
-  "thinkingConfig": {"thinkingBudget": 8192}
-}
+```bash
+bash $SCRIPT generate --model gemini-2.5-flash --prompt "Solve step by step: ..." --thinking-budget 8192
 ```
 
 | Model | Range | Disable | Dynamic (default) |
 |-------|-------|---------|-------------------|
-| 2.5 Pro | 128–32768 | Cannot disable | `thinkingBudget: -1` |
-| 2.5 Flash | 0–24576 | `thinkingBudget: 0` | `thinkingBudget: -1` |
-| 2.5 Flash-Lite | 512–24576 | `thinkingBudget: 0` | `thinkingBudget: -1` |
+| 2.5 Pro | 128–32768 | Cannot disable | `--thinking-budget -1` |
+| 2.5 Flash | 0–24576 | `--thinking-budget 0` | `--thinking-budget -1` |
+| 2.5 Flash-Lite | 512–24576 | `--thinking-budget 0` | `--thinking-budget -1` |
 
-### Gemini 3 models — use `thinkingLevel`:
+### Gemini 3 models — use `--thinking-level`:
 
-```json
-"generationConfig": {
-  "thinkingConfig": {"thinkingLevel": "medium"}
-}
+```bash
+bash $SCRIPT generate --model gemini-3-flash-preview --prompt "Complex task" --thinking-level medium
 ```
 
 | Level | Gemini 3.1 Pro | Gemini 3 Pro | Gemini 3 Flash |
@@ -192,62 +191,37 @@ Pass in `generationConfig` to control output:
 
 ## Structured Output (JSON Mode)
 
-Force JSON responses with a schema:
+Force JSON responses matching a schema with `--json-schema`:
 
 ```bash
-curl "${BASE}/models/gemini-2.5-flash:generateContent" \
-  -H "x-goog-api-key: ${GOOGLE_API_KEY}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "contents": [{"parts": [{"text": "List 3 planets with name and distance from sun"}]}],
-    "generationConfig": {
-      "responseMimeType": "application/json",
-      "responseSchema": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "name": {"type": "string"},
-            "distance_au": {"type": "number"}
-          },
-          "required": ["name", "distance_au"]
-        }
-      }
-    }
-  }'
+# Extract structured data
+bash $SCRIPT generate --model gemini-2.5-flash \
+  --prompt "List 3 planets with name and distance from sun" \
+  --json-schema '{"type":"array","items":{"type":"object","properties":{"name":{"type":"string"},"distance_au":{"type":"number"}},"required":["name","distance_au"]}}'
+
+# Classification (enum)
+bash $SCRIPT generate --model gemini-2.5-flash \
+  --prompt "Classify sentiment: I love this product!" \
+  --json-schema '{"type":"string","enum":["positive","negative","neutral"]}'
 ```
 
-The model's response `text` will be valid JSON matching the schema.
+The model's response will be valid JSON matching the schema. Supported schema features: `type`, `properties`, `required`, `items`, `enum`, `description`, `nullable`, `anyOf`.
 
 ## Function Calling
 
-Declare functions in the `tools` array; the model returns a `functionCall` part when it wants to invoke one:
+Pass function declarations via `--tools` (JSON). The model returns a `functionCall` when it wants to invoke one:
 
 ```bash
-curl "${BASE}/models/gemini-2.5-flash:generateContent" \
-  -H "x-goog-api-key: ${GOOGLE_API_KEY}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "contents": [{"parts": [{"text": "What is the weather in London?"}]}],
-    "tools": [{
-      "functionDeclarations": [{
-        "name": "get_weather",
-        "description": "Get current weather for a location",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "location": {"type": "string", "description": "City name"}
-          },
-          "required": ["location"]
-        }
-      }]
-    }]
-  }'
+bash $SCRIPT generate --model gemini-2.5-flash \
+  --prompt "What is the weather in London?" \
+  --tools '[{"functionDeclarations":[{"name":"get_weather","description":"Get current weather for a location","parameters":{"type":"object","properties":{"location":{"type":"string","description":"City name"}},"required":["location"]}}]}]'
 ```
+
+The script extracts and returns the `functionCall` object when present. To continue the conversation with function results, use `--messages` with the full multi-turn history including `functionResponse` parts.
 
 ### Function calling modes
 
-Set `toolConfig.functionCallingConfig.mode`:
+Set in `toolConfig.functionCallingConfig.mode` (via raw `--tools` JSON or `--messages`):
 
 | Mode | Behavior |
 |------|----------|
@@ -257,30 +231,28 @@ Set `toolConfig.functionCallingConfig.mode`:
 
 ### Returning function results
 
-Send results back with a `functionResponse` part:
+Build a multi-turn `--messages` array including the function response:
 
-```json
-{
-  "contents": [
-    {"role": "user", "parts": [{"text": "What's the weather in London?"}]},
-    {"role": "model", "parts": [{"functionCall": {"name": "get_weather", "args": {"location": "London"}}}]},
-    {"role": "function", "parts": [{"functionResponse": {"name": "get_weather", "response": {"temperature": 15, "condition": "cloudy"}}}]}
-  ]
-}
+```bash
+bash $SCRIPT generate --model gemini-2.5-flash \
+  --messages '[
+    {"role":"user","parts":[{"text":"What is the weather in London?"}]},
+    {"role":"model","parts":[{"functionCall":{"name":"get_weather","args":{"location":"London"}}}]},
+    {"role":"function","parts":[{"functionResponse":{"name":"get_weather","response":{"temperature":15,"condition":"cloudy"}}}]}
+  ]'
 ```
 
 ## Embeddings
 
 ```bash
-curl "${BASE}/models/gemini-embedding-001:embedContent" \
-  -H "x-goog-api-key: ${GOOGLE_API_KEY}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "models/gemini-embedding-001",
-    "content": {"parts": [{"text": "What is the meaning of life?"}]},
-    "taskType": "RETRIEVAL_DOCUMENT",
-    "outputDimensionality": 768
-  }'
+# Single text
+bash $SCRIPT embed --text "What is the meaning of life?"
+
+# With task type
+bash $SCRIPT embed --text "Document about AI" --task-type RETRIEVAL_DOCUMENT
+
+# Batch (multiple texts)
+bash $SCRIPT embed --texts '["First text","Second text","Third text"]'
 ```
 
 ### Task Types
@@ -296,110 +268,88 @@ curl "${BASE}/models/gemini-embedding-001:embedContent" \
 | `FACT_VERIFICATION` | Fact checking |
 | `CODE_RETRIEVAL_QUERY` | Code search queries |
 
-Default dimensions: 3072. Set `outputDimensionality` to reduce (e.g., 768, 256).
-
-### Batch Embeddings
-
-```bash
-curl "${BASE}/models/gemini-embedding-001:batchEmbedContents" \
-  -H "x-goog-api-key: ${GOOGLE_API_KEY}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "requests": [
-      {"model": "models/gemini-embedding-001", "content": {"parts": [{"text": "First text"}]}, "taskType": "RETRIEVAL_DOCUMENT"},
-      {"model": "models/gemini-embedding-001", "content": {"parts": [{"text": "Second text"}]}, "taskType": "RETRIEVAL_DOCUMENT"}
-    ]
-  }'
-```
+Default dimensions: 3072. Set `outputDimensionality` in the model config to reduce (e.g., 768, 256).
 
 ## File Uploads
 
-Upload files for use in prompts (required when total request >100MB, or for video/large audio):
+The script handles the full resumable upload flow automatically:
 
 ```bash
-# Step 1: Start resumable upload
-UPLOAD_URL=$(curl -s -D - "${BASE_UPLOAD}/upload/v1beta/files" \
-  -H "x-goog-api-key: ${GOOGLE_API_KEY}" \
-  -H "X-Goog-Upload-Protocol: resumable" \
-  -H "X-Goog-Upload-Command: start" \
-  -H "X-Goog-Upload-Header-Content-Length: $(wc -c < file.mp4)" \
-  -H "X-Goog-Upload-Header-Content-Type: video/mp4" \
-  -H "Content-Type: application/json" \
-  -d '{"file": {"display_name": "my-video"}}' 2>/dev/null | grep -i "x-goog-upload-url" | cut -d' ' -f2 | tr -d '\r')
+# Upload a file
+bash $SCRIPT upload --file document.pdf
+bash $SCRIPT upload --file video.mp4 --display-name "my-video"
 
-# Step 2: Upload bytes
-curl -s "${UPLOAD_URL}" \
-  -H "X-Goog-Upload-Offset: 0" \
-  -H "X-Goog-Upload-Command: upload, finalize" \
-  --data-binary @file.mp4
+# List uploaded files
+bash $SCRIPT files
 
-# Step 3: Use in generation
-curl "${BASE}/models/gemini-2.5-flash:generateContent" \
-  -H "x-goog-api-key: ${GOOGLE_API_KEY}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "contents": [{"parts": [
-      {"fileData": {"mimeType": "video/mp4", "fileUri": "https://generativelanguage.googleapis.com/v1beta/files/FILE_ID"}},
-      {"text": "Summarize this video"}
-    ]}]
-  }'
+# Delete a file
+bash $SCRIPT delete-file --name "files/abc123"
 ```
 
-The wrapper script handles all upload steps automatically with `bash $SCRIPT upload --file <path>`.
+Files auto-expire after 48 hours. For files >20MB passed to `generate` via `--file`, the script auto-uploads them first.
 
-### File Management
+### Using uploaded files in generation
+
+After uploading, use the returned file URI with `--file`:
 
 ```bash
-# List files
-curl -s "${BASE}/files" -H "x-goog-api-key: ${GOOGLE_API_KEY}"
+# Upload first
+bash $SCRIPT upload --file large_video.mp4
+# Returns: {"file": {"uri": "https://...files/abc123", ...}}
 
-# Get file metadata
-curl -s "${BASE}/files/FILE_ID" -H "x-goog-api-key: ${GOOGLE_API_KEY}"
-
-# Delete file
-curl -s -X DELETE "${BASE}/files/FILE_ID" -H "x-goog-api-key: ${GOOGLE_API_KEY}"
+# Then use in generation
+bash $SCRIPT generate --model gemini-2.5-flash \
+  --prompt "Summarize this video" \
+  --file "https://generativelanguage.googleapis.com/v1beta/files/abc123"
 ```
-
-Files auto-expire after 48 hours.
 
 ## Context Caching
 
-Cache large inputs to save cost on repeated queries:
+Cache large inputs to save cost on repeated queries (cached tokens are 75% cheaper):
 
 ```bash
-# Create cache
-curl "${BASE}/cachedContents" \
-  -H "x-goog-api-key: ${GOOGLE_API_KEY}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "models/gemini-2.5-flash",
-    "contents": [{"parts": [{"text": "Very long document text..."}], "role": "user"}],
-    "systemInstruction": {"parts": [{"text": "You are an analyst"}]},
-    "ttl": "3600s"
-  }'
+# Create cache from a file
+bash $SCRIPT cache-create --model gemini-2.5-flash --file large_doc.pdf \
+  --system "You are an analyst" --ttl 3600
 
-# Use cached content
-curl "${BASE}/models/gemini-2.5-flash:generateContent" \
-  -H "x-goog-api-key: ${GOOGLE_API_KEY}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "cachedContent": "cachedContents/CACHE_NAME",
-    "contents": [{"parts": [{"text": "Summarize the key findings"}], "role": "user"}]
-  }'
+# Create cache from text
+bash $SCRIPT cache-create --model gemini-2.5-flash --text "Very long document..." \
+  --system "Analyze this" --ttl 7200
+
+# Use cached content in generation
+bash $SCRIPT generate --model gemini-2.5-flash \
+  --prompt "Summarize the key findings" \
+  --cached-content "cachedContents/CACHE_NAME"
+
+# List and manage caches
+bash $SCRIPT cache-list
+bash $SCRIPT cache-delete --name "cachedContents/abc123"
 ```
 
 Minimum token count for caching: 1024 (Flash), 4096 (Pro).
 
+**Important:** When using `--cached-content`, do not repeat the cached content or system instruction — they're already in the cache.
+
 ## Token Counting
 
 ```bash
-curl "${BASE}/models/gemini-2.5-flash:countTokens" \
-  -H "x-goog-api-key: ${GOOGLE_API_KEY}" \
-  -H "Content-Type: application/json" \
-  -d '{"contents": [{"parts": [{"text": "Count my tokens"}]}]}'
+bash $SCRIPT count-tokens --model gemini-2.5-flash --prompt "Count my tokens"
+bash $SCRIPT count-tokens --model gemini-2.5-flash --file large_document.pdf
 ```
 
-Response: `{"totalTokens": 4}`
+Returns the total token count as a number.
+
+## Safety Settings
+
+Override default content filtering by including `safetySettings` in `--messages` JSON or via the raw API (see references):
+
+| Category | Thresholds |
+|----------|-----------|
+| `HARM_CATEGORY_HATE_SPEECH` | `BLOCK_NONE`, `BLOCK_ONLY_HIGH`, `BLOCK_MEDIUM_AND_ABOVE`, `BLOCK_LOW_AND_ABOVE` |
+| `HARM_CATEGORY_DANGEROUS_CONTENT` | Same |
+| `HARM_CATEGORY_SEXUALLY_EXPLICIT` | Same |
+| `HARM_CATEGORY_HARASSMENT` | Same |
+| `HARM_CATEGORY_CIVIC_INTEGRITY` | Same |
 
 ## Error Handling
 
@@ -411,24 +361,6 @@ Response: `{"totalTokens": 4}`
 | 404 | Model not found |
 | 429 | Rate limited — back off and retry |
 | 500 | Server error — retry with exponential backoff |
-
-Error response format:
-```json
-{"error": {"code": 400, "message": "Description", "status": "INVALID_ARGUMENT"}}
-```
-
-## Safety Settings
-
-Override default content filtering per request:
-
-```json
-"safetySettings": [
-  {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_ONLY_HIGH"},
-  {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
-]
-```
-
-Thresholds: `BLOCK_NONE`, `BLOCK_ONLY_HIGH`, `BLOCK_MEDIUM_AND_ABOVE`, `BLOCK_LOW_AND_ABOVE`.
 
 ## References
 
