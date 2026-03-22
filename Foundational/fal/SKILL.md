@@ -1,5 +1,5 @@
 ---
-name: Fal
+name: fal
 description: >
   Foundational skill for the fal.ai Model API — 600+ generative media models (image, video, audio, LLMs) accessible via HTTP. Use this skill when: (1) generating images from text or other images (FLUX, SDXL, etc.), (2) generating video from text or images, (3) speech-to-text or text-to-speech, (4) running LLMs via fal, (5) any task involving fal.ai model endpoints, (6) discovering available fal models or checking pricing, (7) chaining models via fal workflows, (8) understanding fal API patterns (sync vs queue, file handling, error handling). This is the base fal skill — specialized skills may reference it for specific model categories or workflows.
 metadata: {"openclaw": {"emoji": "⚡", "requires": {"env": ["FAL_API_KEY"]}, "primaryEnv": "FAL_API_KEY"}}
@@ -7,129 +7,141 @@ metadata: {"openclaw": {"emoji": "⚡", "requires": {"env": ["FAL_API_KEY"]}, "p
 
 # fal Model API
 
-Access 600+ generative media models via simple HTTP requests. Two execution modes: synchronous (fast) and queue (reliable).
+Access 600+ generative media models via `scripts/fal.sh`. Two execution modes: synchronous (fast) and queue (reliable).
 
 ## Authentication
 
-All requests use the same header:
+Set `FAL_API_KEY` environment variable. The wrapper script handles the auth header automatically.
 
-```
-Authorization: Key $FAL_API_KEY
-```
+## Wrapper Script
+
+All operations go through `scripts/fal.sh`. Run `bash scripts/fal.sh --help` for full usage.
+
+### Commands
+
+| Command | Purpose |
+|---------|---------|
+| `run` | Synchronous model execution (fast, simple) |
+| `queue` | Queue-based async execution (reliable, recommended) |
+| `status` | Poll queue request status |
+| `result` | Get queue request result |
+| `cancel` | Cancel a queued request |
+| `search` | Search/list available models |
+| `schema` | Get a model's OpenAPI input/output schema |
+| `pricing` | Get model pricing |
+| `estimate` | Estimate cost for model usage |
 
 ## Model Discovery
 
-fal has 600+ models that change frequently. Always use the live Platform API to find models and get their exact input/output schemas rather than guessing or relying on memorized model IDs.
-
-### Find Models
+fal has 600+ models that change frequently. Use the script to discover models and get their schemas rather than guessing model IDs.
 
 ```bash
-# Search by keyword (text-to-video, image generation, speech-to-text, etc.)
-curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models?query=text-to-video&limit=10" \
-  -H "Authorization: Key $FAL_API_KEY"
+# Search by capability
+bash scripts/fal.sh search --query "text-to-video" --limit 10
 
-# List all available models (paginated)
-curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models?limit=50" \
-  -H "Authorization: Key $FAL_API_KEY"
+# List all models (paginated)
+bash scripts/fal.sh search --limit 50
 
 # Paginate with cursor
-curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models?limit=50&cursor=CURSOR_FROM_PREVIOUS" \
-  -H "Authorization: Key $FAL_API_KEY"
+bash scripts/fal.sh search --limit 50 --cursor CURSOR_FROM_PREVIOUS
+
+# Get a model's exact input/output schema (authoritative source for parameters)
+bash scripts/fal.sh schema --endpoint-id fal-ai/flux/dev
+
+# Check pricing
+bash scripts/fal.sh pricing --endpoint-id fal-ai/flux/dev
 ```
 
-### Get a Model's Input/Output Schema
+Always fetch the schema before calling an unfamiliar model — it tells you exactly what parameters it accepts.
 
-Before calling any model, fetch its OpenAPI schema to know exactly what parameters it accepts:
-
-```bash
-curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models?endpoint_id=fal-ai/flux/dev&expand=openapi-3.0" \
-  -H "Authorization: Key $FAL_API_KEY"
-```
-
-This returns the full OpenAPI 3.0 spec — input parameters, types, defaults, required fields, and output schema. This is the authoritative source for any model's interface.
-
-### Check Pricing
-
-```bash
-curl "https://api.fal.ai.cloudproxy.vibecodeapp.com/v1/models/pricing?endpoint_id=fal-ai/flux/dev" \
-  -H "Authorization: Key $FAL_API_KEY"
-```
-
-### When to Use Discovery
-
-- **No specific model requested** — search by capability (`query=text-to-image`)
-- **Unknown input format** — fetch the OpenAPI schema before calling
-- **Choosing between models** — compare options by searching a category
-- **Specific model requested** — can skip search, but still fetch schema if unsure of params
-
-For a quick reference of commonly used model IDs, see [references/models.md](references/models.md). That list is a convenience starting point — the live API above is always the source of truth.
+For a quick reference of commonly used model IDs, see [references/models.md](references/models.md). That list is a convenience starting point — live search is always the source of truth.
 
 ## Two Execution Modes
 
 ### Sync — Fast, Simple
 
-`POST https://fal.run.cloudproxy.vibecodeapp.com/{model_id}` — send request, get result directly. Best for fast models (<10s).
+Best for fast models (<10s). Send request, get result directly.
 
 ```bash
-curl -X POST "https://fal.run.cloudproxy.vibecodeapp.com/fal-ai/flux/dev" \
-  -H "Authorization: Key $FAL_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "a cat in a spacesuit", "image_size": "landscape_4_3"}'
-```
+# Quick image generation
+bash scripts/fal.sh run --model fal-ai/flux/dev --prompt "a cat in a spacesuit"
 
-Returns the model output directly (images, video URLs, text, etc.).
+# With full JSON control
+bash scripts/fal.sh run --model fal-ai/flux/dev \
+  --data '{"prompt":"a cat","image_size":"landscape_4_3","num_images":2}'
+
+# With image input
+bash scripts/fal.sh run --model fal-ai/flux/dev/image-to-image \
+  --image_url "https://example.com/photo.jpg" --prompt "make it watercolor"
+```
 
 ### Queue — Reliable, Recommended
 
-`POST https://queue.fal.run.cloudproxy.vibecodeapp.com/{model_id}` — submit, poll, retrieve. Built-in retries, cancellation, status tracking. Use for anything slow (video gen, batch ops) or when reliability matters.
+Best for slow operations (video gen, batch) or when reliability matters. Submit → poll → retrieve.
 
-**Step 1: Submit**
+**Important:** The queue submit response returns `status_url`, `response_url`, and `cancel_url`. Use these with `--status-url`, `--response-url`, `--cancel-url` — they contain the correct normalized model path. Alternatively, pass `--model` and the script auto-normalizes sub-paths.
+
 ```bash
-curl -X POST "https://queue.fal.run.cloudproxy.vibecodeapp.com/fal-ai/flux/dev" \
-  -H "Authorization: Key $FAL_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "a cat in a spacesuit"}'
+# Step 1: Submit to queue
+bash scripts/fal.sh queue --model fal-ai/wan/v2.2-a14b/text-to-video \
+  --prompt "a timelapse of a flower blooming"
+# Returns: request_id, status_url, response_url, cancel_url
+
+# Step 2: Poll status — use --status-url from queue response (preferred)
+bash scripts/fal.sh status --status-url "STATUS_URL_FROM_RESPONSE" --logs
+# OR use --model + --request-id (auto-normalizes sub-paths)
+bash scripts/fal.sh status --model fal-ai/wan/v2.2-a14b/text-to-video \
+  --request-id REQUEST_ID --logs
+# Status: IN_QUEUE → IN_PROGRESS → COMPLETED
+
+# Step 3: Get result — use --response-url from queue response (preferred)
+bash scripts/fal.sh result --response-url "RESPONSE_URL_FROM_RESPONSE"
+# OR use --model + --request-id
+bash scripts/fal.sh result --model fal-ai/wan/v2.2-a14b/text-to-video \
+  --request-id REQUEST_ID
+
+# Cancel — use --cancel-url from queue response (preferred)
+bash scripts/fal.sh cancel --cancel-url "CANCEL_URL_FROM_RESPONSE"
+# OR use --model + --request-id
+bash scripts/fal.sh cancel --model fal-ai/wan/v2.2-a14b/text-to-video \
+  --request-id REQUEST_ID
 ```
-Returns `request_id`, `status_url`, `response_url`, `cancel_url`.
 
-**Step 2: Poll status**
-```bash
-curl "https://queue.fal.run.cloudproxy.vibecodeapp.com/fal-ai/flux/dev/requests/{request_id}/status?logs=1"
-```
-Status progression: `IN_QUEUE` (202) → `IN_PROGRESS` (202) → `COMPLETED` (200)
+### Queue with webhook (no polling needed)
 
-**Step 3: Get result**
 ```bash
-curl "https://queue.fal.run.cloudproxy.vibecodeapp.com/fal-ai/flux/dev/requests/{request_id}"
-```
-
-**Cancel** (while `IN_QUEUE`):
-```bash
-curl -X PUT "https://queue.fal.run.cloudproxy.vibecodeapp.com/fal-ai/flux/dev/requests/{request_id}/cancel"
-```
-
-**SSE streaming** (real-time status updates):
-```bash
-curl "https://queue.fal.run.cloudproxy.vibecodeapp.com/fal-ai/flux/dev/requests/{request_id}/status/stream?logs=1"
+bash scripts/fal.sh queue --model fal-ai/flux/dev \
+  --prompt "a sunset" --webhook "https://your.app/webhook"
 ```
 
 ## Which Mode to Use
 
 | Scenario | Mode | Why |
 |----------|------|-----|
-| Fast image gen (FLUX schnell, SDXL) | Sync | Sub-5s, lowest latency |
+| Fast image gen (FLUX schnell, SDXL) | `run` | Sub-5s, lowest latency |
 | High-quality image gen (FLUX dev/pro) | Either | ~5-15s, sync is simpler |
-| Video generation | Queue | 30s–5min, need reliability |
-| Batch operations | Queue | Track multiple requests |
-| Production/critical | Queue | Auto-retries, cancellation |
+| Video generation | `queue` | 30s–5min, need reliability |
+| Batch operations | `queue` | Track multiple requests |
+| Production/critical | `queue` | Auto-retries, cancellation |
+
+## Special Headers
+
+Pass via script options:
+
+```bash
+# Fail-fast if processing doesn't start in 30s
+bash scripts/fal.sh run --model fal-ai/flux/dev --prompt "test" --request-timeout 30
+
+# Disable auto-retries
+bash scripts/fal.sh queue --model fal-ai/flux/dev --prompt "test" --no-retry
+
+# Custom output file expiration (seconds)
+bash scripts/fal.sh run --model fal-ai/flux/dev --prompt "test" --expire 3600
+```
 
 ## File Handling
 
-**Input:** Pass file URLs in the JSON body. Any public URL works. Data URIs work for small files.
-
-```json
-{"image_url": "https://example.com/photo.jpg", "prompt": "remove background"}
-```
+**Input:** Pass file URLs in the JSON body via `--data` or `--image_url`. Any public URL works. Data URIs work for small files.
 
 **Output:** Models return fal CDN URLs (`https://v3.fal.media/files/...`). Guaranteed available 7 days. Download anything you need to keep longer.
 
@@ -151,6 +163,16 @@ curl "https://queue.fal.run.cloudproxy.vibecodeapp.com/fal-ai/flux/dev/requests/
 }
 ```
 
+## Cost Estimation
+
+```bash
+# Get unit price
+bash scripts/fal.sh pricing --endpoint-id fal-ai/flux/dev
+
+# Estimate cost for multiple units
+bash scripts/fal.sh estimate --endpoint-id fal-ai/flux/dev --unit-quantity 10
+```
+
 ## Error Handling
 
 Errors return a `detail` array with `type` (machine-readable), `msg` (human-readable), `loc` (field path).
@@ -161,15 +183,7 @@ Key error types:
 - `no_media_generated` (422) — model produced nothing, not retryable
 - `image_too_small` / `image_too_large` (422) — dimension issues, check `ctx` for limits
 
-Check `X-Fal-Retryable` response header. Queue mode auto-retries server errors (503, 504, 429) up to 10 times. 5xx errors are not billed.
-
-## Useful Headers
-
-| Header | Purpose |
-|--------|---------|
-| `X-Fal-Request-Timeout: 30` | Fail-fast if processing doesn't start in 30s |
-| `X-Fal-No-Retry: 1` | Disable auto-retries (queue mode) |
-| `X-Fal-Object-Lifecycle-Preference: {"expiration_duration_seconds": 3600}` | Custom output file expiration |
+Queue mode auto-retries server errors (503, 504, 429) up to 10 times. 5xx errors are not billed.
 
 ## References
 
