@@ -7,68 +7,68 @@ description: >
   2. When the user needs to manage storage buckets or files
   3. When the user wants to work with edge functions or auth users
   4. When the user mentions Supabase, Postgres, database, or their backend data
-metadata: {"openclaw": {"emoji": "⚡", "requires": {"env": ["SUPABASE_SERVICE_ROLE_KEY"]}}}
+metadata: {"openclaw": {"emoji": "⚡", "requires": {"env": ["SUPABASE_ACCESS_TOKEN"]}}}
 ---
 
 # Supabase Integration
 
 PostgREST API for database CRUD, plus Management API for storage, auth, and edge functions.
 
-**Auth**: Service role key via `SUPABASE_SERVICE_ROLE_KEY` + project URL via `SUPABASE_PROJECT_URL`.
+**Auth**: Access token via `SUPABASE_ACCESS_TOKEN` (OAuth via Nango MCP) + project URL via `SUPABASE_PROJECT_URL`.
 
 ```bash
 # All PostgREST requests (database CRUD)
 curl -s "$SUPABASE_PROJECT_URL/rest/v1/<table>" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
   -H "Content-Type: application/json"
 ```
 
-**Note**: The service role key bypasses Row Level Security. Use with care.
+**Note**: OAuth token from Nango MCP. Access level depends on the scopes granted during OAuth flow.
 
 ## Database — Read
 
 ```bash
 # List all rows from a table
 curl -s "$SUPABASE_PROJECT_URL/rest/v1/users?select=*&limit=20" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
 
 # Select specific columns
 curl -s "$SUPABASE_PROJECT_URL/rest/v1/users?select=id,name,email" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
 
 # Filter (eq, neq, gt, lt, gte, lte, like, ilike, in, is)
 curl -s "$SUPABASE_PROJECT_URL/rest/v1/users?select=*&status=eq.active&age=gt.18" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
 
 # Sort
 curl -s "$SUPABASE_PROJECT_URL/rest/v1/users?select=*&order=created_at.desc&limit=10" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
 
 # Full-text search
 curl -s "$SUPABASE_PROJECT_URL/rest/v1/posts?select=*&title=fts.machine+learning" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
 
 # Relations (foreign key joins)
 curl -s "$SUPABASE_PROJECT_URL/rest/v1/posts?select=*,author:users(name,email)" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
 
 # Count rows
 curl -s "$SUPABASE_PROJECT_URL/rest/v1/users?select=count" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
   -H "Prefer: count=exact"
 
 # Pagination (offset-based)
 curl -s "$SUPABASE_PROJECT_URL/rest/v1/users?select=*&limit=10&offset=20" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
 ```
 
 ## Database — Write
@@ -76,37 +76,37 @@ curl -s "$SUPABASE_PROJECT_URL/rest/v1/users?select=*&limit=10&offset=20" \
 ```bash
 # Insert row(s)
 curl -s -X POST "$SUPABASE_PROJECT_URL/rest/v1/users" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Prefer: return=representation" \
   -d '[{"name":"Alice","email":"alice@example.com"}]'
 
 # Update rows (matching filter)
 curl -s -X PATCH "$SUPABASE_PROJECT_URL/rest/v1/users?id=eq.123" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Prefer: return=representation" \
   -d '{"status":"inactive"}'
 
 # Upsert (insert or update on conflict)
 curl -s -X POST "$SUPABASE_PROJECT_URL/rest/v1/users" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Prefer: resolution=merge-duplicates,return=representation" \
   -d '[{"id":123,"name":"Alice Updated"}]'
 
 # Delete rows
 curl -s -X DELETE "$SUPABASE_PROJECT_URL/rest/v1/users?id=eq.123" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
 
 # Call RPC function
 curl -s -X POST "$SUPABASE_PROJECT_URL/rest/v1/rpc/my_function" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"arg1":"value1"}'
 ```
@@ -116,27 +116,27 @@ curl -s -X POST "$SUPABASE_PROJECT_URL/rest/v1/rpc/my_function" \
 ```bash
 # List buckets
 curl -s "$SUPABASE_PROJECT_URL/storage/v1/bucket" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
 
 # List files in a bucket
 curl -s -X POST "$SUPABASE_PROJECT_URL/storage/v1/object/list/my-bucket" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"prefix":"","limit":100}'
 
 # Upload file
 curl -s -X POST "$SUPABASE_PROJECT_URL/storage/v1/object/my-bucket/path/file.pdf" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
   -H "Content-Type: application/pdf" \
   --data-binary @file.pdf
 
 # Download file
 curl -s "$SUPABASE_PROJECT_URL/storage/v1/object/my-bucket/path/file.pdf" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
   -o file.pdf
 
 # Get public URL (for public buckets)
@@ -144,8 +144,8 @@ echo "$SUPABASE_PROJECT_URL/storage/v1/object/public/my-bucket/path/file.pdf"
 
 # Delete file
 curl -s -X DELETE "$SUPABASE_PROJECT_URL/storage/v1/object/my-bucket/path/file.pdf" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
 ```
 
 ## Auth (user management)
@@ -153,25 +153,25 @@ curl -s -X DELETE "$SUPABASE_PROJECT_URL/storage/v1/object/my-bucket/path/file.p
 ```bash
 # List users
 curl -s "$SUPABASE_PROJECT_URL/auth/v1/admin/users" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
 
 # Get user by ID
 curl -s "$SUPABASE_PROJECT_URL/auth/v1/admin/users/{user_id}" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
 
 # Create user
 curl -s -X POST "$SUPABASE_PROJECT_URL/auth/v1/admin/users" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"email":"user@example.com","password":"securepass","email_confirm":true}'
 
 # Delete user
 curl -s -X DELETE "$SUPABASE_PROJECT_URL/auth/v1/admin/users/{user_id}" \
-  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
 ```
 
 ## Edge Functions
@@ -179,7 +179,7 @@ curl -s -X DELETE "$SUPABASE_PROJECT_URL/auth/v1/admin/users/{user_id}" \
 ```bash
 # Invoke an edge function
 curl -s -X POST "$SUPABASE_PROJECT_URL/functions/v1/{function_name}" \
-  -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"key":"value"}'
 ```
@@ -201,7 +201,7 @@ curl -s -X POST "$SUPABASE_PROJECT_URL/functions/v1/{function_name}" \
 
 ## Tips
 
-- **Service role key bypasses RLS** — be careful with writes, this has full database access.
+- **OAuth token** — access level depends on scopes granted. May not bypass RLS like the service_role key does.
 - **Both headers required**: `apikey` and `Authorization: Bearer` must both contain the key.
 - **`Prefer: return=representation`** on POST/PATCH/DELETE returns the affected rows.
 - **Relations**: Use `select=*,relation_name(columns)` for joins via foreign keys.
