@@ -16,7 +16,7 @@ REST API for boards, lists, cards, checklists, labels, and members.
 
 **Auth**: Token via query parameter `token` (NOT Bearer).
 **Base URL**: `https://api.trello.com/1`
-
+metadata: {"openclaw": {"emoji": "📌", "requires": {"env": ["TRELLO_ACCESS_TOKEN", "TRELLO_API_KEY"]}}}
 ```bash
 # Trello uses token query parameter
 curl -s "https://api.trello.com/1/<endpoint>?token=$TRELLO_ACCESS_TOKEN"
