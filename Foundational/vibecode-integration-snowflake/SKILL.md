@@ -3,7 +3,7 @@ name: vibecode-integration-snowflake
 description: >
   Snowflake SQL API for querying data warehouses, managing databases, and running analytics.
   Consult this skill:
-  1. When the user asks to query data or run SQL against Snowflake
+metadata: {"openclaw": {"emoji": "❄️", "requires": {"env": ["SNOWFLAKE_ACCESS_TOKEN", "SNOWFLAKE_ACCOUNT_URL"]}}}
   2. When the user needs to list databases, schemas, tables, or views
   3. When the user wants to run analytics queries or check warehouse status
   4. When the user mentions Snowflake, data warehouse, or SQL queries on their data
