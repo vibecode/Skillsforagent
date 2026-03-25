@@ -72,3 +72,7 @@ Many more integrations follow the same pattern — if an `_ACCESS_TOKEN` or `_AP
 - **Instance URLs**: Some services include a second env var for the base URL (e.g., `JIRA_SITE_URL`, `SALESFORCE_INSTANCE_URL`, `ZENDESK_SUBDOMAIN`). Always use these.
 - **Token expiry**: Tokens refresh on container restart. If you get a 401, tell the user to reconnect the integration.
 - **Rate limits**: Back off on 429 responses with exponential delay.
+
+---
+
+*Sources: [Nango integration docs](https://nango.dev/docs/api-integrations), individual provider API docs (linked in env var tables above). Env var names from [agents-backend provider configs](https://github.com/vibecode/vibecodeapp/tree/main/agents-backend/src/domains/connections/providers).*

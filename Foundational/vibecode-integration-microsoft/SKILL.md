@@ -374,4 +374,4 @@ curl -s -H "Authorization: Bearer $MS_TOKEN" \
 
 ---
 
-*Based on [Microsoft Graph REST API v1.0](https://learn.microsoft.com/en-us/graph/api/overview), [vm0-ai/intercom](https://skills.sh/vm0-ai/vm0-skills/intercom) (format reference), and [claude-office-skills](https://skills.sh/claude-office-skills/skills) (workflow patterns).*
+*Based on [Microsoft Graph REST API v1.0](https://learn.microsoft.com/en-us/graph/api/overview), [Microsoft Graph Auth docs](https://learn.microsoft.com/en-us/graph/auth-v2-user), and [claude-office-skills](https://skills.sh/claude-office-skills/skills) (workflow patterns).*
