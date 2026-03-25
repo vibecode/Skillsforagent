@@ -54,7 +54,7 @@ Many more integrations follow the same pattern — if an `_ACCESS_TOKEN` or `_AP
 | Datadog | `DATADOG_API_KEY` + `DATADOG_SITE` | `DD-API-KEY` header (not Bearer) |
 | Chargebee | `CHARGEBEE_API_KEY` + `CHARGEBEE_SUBDOMAIN` | Basic auth (key as username, empty password) |
 | Jotform | `JOTFORM_API_KEY` | Query param: `?apiKey=$JOTFORM_API_KEY` |
-| GitLab | `GITLAB_ACCESS_TOKEN` | `PRIVATE-TOKEN` header |
+| Supabase | `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_URL` | `apikey` header + Bearer |
 | Supabase | `SUPABASE_SERVICE_ROLE_KEY` + `SUPABASE_PROJECT_URL` | `apikey` header + Bearer |
 
 ## Complex integrations
