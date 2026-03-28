@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-jotform
+display_name: Jotform
 description: >
   Jotform API for accessing forms, submissions, and survey responses.
   Consult this skill:

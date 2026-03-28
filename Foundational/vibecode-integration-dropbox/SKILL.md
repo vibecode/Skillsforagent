@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-dropbox
+display_name: Dropbox
 description: >
   Dropbox API for managing files, folders, and sharing links.
   Consult this skill:

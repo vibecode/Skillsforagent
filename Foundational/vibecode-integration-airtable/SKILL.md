@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-airtable
+display_name: Airtable
 description: >
   Airtable API for managing bases, tables, records, and views.
   Consult this skill:

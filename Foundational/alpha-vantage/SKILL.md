@@ -1,5 +1,6 @@
 ---
 name: alpha-vantage
+display_name: Alpha Vantage
 description: >
   Foundational skill for the Alpha Vantage financial data API — stocks,
   fundamentals, forex, crypto, commodities, economic indicators, 50+ technical

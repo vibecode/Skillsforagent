@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-wise
+display_name: Wise
 description: >
   Wise API for managing international transfers, balances, and currency exchange.
   Consult this skill:

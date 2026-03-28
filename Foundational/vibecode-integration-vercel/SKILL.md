@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-vercel
+display_name: Vercel
 description: >
   Vercel integration for deployments, projects, domains, and logs.
   Consult this skill:

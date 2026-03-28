@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-supabase
+display_name: Supabase
 description: >
   Supabase integration for database queries, storage, auth, and edge functions.
   Consult this skill:

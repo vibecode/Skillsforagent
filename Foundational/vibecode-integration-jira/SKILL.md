@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-jira
+display_name: Jira
 description: >
   Jira REST API for managing issues, projects, boards, sprints, and workflows.
   Consult this skill:

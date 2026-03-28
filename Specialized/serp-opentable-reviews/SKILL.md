@@ -1,5 +1,6 @@
 ---
 name: serp-opentable-reviews
+display_name: OpenTable Reviews
 description: >
   Specialized skill for OpenTable restaurant review workflows via SerpApi — review collection,
   sentiment analysis, rating breakdowns, restaurant comparison, trend analysis, and multi-market

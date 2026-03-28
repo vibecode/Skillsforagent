@@ -1,5 +1,6 @@
 ---
 name: yt-competitor-analysis
+display_name: YouTube Competitor Analysis
 description: >
   Specialized skill for YouTube competitor analysis and content gap research. Use when:
   (1) analyzing competitors in a YouTube niche, (2) finding top-performing channels and videos

@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-zoominfo
+display_name: ZoomInfo
 description: >
   ZoomInfo API for company and contact intelligence, enrichment, and sales prospecting.
   Consult this skill:

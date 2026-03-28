@@ -1,5 +1,6 @@
 ---
 name: serp-tripadvisor
+display_name: Tripadvisor
 description: >
   Specialized skill for Tripadvisor travel workflows via SerpApi — restaurant discovery,
   hotel comparison with live pricing, attraction and tour planning, destination exploration,

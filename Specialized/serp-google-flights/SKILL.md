@@ -1,5 +1,6 @@
 ---
 name: serp-google-flights
+display_name: Google Flights
 description: >
   Specialized skill for Google Flights workflows via SerpApi — flight search, price comparison,
   round-trip planning, multi-city itineraries, and booking. Use when: (1) searching for flights

@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-youtube
+display_name: YouTube
 description: >
   YouTube Data API for managing channels, videos, playlists, and analytics.
   Consult this skill:

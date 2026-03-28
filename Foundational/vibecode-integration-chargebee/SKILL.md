@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-chargebee
+display_name: Chargebee
 description: >
   Chargebee API for managing subscriptions, customers, invoices, and billing.
   Consult this skill:

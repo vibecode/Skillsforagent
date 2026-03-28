@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-ramp
+display_name: Ramp
 description: >
   Ramp API for managing corporate expenses, cards, transactions, and reimbursements.
   Consult this skill:

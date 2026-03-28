@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-xero
+display_name: Xero
 description: >
   Xero Accounting API for managing invoices, contacts, bank transactions, and reports.
   Consult this skill:

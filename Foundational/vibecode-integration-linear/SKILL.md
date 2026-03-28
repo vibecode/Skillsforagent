@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-linear
+display_name: Linear
 description: >
   Linear GraphQL API for managing issues, projects, teams, and workflows.
   Consult this skill:

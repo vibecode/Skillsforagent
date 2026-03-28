@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-stripe
+display_name: Stripe
 description: >
   Stripe API for managing payments, customers, subscriptions, invoices, and billing.
   Consult this skill:

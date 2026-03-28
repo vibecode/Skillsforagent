@@ -1,5 +1,6 @@
 ---
 name: serpapi-youtube
+display_name: YouTube Search
 description: >
   Specialized skill for YouTube search, video analysis, transcript extraction, comment mining,
   and content research workflows via SerpApi. Use when: (1) searching YouTube for videos,

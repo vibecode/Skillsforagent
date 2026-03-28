@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-sentry
+display_name: Sentry
 description: >
   Sentry API for tracking errors, monitoring performance, and debugging issues.
   Consult this skill:

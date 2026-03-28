@@ -1,5 +1,6 @@
 ---
 name: vibecode-integrations
+display_name: Connected Integrations
 description: >
   Reference for third-party services the user has connected through the Vibecode dashboard.
   Consult this skill:

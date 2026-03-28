@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-notion
+display_name: Notion
 description: >
   Notion API for managing pages, databases, blocks, and workspace content.
   Consult this skill:

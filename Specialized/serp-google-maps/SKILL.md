@@ -1,5 +1,6 @@
 ---
 name: serp-google-maps
+display_name: Google Maps
 description: >
   Specialized skill for Google Maps local search workflows via SerpApi — find businesses,
   restaurants, services, and places with ratings, reviews, hours, and contact details.

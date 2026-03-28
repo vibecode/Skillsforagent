@@ -1,5 +1,6 @@
 ---
 name: yt-dlp
+display_name: Video Downloader
 description: >
   Download videos, audio, and playlists from YouTube and thousands of other sites using yt-dlp.
   Use when: (1) downloading a video from a URL, (2) extracting audio/MP3 from a video,

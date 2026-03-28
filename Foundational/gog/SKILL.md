@@ -1,5 +1,6 @@
 ---
 name: gog
+display_name: Google Workspace CLI
 description: Google Workspace CLI for Gmail, Calendar, Drive, Docs, Sheets, Slides, Forms, Contacts, and Tasks. Use this skill whenever the user asks about email, calendar events, Google Drive files, spreadsheets, documents, or any Google Workspace operation.
 metadata: {"openclaw": { "requires": {"bins": ["gog"], "env": ["OPENCLAW_CONNECTION_GOG_ACCOUNT"]}}}
 ---

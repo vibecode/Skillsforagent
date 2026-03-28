@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-pagerduty
+display_name: PagerDuty
 description: >
   PagerDuty API for managing incidents, on-call schedules, services, and escalation policies.
   Consult this skill:

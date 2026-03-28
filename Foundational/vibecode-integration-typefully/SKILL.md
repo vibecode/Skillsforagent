@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-typefully
+display_name: Typefully
 description: >
   Typefully API for scheduling and publishing posts to Twitter/X and LinkedIn.
   Consult this skill:

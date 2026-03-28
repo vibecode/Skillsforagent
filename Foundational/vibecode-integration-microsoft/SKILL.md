@@ -1,5 +1,6 @@
 ---
 name: vibecode-integration-microsoft
+display_name: Microsoft 365
 description: >
   Microsoft 365 integration via Microsoft Graph API. Consult this skill:
   1. When the user asks to read, send, or manage Outlook emails
