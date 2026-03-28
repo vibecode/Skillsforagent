@@ -1,5 +1,6 @@
 ---
 name: skill-creator
+display_name: Skill Creator
 description: >
   Create new skills, modify and improve existing skills, and measure skill
   performance for the Chorus agent platform. Use this skill whenever a user wants

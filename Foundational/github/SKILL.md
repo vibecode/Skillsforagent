@@ -1,5 +1,6 @@
 ---
 name: github
+display_name: GitHub CLI
 description: GitHub via the `gh` CLI — repos, issues, PRs, search, Actions, releases, gists, and the API.
 metadata: {"openclaw": {"emoji": "🐙", "requires": {"bins": ["gh"], "env": ["GITHUB_TOKEN"]}}}
 ---

@@ -1,5 +1,6 @@
 ---
 name: fal
+display_name: Fal AI
 description: >
   Foundational skill for the fal.ai Model API — 600+ generative media models (image, video, audio, LLMs) accessible via HTTP. Use this skill when: (1) generating images from text or other images (FLUX, SDXL, etc.), (2) generating video from text or images, (3) speech-to-text or text-to-speech, (4) running LLMs via fal, (5) any task involving fal.ai model endpoints, (6) discovering available fal models or checking pricing, (7) chaining models via fal workflows, (8) understanding fal API patterns (sync vs queue, file handling, error handling). This is the base fal skill — specialized skills may reference it for specific model categories or workflows.
 metadata: {"openclaw": {"emoji": "⚡", "requires": {"env": ["FAL_API_KEY"]}, "primaryEnv": "FAL_API_KEY"}}

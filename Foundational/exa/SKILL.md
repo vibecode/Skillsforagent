@@ -1,5 +1,6 @@
 ---
 name: exa
+display_name: Exa Search
 description: >
   Foundational skill for the Exa API — web search, content extraction, similar link discovery,
   AI-powered answers, multi-step research, and Websets (async entity sourcing at scale). Use
