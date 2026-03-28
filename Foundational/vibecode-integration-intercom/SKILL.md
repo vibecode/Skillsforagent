@@ -19,30 +19,30 @@ REST API v2.15 for conversations, contacts, articles, companies, tags, and suppo
 
 ```bash
 # All requests use these headers
-curl -s https://api.intercom.com/<endpoint> \
+curl -s https://api.intercom.io/<endpoint> \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Accept: application/json" \
   -H "Content-Type: application/json" \
   -H "Intercom-Version: 2.15"
 ```
 
-**Regional endpoints**: US `api.intercom.com` | EU `api.eu.intercom.io` | AU `api.au.intercom.io`. Default to US unless user specifies otherwise.
+**Regional endpoints**: US `api.intercom.io` | EU `api.eu.intercom.io` | AU `api.au.intercom.io`. Default to US unless user specifies otherwise.
 
 ## Conversations
 
 ```bash
 # List conversations
-curl -s "https://api.intercom.com/conversations" \
+curl -s "https://api.intercom.io/conversations" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Intercom-Version: 2.15"
 
 # Get conversation with full thread
-curl -s "https://api.intercom.com/conversations/{id}?display_as=plaintext" \
+curl -s "https://api.intercom.io/conversations/{id}?display_as=plaintext" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Intercom-Version: 2.15"
 
 # Search conversations (open, assigned to team)
-curl -s -X POST "https://api.intercom.com/conversations/search" \
+curl -s -X POST "https://api.intercom.io/conversations/search" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Intercom-Version: 2.15" \
@@ -52,28 +52,28 @@ curl -s -X POST "https://api.intercom.com/conversations/search" \
   ]}}'
 
 # Reply to conversation (as admin)
-curl -s -X POST "https://api.intercom.com/conversations/{id}/reply" \
+curl -s -X POST "https://api.intercom.io/conversations/{id}/reply" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Intercom-Version: 2.15" \
   -d '{"message_type":"comment","type":"admin","admin_id":"ADMIN_ID","body":"Reply text"}'
 
 # Add internal note
-curl -s -X POST "https://api.intercom.com/conversations/{id}/reply" \
+curl -s -X POST "https://api.intercom.io/conversations/{id}/reply" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Intercom-Version: 2.15" \
   -d '{"message_type":"note","type":"admin","admin_id":"ADMIN_ID","body":"Internal note"}'
 
 # Assign conversation
-curl -s -X POST "https://api.intercom.com/conversations/{id}/parts" \
+curl -s -X POST "https://api.intercom.io/conversations/{id}/parts" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Intercom-Version: 2.15" \
   -d '{"message_type":"assignment","type":"admin","admin_id":"ADMIN_ID","assignee_id":"TARGET_ADMIN_OR_TEAM_ID"}'
 
 # Close conversation
-curl -s -X POST "https://api.intercom.com/conversations/{id}/parts" \
+curl -s -X POST "https://api.intercom.io/conversations/{id}/parts" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Intercom-Version: 2.15" \
@@ -84,28 +84,28 @@ curl -s -X POST "https://api.intercom.com/conversations/{id}/parts" \
 
 ```bash
 # Search contacts by email
-curl -s -X POST "https://api.intercom.com/contacts/search" \
+curl -s -X POST "https://api.intercom.io/contacts/search" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Intercom-Version: 2.15" \
   -d '{"query":{"field":"email","operator":"=","value":"user@example.com"}}'
 
 # Create contact
-curl -s -X POST "https://api.intercom.com/contacts" \
+curl -s -X POST "https://api.intercom.io/contacts" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Intercom-Version: 2.15" \
   -d '{"role":"user","email":"user@example.com","name":"Jane Doe"}'
 
 # Update contact (PATCH not PUT)
-curl -s -X PATCH "https://api.intercom.com/contacts/{id}" \
+curl -s -X PATCH "https://api.intercom.io/contacts/{id}" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Intercom-Version: 2.15" \
   -d '{"name":"Updated Name","custom_attributes":{"plan":"enterprise"}}'
 
 # List contacts
-curl -s "https://api.intercom.com/contacts" \
+curl -s "https://api.intercom.io/contacts" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Intercom-Version: 2.15"
 ```
@@ -114,17 +114,17 @@ curl -s "https://api.intercom.com/contacts" \
 
 ```bash
 # List articles
-curl -s "https://api.intercom.com/articles" \
+curl -s "https://api.intercom.io/articles" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Intercom-Version: 2.15"
 
 # Search articles
-curl -s "https://api.intercom.com/articles/search?phrase=billing+FAQ" \
+curl -s "https://api.intercom.io/articles/search?phrase=billing+FAQ" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Intercom-Version: 2.15"
 
 # Create article
-curl -s -X POST "https://api.intercom.com/articles" \
+curl -s -X POST "https://api.intercom.io/articles" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Intercom-Version: 2.15" \
@@ -135,12 +135,12 @@ curl -s -X POST "https://api.intercom.com/articles" \
 
 ```bash
 # List admins (needed for admin_id in replies/assignments)
-curl -s "https://api.intercom.com/admins" \
+curl -s "https://api.intercom.io/admins" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Intercom-Version: 2.15"
 
 # List teams
-curl -s "https://api.intercom.com/teams" \
+curl -s "https://api.intercom.io/teams" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Intercom-Version: 2.15"
 ```
@@ -149,26 +149,26 @@ curl -s "https://api.intercom.com/teams" \
 
 ```bash
 # List tags
-curl -s "https://api.intercom.com/tags" \
+curl -s "https://api.intercom.io/tags" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Intercom-Version: 2.15"
 
 # Tag a contact
-curl -s -X POST "https://api.intercom.com/contacts/{contact_id}/tags" \
+curl -s -X POST "https://api.intercom.io/contacts/{contact_id}/tags" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Intercom-Version: 2.15" \
   -d '{"id":"TAG_ID"}'
 
 # Create note on contact
-curl -s -X POST "https://api.intercom.com/contacts/{contact_id}/notes" \
+curl -s -X POST "https://api.intercom.io/contacts/{contact_id}/notes" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Intercom-Version: 2.15" \
   -d '{"admin_id":"ADMIN_ID","body":"Note text"}'
 
 # Track event
-curl -s -X POST "https://api.intercom.com/events" \
+curl -s -X POST "https://api.intercom.io/events" \
   -H "Authorization: Bearer $INTERCOM_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Intercom-Version: 2.15" \
