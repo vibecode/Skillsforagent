@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-github
 display_name: GitHub
+provider_skill: true
+integration_dependencies:
+  - github
 description: >
   GitHub integration via the gh CLI and REST/GraphQL API.
   Consult this skill:

@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-jira
 display_name: Jira
+provider_skill: true
+integration_dependencies:
+  - jira
 description: >
   Jira REST API for managing issues, projects, boards, sprints, and workflows.
   Consult this skill:

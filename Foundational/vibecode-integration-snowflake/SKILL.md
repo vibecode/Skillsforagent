@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-snowflake
 display_name: Snowflake
+provider_skill: true
+integration_dependencies:
+  - snowflake
 description: >
   Snowflake SQL API for querying data warehouses, managing databases, and running analytics.
   Consult this skill:

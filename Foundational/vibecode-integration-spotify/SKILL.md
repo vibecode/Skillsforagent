@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-spotify
 display_name: Spotify
+provider_skill: true
+integration_dependencies:
+  - spotify
 description: >
   Spotify Web API for managing playlists, searching music, and controlling playback.
   Consult this skill:

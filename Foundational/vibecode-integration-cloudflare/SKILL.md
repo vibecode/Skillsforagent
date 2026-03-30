@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-cloudflare
 display_name: Cloudflare
+provider_skill: true
+integration_dependencies:
+  - cloudflare
 description: >
   Cloudflare API for managing DNS, zones, Workers, tunnels, and security settings.
   Consult this skill:

@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-granola
 display_name: Granola
+provider_skill: true
+integration_dependencies:
+  - granola
 description: >
   Granola API for accessing meeting notes, transcripts, and summaries.
   Consult this skill:

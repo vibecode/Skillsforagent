@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-google
 display_name: Google Workspace
+provider_skill: true
+integration_dependencies:
+  - google
 description: >
   Google Workspace integration via the gws or gog CLI. Consult this skill:
   1. When the user asks to read, send, or manage Gmail messages

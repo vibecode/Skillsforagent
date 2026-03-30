@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-intercom
 display_name: Intercom
+provider_skill: true
+integration_dependencies:
+  - intercom
 description: >
   Intercom API for managing conversations, contacts, articles, and support workflows.
   Consult this skill:

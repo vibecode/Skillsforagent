@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-trello
 display_name: Trello
+provider_skill: true
+integration_dependencies:
+  - trello
 description: >
   Trello REST API for managing boards, lists, cards, and checklists.
   Consult this skill:

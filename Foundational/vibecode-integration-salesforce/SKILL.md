@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-salesforce
 display_name: Salesforce
+provider_skill: true
+integration_dependencies:
+  - salesforce
 description: >
   Salesforce REST API for managing CRM objects, SOQL queries, and data operations.
   Consult this skill:

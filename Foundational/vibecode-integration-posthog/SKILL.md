@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-posthog
 display_name: PostHog
+provider_skill: true
+integration_dependencies:
+  - posthog
 description: >
   PostHog API for product analytics, feature flags, session recordings, and experiments.
   Consult this skill:

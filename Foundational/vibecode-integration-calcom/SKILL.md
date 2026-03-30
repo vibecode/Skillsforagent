@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-calcom
 display_name: Cal.com
+provider_skill: true
+integration_dependencies:
+  - calcom
 description: >
   Cal.com API for managing scheduling, event types, bookings, and availability.
   Consult this skill:

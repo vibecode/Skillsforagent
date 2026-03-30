@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-kustomer
 display_name: Kustomer
+provider_skill: true
+integration_dependencies:
+  - kustomer
 description: >
   Kustomer API for managing customers, conversations, and support workflows.
   Consult this skill:

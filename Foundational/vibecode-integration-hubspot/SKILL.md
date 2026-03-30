@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-hubspot
 display_name: HubSpot
+provider_skill: true
+integration_dependencies:
+  - hubspot
 description: >
   HubSpot CRM API for managing contacts, companies, deals, tickets, and engagements.
   Consult this skill:

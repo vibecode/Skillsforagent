@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-brex
 display_name: Brex
+provider_skill: true
+integration_dependencies:
+  - brex
 description: >
   Brex API for managing corporate cards, expenses, accounts, and transactions.
   Consult this skill:

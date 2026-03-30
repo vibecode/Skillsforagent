@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-shopify
 display_name: Shopify
+provider_skill: true
+integration_dependencies:
+  - shopify
 description: >
   Shopify Admin API for managing products, orders, customers, and store operations.
   Consult this skill:

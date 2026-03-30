@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-datadog
 display_name: Datadog
+provider_skill: true
+integration_dependencies:
+  - datadog
 description: >
   Datadog API for monitoring infrastructure, querying logs, managing monitors, and APM traces.
   Consult this skill:

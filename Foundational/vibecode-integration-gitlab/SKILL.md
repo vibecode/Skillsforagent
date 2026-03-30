@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-gitlab
 display_name: GitLab
+provider_skill: true
+integration_dependencies:
+  - gitlab
 description: >
   GitLab API for managing repositories, issues, merge requests, and CI/CD pipelines.
   Consult this skill:

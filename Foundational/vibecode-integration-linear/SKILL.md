@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-linear
 display_name: Linear
+provider_skill: true
+integration_dependencies:
+  - linear
 description: >
   Linear GraphQL API for managing issues, projects, teams, and workflows.
   Consult this skill:

@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-youtube
 display_name: YouTube
+provider_skill: true
+integration_dependencies:
+  - youtube
 description: >
   YouTube Data API for managing channels, videos, playlists, and analytics.
   Consult this skill:

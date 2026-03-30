@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-airtable
 display_name: Airtable
+provider_skill: true
+integration_dependencies:
+  - airtable
 description: >
   Airtable API for managing bases, tables, records, and views.
   Consult this skill:

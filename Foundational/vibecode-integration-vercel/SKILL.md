@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-vercel
 display_name: Vercel
+provider_skill: true
+integration_dependencies:
+  - vercel
 description: >
   Vercel integration for deployments, projects, domains, and logs.
   Consult this skill:

@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-jazzhr
 display_name: JazzHR
+provider_skill: true
+integration_dependencies:
+  - jazzhr
 description: >
   JazzHR API for managing job postings, applicants, and hiring workflows.
   Consult this skill:

@@ -1,6 +1,9 @@
 ---
 name: vibecode-integration-clerk
 display_name: Clerk
+provider_skill: true
+integration_dependencies:
+  - clerk
 description: >
   Clerk Backend API for managing users, organizations, sessions, and authentication.
   Consult this skill:
