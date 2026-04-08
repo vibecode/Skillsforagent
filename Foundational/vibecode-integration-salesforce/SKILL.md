@@ -11,7 +11,7 @@ description: >
   2. When the user needs to run SOQL queries or search with SOSL
   3. When the user wants to manage contacts, accounts, leads, or opportunities
   4. When the user mentions Salesforce, CRM objects, or SOQL
-metadata: {"openclaw": {"emoji": "☁️", "requires": {"env": ["SALESFORCE_ACCESS_TOKEN"]}}}
+metadata: {"openclaw": {"emoji": "☁️", "requires": {"env": ["SALESFORCE_ACCESS_TOKEN", "SALESFORCE_INSTANCE_URL"]}}}
 ---
 
 # Salesforce Integration

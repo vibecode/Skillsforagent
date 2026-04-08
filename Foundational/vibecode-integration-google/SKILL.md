@@ -12,7 +12,7 @@ description: >
   4. When the user asks to work with Google Docs, Sheets, Slides, or Forms
   5. When the user needs to search contacts or use any Google Workspace service
   6. When the user mentions email, calendar, spreadsheet, document, or presentation without specifying a provider
-metadata: {"openclaw": {"emoji": "📧", "requires": {"env": ["OPENCLAW_CONNECTION_GOOGLE_APPLICATION_CREDENTIALS_BASE64"]}}}
+metadata: {"openclaw": {"emoji": "📧", "requires": {"env": ["OPENCLAW_CONNECTION_GOOGLE_APPLICATION_CREDENTIALS_BASE64"], "anyBins": ["gog", "gws"]}}}
 ---
 
 # Google Workspace Integration

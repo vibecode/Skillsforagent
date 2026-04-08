@@ -11,7 +11,7 @@ description: >
   2. When the user needs to view or manage orders, fulfillments, or shipping
   3. When the user wants to look up or manage customers
   4. When the user mentions Shopify, e-commerce, store, or orders
-metadata: {"openclaw": {"emoji": "🛍️", "requires": {"env": ["SHOPIFY_ACCESS_TOKEN"]}}}
+metadata: {"openclaw": {"emoji": "🛍️", "requires": {"env": ["SHOPIFY_ACCESS_TOKEN", "SHOPIFY_STORE_DOMAIN"]}}}
 ---
 
 # Shopify Integration
