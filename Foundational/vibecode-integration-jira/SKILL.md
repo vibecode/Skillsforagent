@@ -11,7 +11,7 @@ description: >
   2. When the user needs to check sprint status, board, or backlog
   3. When the user wants to manage projects, transitions, or comments
   4. When the user mentions Jira, tickets, sprints, or project tracking
-metadata: {"openclaw": {"emoji": "📋", "requires": {"env": ["JIRA_ACCESS_TOKEN"]}}}
+metadata: {"openclaw": {"emoji": "📋", "requires": {"env": ["JIRA_ACCESS_TOKEN", "JIRA_SITE_URL"]}}}
 ---
 
 # Jira Integration

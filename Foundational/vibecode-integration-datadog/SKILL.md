@@ -12,7 +12,6 @@ description: >
   3. When the user wants to manage monitors, alerts, or incidents
   4. When the user asks about APM traces, error rates, or performance
 metadata: {"openclaw": {"emoji": "🐕", "requires": {"env": ["DATADOG_API_KEY", "DATADOG_APP_KEY"]}}}
-metadata: {"openclaw": {"emoji": "🐕", "requires": {"env": ["DATADOG_API_KEY"]}}}
 ---
 
 # Datadog Integration

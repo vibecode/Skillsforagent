@@ -11,7 +11,7 @@ description: >
   2. When the user needs to manage storage buckets or files
   3. When the user wants to work with edge functions or auth users
   4. When the user mentions Supabase, Postgres, database, or their backend data
-metadata: {"openclaw": {"emoji": "⚡", "requires": {"env": ["SUPABASE_ACCESS_TOKEN"]}}}
+metadata: {"openclaw": {"emoji": "⚡", "requires": {"env": ["SUPABASE_ACCESS_TOKEN", "SUPABASE_PROJECT_URL"]}}}
 ---
 
 # Supabase Integration

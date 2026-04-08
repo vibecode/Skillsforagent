@@ -11,7 +11,7 @@ description: >
   2. When the user needs to view or respond to support conversations
   3. When the user wants to manage tags, teams, or routing
   4. When the user mentions Kustomer or customer support
-metadata: {"openclaw": {"emoji": "🎧", "requires": {"env": ["KUSTOMER_API_KEY"]}}}
+metadata: {"openclaw": {"emoji": "🎧", "requires": {"env": ["KUSTOMER_API_KEY", "KUSTOMER_SUBDOMAIN"]}}}
 ---
 
 # Kustomer Integration

@@ -11,7 +11,7 @@ description: >
   2. When the user needs to check CI/CD status, releases, or Actions workflows
   3. When the user wants to search code, create gists, or manage GitHub settings
   4. When the user mentions repos, PRs, issues, commits, or GitHub
-metadata: {"openclaw": {"emoji": "🐙", "requires": {"env": ["GITHUB_TOKEN"]}}}
+metadata: {"openclaw": {"emoji": "🐙", "requires": {"env": ["GITHUB_TOKEN"], "bins": ["gh"]}}}
 ---
 
 # GitHub Integration

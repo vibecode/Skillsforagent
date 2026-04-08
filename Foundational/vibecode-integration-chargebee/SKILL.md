@@ -11,7 +11,7 @@ description: >
   2. When the user needs to look up customers, invoices, or plans
   3. When the user wants to handle subscription changes, cancellations, or renewals
   4. When the user mentions Chargebee, subscriptions, or recurring billing
-metadata: {"openclaw": {"emoji": "🔄", "requires": {"env": ["CHARGEBEE_API_KEY"]}}}
+metadata: {"openclaw": {"emoji": "🔄", "requires": {"env": ["CHARGEBEE_API_KEY", "CHARGEBEE_SUBDOMAIN"]}}}
 ---
 
 # Chargebee Integration
