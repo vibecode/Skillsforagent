@@ -23,7 +23,7 @@ REST API v2 for event types, bookings, availability, and schedules.
 
 ```bash
 curl -s -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" \
-  -H "cal-api-version: 2024-08-13" \
+  -H "cal-api-version: 2024-06-14" \
   "https://api.cal.com/v2/<endpoint>"
 ```
 
@@ -31,15 +31,15 @@ curl -s -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" \
 
 ```bash
 # List my event types
-curl -s -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-08-13" \
+curl -s -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-06-14" \
   "https://api.cal.com/v2/event-types"
 
 # Get event type
-curl -s -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-08-13" \
+curl -s -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-06-14" \
   "https://api.cal.com/v2/event-types/{eventTypeId}"
 
 # Create event type
-curl -s -X POST -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-08-13" \
+curl -s -X POST -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-06-14" \
   -H "Content-Type: application/json" "https://api.cal.com/v2/event-types" \
   -d '{"title":"30 Min Meeting","slug":"30min","lengthInMinutes":30,"locations":[{"type":"integration","integration":"google-meet"}]}'
 ```
@@ -48,20 +48,20 @@ curl -s -X POST -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-vers
 
 ```bash
 # List my bookings
-curl -s -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-08-13" \
+curl -s -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-06-14" \
   "https://api.cal.com/v2/bookings?status=upcoming"
 
 # Get booking
-curl -s -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-08-13" \
+curl -s -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-06-14" \
   "https://api.cal.com/v2/bookings/{bookingUid}"
 
 # Cancel booking
-curl -s -X POST -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-08-13" \
+curl -s -X POST -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-06-14" \
   -H "Content-Type: application/json" "https://api.cal.com/v2/bookings/{bookingUid}/cancel" \
   -d '{"cancellationReason":"Schedule conflict"}'
 
 # Reschedule booking
-curl -s -X POST -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-08-13" \
+curl -s -X POST -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-06-14" \
   -H "Content-Type: application/json" "https://api.cal.com/v2/bookings/{bookingUid}/reschedule" \
   -d '{"start":"2026-04-01T10:00:00Z","reschedulingReason":"Time change"}'
 ```
@@ -70,17 +70,17 @@ curl -s -X POST -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-vers
 
 ```bash
 # Get my schedules (availability)
-curl -s -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-08-13" \
+curl -s -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-06-14" \
   "https://api.cal.com/v2/schedules"
 
 # Check available slots for an event type
-curl -s -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-08-13" \
+curl -s -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 2024-06-14" \
   "https://api.cal.com/v2/slots/available?startTime=2026-03-25T00:00:00Z&endTime=2026-03-31T23:59:59Z&eventTypeId={eventTypeId}"
 ```
 
 ## Tips
 
-- **`cal-api-version` header required** — use `2024-08-13` (latest stable).
+- **`cal-api-version` header required** — use `2024-06-14` (latest stable; `2024-08-13` causes 404s).
 - **Booking statuses**: `upcoming`, `past`, `cancelled`, `recurring`.
 - **Event type slugs** are used in booking URLs: `cal.com/username/slug`.
 - **Rate limit**: Back off on 429.
