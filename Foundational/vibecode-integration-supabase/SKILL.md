@@ -5,20 +5,46 @@ provider_skill: true
 integration_dependencies:
   - supabase
 description: >
-  Supabase integration for database queries, storage, auth, and edge functions.
-  Consult this skill:
+  Supabase integration for database CRUD, storage, auth, and edge functions on
+  a single Supabase project. Consult this skill:
   1. When the user asks to query, insert, or manage data in their Supabase database
   2. When the user needs to manage storage buckets or files
-  3. When the user wants to work with edge functions or auth users
-  4. When the user mentions Supabase, Postgres, database, or their backend data
+  3. When the user wants to invoke edge functions or manage auth users
+  4. When the user mentions Supabase, Postgres, their database, or their backend
 metadata: {"openclaw": {"emoji": "⚡", "requires": {"env": ["SUPABASE_ACCESS_TOKEN", "SUPABASE_PROJECT_URL"]}}}
 ---
 
 # Supabase Integration
 
-PostgREST API for database CRUD, plus Management API for storage, auth, and edge functions.
+Project-scoped access to one Supabase project via PostgREST, Storage, Auth admin, and Edge Functions.
 
-**Auth**: Access token via `SUPABASE_ACCESS_TOKEN` (OAuth via Nango MCP) + project URL via `SUPABASE_PROJECT_URL`.
+## Scope & Limitations — read this first
+
+This connection uses a **project API key** (anon or service_role) and is scoped to exactly **one project**: `$SUPABASE_PROJECT_URL`.
+
+**What you CAN do** (all against `$SUPABASE_PROJECT_URL/*`):
+- Query / insert / update / delete table rows via PostgREST
+- Read and write storage buckets and files
+- Call RPC Postgres functions
+- Manage auth users (only with service_role key)
+- Invoke edge functions
+
+**What you CANNOT do with this integration**:
+- List projects across the user's Supabase account
+- Create, rename, delete, or pause projects
+- Read organization info, billing, or team members
+- Any `api.supabase.com/v1/*` (Management API) call
+
+The Management API requires a Personal Access Token (PAT) generated at `supabase.com/dashboard/account/tokens` — **that is a different token type that this integration does not capture**. If the user asks to "list my Supabase projects" or similar account-level operations, tell them this integration is project-scoped and they'd need a PAT for account-wide operations (not supported today).
+
+## Auth model
+
+- `SUPABASE_ACCESS_TOKEN` is a project API key (anon or service_role).
+- `SUPABASE_PROJECT_URL` is the project endpoint, e.g. `https://<project-ref>.supabase.co`.
+- Both `apikey` and `Authorization: Bearer` headers must be sent with the same token value for PostgREST and Storage.
+- **Anon key**: respects Row Level Security (RLS). If a table has RLS enabled and no policy matches the anonymous role, queries return zero rows — the table is not empty, you just can't see it. This is the most common reason for "no tables visible" despite a successful connection.
+- **Service_role key**: bypasses RLS, sees everything. Required for `/auth/v1/admin/*` endpoints. Keep secret.
+- If queries return empty and you suspect RLS, ask the user to either add an RLS policy or reconnect with the service_role key.
 
 ```bash
 # All PostgREST requests (database CRUD)
@@ -27,8 +53,6 @@ curl -s "$SUPABASE_PROJECT_URL/rest/v1/<table>" \
   -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
   -H "Content-Type: application/json"
 ```
-
-**Note**: OAuth token from Nango MCP. Access level depends on the scopes granted during OAuth flow.
 
 ## Database — Read
 
@@ -71,6 +95,11 @@ curl -s "$SUPABASE_PROJECT_URL/rest/v1/users?select=count" \
 
 # Pagination (offset-based)
 curl -s "$SUPABASE_PROJECT_URL/rest/v1/users?select=*&limit=10&offset=20" \
+  -H "apikey: $SUPABASE_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
+
+# Discover tables + columns (OpenAPI spec)
+curl -s "$SUPABASE_PROJECT_URL/rest/v1/" \
   -H "apikey: $SUPABASE_ACCESS_TOKEN" \
   -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
 ```
@@ -152,7 +181,7 @@ curl -s -X DELETE "$SUPABASE_PROJECT_URL/storage/v1/object/my-bucket/path/file.p
   -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN"
 ```
 
-## Auth (user management)
+## Auth (user management — requires service_role key)
 
 ```bash
 # List users
@@ -203,15 +232,16 @@ curl -s -X POST "$SUPABASE_PROJECT_URL/functions/v1/{function_name}" \
 | `fts` | Full-text search | `?title=fts.machine+learning` |
 | `not` | Negate | `?status=not.eq.deleted` |
 
-## Tips
+## Troubleshooting
 
-- **OAuth token** — access level depends on scopes granted. May not bypass RLS like the service_role key does.
-- **Both headers required**: `apikey` and `Authorization: Bearer` must both contain the key.
-- **`Prefer: return=representation`** on POST/PATCH/DELETE returns the affected rows.
+- **"No tables visible" / queries return zero rows** — almost always RLS with an anon key. Ask the user to reconnect with the service_role key, or add an RLS policy allowing the anon role.
+- **401 Unauthorized** — token/URL mismatch, or the key was regenerated in Supabase. Reconnect.
+- **403 Forbidden on `/auth/v1/admin/*`** — that path requires service_role, not anon. Reconnect with service_role.
+- **404 on `api.supabase.com/v1/projects`** — this integration does not include Management API. See "Scope & Limitations" above.
+- **`Prefer: return=representation`** on POST/PATCH/DELETE returns the affected rows; without it you get a 201 with empty body.
 - **Relations**: Use `select=*,relation_name(columns)` for joins via foreign keys.
 - **RPC**: Call Postgres functions via `/rest/v1/rpc/{function_name}`.
-- **Discover tables**: `GET /rest/v1/` returns the OpenAPI spec listing all tables and their columns.
 
 ---
 
-*Extracted from [vm0-ai/vm0-skills/supabase](https://skills.sh/vm0-ai/vm0-skills/supabase), [Supabase PostgREST docs](https://supabase.com/docs/guides/api), [Supabase MCP docs](https://supabase.com/docs/guides/getting-started/mcp), and [Supabase Storage API](https://supabase.com/docs/guides/storage).*
+*Extracted from [Supabase PostgREST docs](https://supabase.com/docs/guides/api), [Supabase Storage API](https://supabase.com/docs/guides/storage), and [Supabase Auth Admin API](https://supabase.com/docs/reference/api/auth-admin).*
