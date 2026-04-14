@@ -169,7 +169,7 @@ curl -s -X POST -H "DD-API-KEY: $DATADOG_API_KEY" -H "DD-APPLICATION-KEY: $DATAD
 ## Incidents
 
 ```bash
-# List incidents
+# List incidents (public beta — may require opt-in)
 curl -s -H "DD-API-KEY: $DATADOG_API_KEY" -H "DD-APPLICATION-KEY: $DATADOG_APP_KEY" \
   "$DD_BASE/api/v2/incidents"
 
@@ -181,7 +181,7 @@ curl -s -H "DD-API-KEY: $DATADOG_API_KEY" -H "DD-APPLICATION-KEY: $DATADOG_APP_K
 ## Tips
 
 - **Auth is NOT Bearer** — use `DD-API-KEY` and `DD-APPLICATION-KEY` headers.
-- **`DATADOG_SITE`** determines the region: `datadoghq.com` (US1), `us3.datadoghq.com` (US3), `us5.datadoghq.com` (US5), `datadoghq.eu` (EU), `ap1.datadoghq.com` (AP1).
+- **`DATADOG_SITE`** determines the region: `datadoghq.com` (US1), `us3.datadoghq.com` (US3), `us5.datadoghq.com` (US5), `datadoghq.eu` (EU), `ap1.datadoghq.com` (AP1), `ap2.datadoghq.com` (AP2/Australia).
 - **Time params**: Use Unix timestamps (seconds) for v1 endpoints, ISO 8601 or relative (`now-1h`) for v2 endpoints.
 - **Metric queries**: `avg:metric.name{tag:value} by {group}` — aggregation functions: `avg`, `sum`, `min`, `max`, `count`.
 - **Pagination**: v2 endpoints use cursor-based pagination via `page[cursor]`.
