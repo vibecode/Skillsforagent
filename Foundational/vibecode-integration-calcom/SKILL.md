@@ -80,7 +80,15 @@ curl -s -H "Authorization: Bearer $CALCOM_ACCESS_TOKEN" -H "cal-api-version: 202
 
 ## Tips
 
-- **`cal-api-version` header required** — use `2024-06-14` (latest stable; `2024-08-13` causes 404s).
+- **`cal-api-version` header required** — use `2024-06-14` for every request
+  in this skill. Cal.com's docs list `2024-08-13` as the newer "enhanced
+  bookings" version, but in our testing it returned 404 on the booking,
+  event-types, and schedules endpoints we use here (likely because those
+  paths/payload shapes changed shape under the new version). `2024-06-14` is
+  the most recent version for which all four endpoints below respond 200.
+  If you add an endpoint that *requires* `2024-08-13` (Cal.com's docs flag a
+  few specific ones), set the header per-request rather than changing the
+  default — don't rev the whole skill.
 - **Booking statuses**: `upcoming`, `past`, `cancelled`, `recurring`.
 - **Event type slugs** are used in booking URLs: `cal.com/username/slug`.
 - **Rate limit**: Back off on 429.

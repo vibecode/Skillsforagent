@@ -37,15 +37,30 @@ each user to authorize the app on Spotify's developer allowlist.
 |---|---|
 | Search tracks, artists, albums, playlists | ✓ |
 | Get track / album / artist by ID | ✓ |
-| Get audio features and audio analysis | ✓ |
-| Browse new releases, featured playlists, categories | ✓ |
+| Browse new releases, list categories | ✓ |
 | Read a *public* playlist by ID | ✓ |
-| Get artist's top tracks, related artists, albums | ✓ |
+| Get artist's top tracks, get artist's albums | ✓ |
+| Audio features (`/audio-features`) and analysis (`/audio-analysis`) | ⚠ see Nov-2024 note |
+| Featured playlists (`/browse/featured-playlists`) | ⚠ see Nov-2024 note |
+| Playlists in a category (`/browse/categories/{id}/playlists`) | ⚠ see Nov-2024 note |
+| Related artists (`/artists/{id}/related-artists`) | ⚠ see Nov-2024 note |
+| Track recommendations (`/recommendations`) | ⚠ see Nov-2024 note |
 | **Anything under `/me/*`** (current playback, devices, recently played, top tracks, saved library, user playlists) | ✗ 401 |
 | **Control playback** (play/pause/skip/seek/volume) | ✗ 401 |
 | **Create / modify playlists** | ✗ 401 |
 | **Save / unsave tracks** | ✗ 401 |
 | **Follow / unfollow artists** | ✗ 401 |
+
+> **⚠ Nov 27, 2024 Spotify restriction**: Five endpoints (`/audio-features`,
+> `/audio-analysis`, `/browse/featured-playlists`,
+> `/browse/categories/{id}/playlists`, `/artists/{id}/related-artists`, plus
+> `/recommendations`) are restricted to apps registered **before** Nov 27,
+> 2024 OR apps that have been granted extended quota by Spotify. If our
+> Nango `spotify-oauth2-cc` app falls in either bucket, these calls work
+> today; for any newly-registered app they return 403/404. Prefer
+> alternatives where possible (artist top-tracks instead of related-artists,
+> new-releases instead of featured-playlists), and degrade gracefully on
+> error rather than retrying. See [Spotify's announcement](https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api).
 
 **If the user asks to "play X" or "add X to my playlist" or "what am I
 listening to right now"** — tell them:
@@ -136,12 +151,17 @@ curl -s -H "Authorization: Bearer $SPOTIFY_ACCESS_TOKEN" \
 curl -s -H "Authorization: Bearer $SPOTIFY_ACCESS_TOKEN" \
   "https://api.spotify.com/v1/artists/4Z8W4fKeB5YxbusRsdQVPb/albums?include_groups=album,single&limit=20"
 
-# Get related artists
+# Get related artists  ⚠ Nov-2024 restricted — see top-of-file note
 curl -s -H "Authorization: Bearer $SPOTIFY_ACCESS_TOKEN" \
   "https://api.spotify.com/v1/artists/4Z8W4fKeB5YxbusRsdQVPb/related-artists"
 ```
 
 ## Audio features & analysis
+
+> ⚠ Both endpoints below are in Spotify's [Nov 27, 2024 restricted set](https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api).
+> They work for our app today (registered before that date), but if the
+> `spotify-oauth2-cc` Nango integration is ever pointed at a newly-created
+> Spotify app, both will 403. Don't build core features that depend on these.
 
 ```bash
 # Get audio features for one track (tempo, key, danceability, energy, valence)
@@ -160,19 +180,19 @@ curl -s -H "Authorization: Bearer $SPOTIFY_ACCESS_TOKEN" \
 ## Browse / discovery
 
 ```bash
-# New album releases
+# New album releases — works on all apps
 curl -s -H "Authorization: Bearer $SPOTIFY_ACCESS_TOKEN" \
   "https://api.spotify.com/v1/browse/new-releases?country=US&limit=20"
 
-# Featured playlists
+# Featured playlists  ⚠ Nov-2024 restricted — see top-of-file note
 curl -s -H "Authorization: Bearer $SPOTIFY_ACCESS_TOKEN" \
   "https://api.spotify.com/v1/browse/featured-playlists?country=US&limit=20"
 
-# All categories (Pop, Hip-Hop, Workout, etc.)
+# All categories (Pop, Hip-Hop, Workout, etc.) — works on all apps
 curl -s -H "Authorization: Bearer $SPOTIFY_ACCESS_TOKEN" \
   "https://api.spotify.com/v1/browse/categories?country=US&limit=50"
 
-# Playlists in a category
+# Playlists in a category  ⚠ Nov-2024 restricted — see top-of-file note
 curl -s -H "Authorization: Bearer $SPOTIFY_ACCESS_TOKEN" \
   "https://api.spotify.com/v1/browse/categories/{category_id}/playlists?country=US&limit=20"
 ```
@@ -213,8 +233,13 @@ curl -s -H "Authorization: Bearer $SPOTIFY_ACCESS_TOKEN" \
   even on `/search`, the Nango integration's Client ID/Secret may be invalid.
 - **Pagination**: Offset-based with `limit` (max 50, sometimes 100) and
   `offset` params. Response includes `next` URL.
-- **`/recommendations` endpoint is deprecated** for apps created after
-  November 2024 — don't rely on it for new functionality.
+- **Spotify Nov 27, 2024 restricted endpoints** — `/audio-features`,
+  `/audio-analysis`, `/browse/featured-playlists`,
+  `/browse/categories/{id}/playlists`, `/artists/{id}/related-artists`, and
+  `/recommendations` are all locked to apps registered before that date or
+  apps with extended quota. Our `spotify-oauth2-cc` Nango integration may
+  or may not qualify depending on registration date — degrade gracefully on
+  403, don't build essential flows on top of them. See [the announcement](https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api).
 - **401 on a `/me/*` endpoint** is not a bug — see the table at the top.
   Tell the user this connection is catalog-only.
 
