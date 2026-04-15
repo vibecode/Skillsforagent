@@ -21,6 +21,29 @@ Data API v3 for videos, channels, playlists, search, comments, and captions.
 **Auth**: Bearer token via `YOUTUBE_ACCESS_TOKEN` (OAuth via Nango).
 **Base URL**: `https://www.googleapis.com/youtube/v3`
 
+## Scope & Limitations — read this before attempting writes
+
+The token's capabilities are controlled by the OAuth scopes granted at connect
+time. Two common scope setups:
+
+| Scope | Reads | Writes |
+|---|---|---|
+| `youtube.readonly` | ✓ all | ✗ everything 401/403s |
+| `youtube.force-ssl` | ✓ all | ✓ playlists, comments, metadata, subscriptions |
+| `youtube.upload` | — | ✓ upload videos (in addition to above) |
+
+**If you call a write endpoint (POST / PUT / DELETE) and get 401 or 403, do not
+retry blindly.** That's almost certainly a missing scope — the Nango `youtube`
+OAuth integration was configured with read-only scope. Tell the user:
+
+> "Writes are blocked because the connection was made with read-only scope.
+> An admin needs to add `https://www.googleapis.com/auth/youtube.force-ssl` to
+> the Nango YouTube integration's OAuth Scopes field, then you'll need to
+> reconnect YouTube to pick up the new grant."
+
+Reads (search, channel info, video details, playlist contents, subscriptions,
+comments) work with either scope.
+
 ```bash
 YT="https://www.googleapis.com/youtube/v3"
 
@@ -144,10 +167,12 @@ curl -s -H "Authorization: Bearer $YOUTUBE_ACCESS_TOKEN" \
 
 - **Video IDs are in the URL**: `youtube.com/watch?v=VIDEO_ID`.
 - **`part` parameter is required** on every request — controls which data sections are returned (`snippet`, `statistics`, `contentDetails`, `status`).
-- **Quota**: YouTube API has a daily quota (default 10,000 units). Searches cost 100 units, reads cost 1-3. Monitor usage.
+- **Quota**: YouTube API has a daily quota (default 10,000 units). Searches cost 100 units, reads cost 1-3, writes cost 50+. Monitor usage.
 - **Pagination**: Use `pageToken` from response's `nextPageToken`.
 - **`order`** options for search: `date`, `rating`, `relevance`, `title`, `viewCount`.
 - **Category IDs**: `22` = People & Blogs, `28` = Science & Technology, `10` = Music. Full list via `videoCategories` endpoint.
+- **401/403 on writes only** — scope issue, not a code issue. See "Scope & Limitations" at the top.
+- **401/403 on everything including reads** — token expired/revoked, reconnect YouTube.
 
 ---
 
