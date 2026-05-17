@@ -83,9 +83,10 @@ curl -s -H "Authorization: Bearer $OURA_ACCESS_TOKEN" \
 curl -s -H "Authorization: Bearer $OURA_ACCESS_TOKEN" \
   "$OURA/usercollection/vO2_max?start_date=2026-05-01&end_date=2026-05-07"
 
-# Tags, sessions, sleep time, rest mode periods, ring configuration
+# Enhanced tags, sessions, sleep time, rest mode periods, ring configuration
+# Use enhanced_tag for tag data; the older tag endpoint is legacy.
 curl -s -H "Authorization: Bearer $OURA_ACCESS_TOKEN" \
-  "$OURA/usercollection/tag?start_date=2026-05-01&end_date=2026-05-31"
+  "$OURA/usercollection/enhanced_tag?start_date=2026-05-01&end_date=2026-05-31"
 curl -s -H "Authorization: Bearer $OURA_ACCESS_TOKEN" \
   "$OURA/usercollection/session?start_date=2026-05-01&end_date=2026-05-31"
 curl -s -H "Authorization: Bearer $OURA_ACCESS_TOKEN" \
