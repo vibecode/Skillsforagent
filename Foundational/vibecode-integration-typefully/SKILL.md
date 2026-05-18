@@ -17,73 +17,74 @@ metadata: {"openclaw": {"emoji": "✍️", "requires": {"env": ["TYPEFULLY_API_K
 
 API for drafting, scheduling, and publishing posts to Twitter/X and LinkedIn.
 
-**Auth**: API key via `TYPEFULLY_API_KEY` using `X-API-KEY` header (not Bearer).
-**Base URL**: `https://api.typefully.com/v1`
+**Auth**: API key via `TYPEFULLY_API_KEY` using `Authorization: Bearer ...` header.
+**Base URL**: `https://api.typefully.com/v2`
 
 ```bash
-curl -s https://api.typefully.com/v1/<endpoint> \
-  -H "X-API-KEY: $TYPEFULLY_API_KEY" \
+curl -s https://api.typefully.com/v2/<endpoint> \
+  -H "Authorization: Bearer $TYPEFULLY_API_KEY" \
   -H "Content-Type: application/json"
+```
+
+All draft endpoints need a `social_set_id`. Capture once per session:
+
+```bash
+SOCIAL_SET_ID=$(curl -s -H "Authorization: Bearer $TYPEFULLY_API_KEY" \
+  "https://api.typefully.com/v2/social-sets" | jq -r '.results[0].id')
 ```
 
 ## Create draft
 
 ```bash
 # Create a simple tweet/post
-curl -s -X POST -H "X-API-KEY: $TYPEFULLY_API_KEY" -H "Content-Type: application/json" \
-  "https://api.typefully.com/v1/drafts/" \
-  -d '{"content":"Just shipped a new feature! 🚀","threadify":false}'
+curl -s -X POST -H "Authorization: Bearer $TYPEFULLY_API_KEY" -H "Content-Type: application/json" \
+  "https://api.typefully.com/v2/social-sets/$SOCIAL_SET_ID/drafts" \
+  -d '{"platforms":{"x":{"enabled":true,"posts":[{"text":"Just shipped a new feature! 🚀"}]}}}'
 
-# Create a thread (use \n\n\n\n to separate tweets)
-curl -s -X POST -H "X-API-KEY: $TYPEFULLY_API_KEY" -H "Content-Type: application/json" \
-  "https://api.typefully.com/v1/drafts/" \
-  -d '{"content":"Thread about AI agents 🧵\n\n\n\n1/ First, what are AI agents?\n\n\n\n2/ They can use tools autonomously\n\n\n\n3/ The future is agentic","threadify":false}'
-
-# Auto-threadify (let Typefully split into tweets)
-curl -s -X POST -H "X-API-KEY: $TYPEFULLY_API_KEY" -H "Content-Type: application/json" \
-  "https://api.typefully.com/v1/drafts/" \
-  -d '{"content":"Long post that Typefully will automatically split into a thread based on character limits...","threadify":true}'
+# Create a thread (one posts entry per tweet)
+curl -s -X POST -H "Authorization: Bearer $TYPEFULLY_API_KEY" -H "Content-Type: application/json" \
+  "https://api.typefully.com/v2/social-sets/$SOCIAL_SET_ID/drafts" \
+  -d '{"platforms":{"x":{"enabled":true,"posts":[
+        {"text":"Thread about AI agents 🧵"},
+        {"text":"1/ First, what are AI agents?"},
+        {"text":"2/ They can use tools autonomously"},
+        {"text":"3/ The future is agentic"}
+      ]}}}'
 
 # Schedule a post
-curl -s -X POST -H "X-API-KEY: $TYPEFULLY_API_KEY" -H "Content-Type: application/json" \
-  "https://api.typefully.com/v1/drafts/" \
-  -d '{"content":"Scheduled post","schedule-date":"2026-03-26T14:00:00Z"}'
+curl -s -X POST -H "Authorization: Bearer $TYPEFULLY_API_KEY" -H "Content-Type: application/json" \
+  "https://api.typefully.com/v2/social-sets/$SOCIAL_SET_ID/drafts" \
+  -d '{"platforms":{"x":{"enabled":true,"posts":[{"text":"Scheduled post"}]}},"publish_at":"2026-03-26T14:00:00Z"}'
 
 # Schedule for next free slot
-curl -s -X POST -H "X-API-KEY: $TYPEFULLY_API_KEY" -H "Content-Type: application/json" \
-  "https://api.typefully.com/v1/drafts/" \
-  -d '{"content":"Next available slot","auto-schedule":true}'
+curl -s -X POST -H "Authorization: Bearer $TYPEFULLY_API_KEY" -H "Content-Type: application/json" \
+  "https://api.typefully.com/v2/social-sets/$SOCIAL_SET_ID/drafts" \
+  -d '{"platforms":{"x":{"enabled":true,"posts":[{"text":"Next available slot"}]}},"publish_at":"next-free-slot"}'
 
 # Publish to LinkedIn too
-curl -s -X POST -H "X-API-KEY: $TYPEFULLY_API_KEY" -H "Content-Type: application/json" \
-  "https://api.typefully.com/v1/drafts/" \
-  -d '{"content":"Cross-posted to LinkedIn","share-on-linkedin":true}'
+curl -s -X POST -H "Authorization: Bearer $TYPEFULLY_API_KEY" -H "Content-Type: application/json" \
+  "https://api.typefully.com/v2/social-sets/$SOCIAL_SET_ID/drafts" \
+  -d '{"platforms":{
+        "x":{"enabled":true,"posts":[{"text":"Cross-posted to LinkedIn"}]},
+        "linkedin":{"enabled":true,"posts":[{"text":"Cross-posted to LinkedIn"}]}
+      }}'
 ```
 
 ## List scheduled drafts
 
 ```bash
-curl -s -H "X-API-KEY: $TYPEFULLY_API_KEY" \
-  "https://api.typefully.com/v1/drafts/recently-scheduled"
-```
-
-## Notifications
-
-```bash
-# Get recent notifications (replies, likes, retweets)
-curl -s -H "X-API-KEY: $TYPEFULLY_API_KEY" \
-  "https://api.typefully.com/v1/notifications/"
+curl -s -H "Authorization: Bearer $TYPEFULLY_API_KEY" \
+  "https://api.typefully.com/v2/social-sets/$SOCIAL_SET_ID/drafts?status=scheduled"
 ```
 
 ## Tips
 
-- **Thread separator**: Use `\n\n\n\n` (4 newlines) to manually split tweets in a thread.
-- **`threadify: true`** lets Typefully auto-split long content into optimal tweet-sized chunks.
-- **`auto-schedule: true`** uses your Typefully schedule queue (set up in Typefully settings).
-- **`share-on-linkedin: true`** cross-posts to LinkedIn.
-- **Auth is `X-API-KEY` header**, not Bearer.
-- **No delete/update API** — drafts can only be managed through the Typefully web UI once created.
+- **Thread**: pass multiple `posts` entries in the array — one per tweet. No more `\n\n\n\n` separator.
+- **`publish_at`** replaces v1's `schedule-date` / `auto-schedule`. Use `"now"`, `"next-free-slot"`, an ISO 8601 datetime, or omit to save as a draft.
+- **Cross-platform**: add the platform key (`linkedin`, `mastodon`, `threads`, `bluesky`) to the `platforms` object with `enabled: true` + its own `posts`. The v1 `share-on-linkedin` flag is gone.
+- **Auth is `Authorization: Bearer`**, not `X-API-KEY`. Generate a v2 key under Typefully → Settings → API.
+- **Notifications endpoint is v1-only**; v2 has no equivalent (use webhooks).
 
 ---
 
-*Based on [typefully/agent-skills/typefully](https://skills.sh/typefully/agent-skills/typefully), [synapz-org/typefully-claude-skill](https://skills.sh/synapz-org/typefully-claude-skill/typefully), and [Typefully API docs](https://support.typefully.com/en/articles/8718287-typefully-api).*
+*Based on [Typefully v1 → v2 migration guide](https://support.typefully.com/en/articles/13133296-typefully-api-v1-v2-migration-guide) and [Typefully API docs](https://typefully.com/docs/api).*
