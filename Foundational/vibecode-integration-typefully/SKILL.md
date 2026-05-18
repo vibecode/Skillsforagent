@@ -26,11 +26,12 @@ curl -s https://api.typefully.com/v2/<endpoint> \
   -H "Content-Type: application/json"
 ```
 
-All draft endpoints need a `social_set_id`. Capture once per session:
+All draft endpoints need a `social_set_id`. Capture once per session (requires `jq`):
 
 ```bash
 SOCIAL_SET_ID=$(curl -s -H "Authorization: Bearer $TYPEFULLY_API_KEY" \
-  "https://api.typefully.com/v2/social-sets" | jq -r '.results[0].id')
+  "https://api.typefully.com/v2/social-sets" | jq -r '.results[0].id // empty')
+[ -z "$SOCIAL_SET_ID" ] && { echo "no Typefully social set found — check TYPEFULLY_API_KEY"; return 1 2>/dev/null || exit 1; }
 ```
 
 ## Create draft
@@ -51,10 +52,10 @@ curl -s -X POST -H "Authorization: Bearer $TYPEFULLY_API_KEY" -H "Content-Type: 
         {"text":"3/ The future is agentic"}
       ]}}}'
 
-# Schedule a post
+# Schedule a post (replace publish_at with a future ISO 8601 datetime)
 curl -s -X POST -H "Authorization: Bearer $TYPEFULLY_API_KEY" -H "Content-Type: application/json" \
   "https://api.typefully.com/v2/social-sets/$SOCIAL_SET_ID/drafts" \
-  -d '{"platforms":{"x":{"enabled":true,"posts":[{"text":"Scheduled post"}]}},"publish_at":"2026-03-26T14:00:00Z"}'
+  -d '{"platforms":{"x":{"enabled":true,"posts":[{"text":"Scheduled post"}]}},"publish_at":"2027-03-26T14:00:00Z"}'
 
 # Schedule for next free slot
 curl -s -X POST -H "Authorization: Bearer $TYPEFULLY_API_KEY" -H "Content-Type: application/json" \
