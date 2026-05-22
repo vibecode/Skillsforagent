@@ -16,80 +16,94 @@ metadata: {"openclaw": {"emoji": "🎙️", "requires": {"env": ["GRANOLA_API_KE
 
 # Granola Integration
 
-Meeting notes, transcripts, and summaries via the Granola public API.
+Meeting notes, transcripts, and summaries via Granola.
 
-**Auth**: Bearer token via `GRANOLA_API_KEY`.
-**Base URL**: `https://public-api.granola.ai`
-**Rate limit**: 25 requests per 5-second burst, 5 req/s sustained.
+The Chorus Granola connection uses **MCP over OAuth** (not the REST API). `GRANOLA_API_KEY` holds a JWT bearer token issued by `mcp-auth.granola.ai`. Use the MCP endpoint described below — the public REST API will reject this token with `INVALID_API_KEY`.
 
-## List meetings
+**Auth**: Bearer token via `GRANOLA_API_KEY` (JWT issued by Granola MCP OAuth).
+**MCP endpoint**: `https://mcp.granola.ai/mcp`
+**Transport**: Streamable HTTP (JSON-RPC 2.0).
 
-```bash
-# List recent notes (default: 10 most recent)
-curl -s https://public-api.granola.ai/v1/notes \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
+## Quick start — call MCP via curl
 
-# List with date filter
-curl -s "https://public-api.granola.ai/v1/notes?created_after=2026-03-20&page_size=20" \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
+Every call is a JSON-RPC 2.0 POST to `https://mcp.granola.ai/mcp`. Required headers: `Authorization: Bearer $GRANOLA_API_KEY`, `Content-Type: application/json`, `Accept: application/json, text/event-stream`.
 
-# Filter by update date
-curl -s "https://public-api.granola.ai/v1/notes?updated_after=2026-03-24&page_size=30" \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
+Responses are returned as Server-Sent Events. Extract the `data:` line and parse it as JSON.
 
-# List notes before a date
-curl -s "https://public-api.granola.ai/v1/notes?created_before=2026-03-15" \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
-
-# Paginate (when hasMore is true, use cursor)
-curl -s "https://public-api.granola.ai/v1/notes?cursor=CURSOR_VALUE&page_size=10" \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
-```
-
-Response:
-```json
-{
-  "notes": [{"id": "not_abc123...", "title": "Weekly standup", "owner": {"name": "...", "email": "..."}, "created_at": "...", "updated_at": "..."}],
-  "hasMore": true,
-  "cursor": "next_cursor_value"
-}
-```
-
-## Get meeting details
+### Initialize the session (optional, but standard MCP handshake)
 
 ```bash
-# Get note with summary
-curl -s https://public-api.granola.ai/v1/notes/{note_id} \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
-
-# Get note with full transcript
-curl -s "https://public-api.granola.ai/v1/notes/{note_id}?include=transcript" \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
+curl -s -X POST "https://mcp.granola.ai/mcp" \
+  -H "Authorization: Bearer $GRANOLA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"chorus","version":"1.0"}}}'
 ```
 
-Note IDs follow the pattern `not_[a-zA-Z0-9]{14}`.
+### List available tools
 
-Response includes:
-- `title`, `owner`, `created_at`, `updated_at`
-- `calendar_event` — event title, invitees, organiser, scheduled start/end
-- `attendees` — array of `{name, email}`
-- `folder_membership` — folders the note belongs to
-- `summary_text` — plain text summary
-- `summary_markdown` — markdown summary
-- `transcript` (if requested) — array of `{speaker_source, text, start_time, end_time}`
+```bash
+curl -s -X POST "https://mcp.granola.ai/mcp" \
+  -H "Authorization: Bearer $GRANOLA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
+```
 
-Speaker sources: `"microphone"` (the user) or `"speaker"` (others in the meeting).
+## Available MCP tools
+
+| Tool | Purpose |
+|---|---|
+| `query_granola_meetings` | Natural-language Q&A over meeting notes. Returns prose with inline citation links (`[[0]](url)`) — preserve them in user-facing responses. Best for open-ended questions ("what did we decide about X?", "any action items from last week?"). |
+| `list_meetings` | List meetings in a time range. `time_range` ∈ `this_week`, `last_week`, `last_30_days` (default). Returns titles, dates, participants, IDs. |
+| `list_meeting_folders` | List folders with IDs, titles, descriptions, note counts. Use folder IDs to scope `list_meetings`. |
+| `get_meetings` | Retrieve detailed notes + AI summary + attendees for up to 10 meeting UUIDs. Use after `list_meetings`. |
+| `get_meeting_transcript` | Full verbatim transcript for one meeting UUID. Use when exact quotes matter. |
+| `get_account_info` | Returns the email + active workspace for the connected Granola account. |
+
+### Example — list recent meetings
+
+```bash
+curl -s -X POST "https://mcp.granola.ai/mcp" \
+  -H "Authorization: Bearer $GRANOLA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"list_meetings","arguments":{"time_range":"last_30_days"}}}'
+```
+
+### Example — natural-language query
+
+```bash
+curl -s -X POST "https://mcp.granola.ai/mcp" \
+  -H "Authorization: Bearer $GRANOLA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"query_granola_meetings","arguments":{"query":"What action items came out of meetings this week?"}}}'
+```
+
+### Example — get full meeting details
+
+```bash
+curl -s -X POST "https://mcp.granola.ai/mcp" \
+  -H "Authorization: Bearer $GRANOLA_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"get_meetings","arguments":{"meeting_ids":["<uuid>"]}}}'
+```
 
 ## Tips
 
-- **Page size**: 1–30, default 10.
-- **Note IDs** match pattern `not_[a-zA-Z0-9]{14}`.
-- **Transcripts are large** — only fetch with `?include=transcript` when needed.
-- **Timestamps are UTC** in ISO 8601 format.
-- **Date filters accept both date and datetime**: `2026-03-25` or `2026-03-25T10:00:00Z`.
-- **No search endpoint** in the public API — filter by date range and scan titles client-side.
-- **Only 2 endpoints**: list notes and get note. The API is simple but covers the core use case.
+- **Meeting IDs are UUIDs** (`c81d271e-99b1-4489-8ec0-fb0e2b262560`), not `not_*` strings. The legacy REST API used `not_*`; MCP uses UUIDs.
+- **Prefer `query_granola_meetings`** for natural-language questions — it returns a synthesized answer with citations.
+- **Use `list_meetings` → `get_meetings`** when you need structured data on specific meetings.
+- **Transcripts are large** — only call `get_meeting_transcript` when verbatim text is needed.
+- **Preserve citation links** (`[[0]](url)`) when relaying `query_granola_meetings` output to the user.
+- **Token is OAuth-issued and expires.** If a call returns 401, the Chorus integration needs to be reconnected via `masterclaw connections ensure --provider granola`.
+
+## Legacy REST API (not used by Chorus)
+
+Granola also publishes a separate REST API at `https://public-api.granola.ai/v1/notes` that takes a different bearer key issued from the Granola dashboard (not OAuth). Chorus connections do **not** populate `GRANOLA_API_KEY` with this kind of key — calls to the REST API will fail with `INVALID_API_KEY`. Only consult the REST docs if the user has manually exported a dashboard API key.
 
 ---
 
-*Extracted from [joelhooks/joelclaw/granola](https://skills.sh/joelhooks/joelclaw/granola) and [Granola API Reference](https://docs.granola.ai/introduction).*
+*Source: [Granola MCP — Docs & Help Center](https://docs.granola.ai/help-center/sharing/integrations/mcp).*
