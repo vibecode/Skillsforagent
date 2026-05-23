@@ -23,7 +23,7 @@ All Microsoft 365 services through one unified API: `https://graph.microsoft.com
 
 | Var | Purpose |
 |---|---|
-| `MICROSOFT_ACCESS_TOKEN` | Bearer access token for Microsoft Graph. The platform exchanges and refreshes this server-side; the runner receives a ready-to-use token (~1h TTL) and a fresh one after each refresh. |
+| `MICROSOFT_ACCESS_TOKEN` | Bearer access token for Microsoft Graph (~1h TTL). The platform exchanges the token server-side and pushes a fresh value to the runner on connect, reconnect, and agent redeploy. Long-idle sessions can outlive a token — see the 401 recovery note below. |
 | `CHORUS_CONNECTION_MICROSOFT_ACCOUNT` | Email of the connected Microsoft account (may be empty for personal MSA accounts). |
 
 ## Setup (run once per session)
@@ -37,7 +37,7 @@ export MS_TOKEN="$MICROSOFT_ACCESS_TOKEN"
 curl -s -H "Authorization: Bearer $MS_TOKEN" https://graph.microsoft.com/v1.0/me | jq '{name:.displayName,email:.mail}'
 ```
 
-If you get a 401 on any call later, the cached `$MS_TOKEN` may be stale. The runtime keeps `$MICROSOFT_ACCESS_TOKEN` fresh, so just re-run: `export MS_TOKEN="$MICROSOFT_ACCESS_TOKEN"`
+If you get a 401 on any call later, the cached `$MS_TOKEN` is stale. First, re-run `export MS_TOKEN="$MICROSOFT_ACCESS_TOKEN"` — each new bash subshell sources the latest value from the runner's environment bridge (`BASH_ENV` → `runtime-bash-env.sh`), so this picks up any token the platform has pushed since you last aliased. If the 401 persists after re-aliasing, the platform hasn't pushed a fresh token (it refreshes on connect / reconnect / redeploy, not on a schedule). Ask the user to reconnect the Microsoft integration in the runner admin, then re-run the alias.
 
 **All curl commands below assume `$MS_TOKEN` is set.**
 
@@ -351,7 +351,7 @@ curl -s -H "Authorization: Bearer $MS_TOKEN" \
 
 ## Tips
 
-- **Token expires in ~1 hour** — the platform refreshes `$MICROSOFT_ACCESS_TOKEN` automatically. On 401 errors, re-run `export MS_TOKEN="$MICROSOFT_ACCESS_TOKEN"` to pick up the latest one.
+- **Token TTL is ~1 hour.** The platform pushes a fresh `$MICROSOFT_ACCESS_TOKEN` on connect / reconnect / redeploy, not on a schedule. On a 401, first re-run `export MS_TOKEN="$MICROSOFT_ACCESS_TOKEN"` — a new bash subshell sources the latest value via `BASH_ENV`. If the 401 persists, the platform hasn't pushed a new token; ask the user to reconnect the Microsoft integration.
 - **OData query params**: `$top` (page size), `$select` (fields), `$filter` (conditions), `$orderby` (sort), `$search` (text search), `$expand` (include related). Escape `$` in bash: `\$top`.
 - **Pagination**: Responses include `@odata.nextLink` — follow it for next page.
 - **Planner updates need `If-Match`** — GET the task first, extract `@odata.etag`, pass as `If-Match` header on PATCH.
