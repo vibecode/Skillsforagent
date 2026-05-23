@@ -12,7 +12,7 @@ description: >
   4. When the user needs to manage OneDrive or SharePoint files
   5. When the user asks to work with Excel workbooks, OneNote, Planner, or Power BI
   6. When the user mentions Outlook, Teams, OneDrive, SharePoint, or any Microsoft 365 service
-metadata: {"openclaw": {"emoji": "📎", "requires": {"env": ["OPENCLAW_CONNECTION_MICROSOFT_CREDENTIALS_BASE64"]}}}
+metadata: {"openclaw": {"emoji": "📎", "requires": {"env": ["MICROSOFT_ACCESS_TOKEN"]}}}
 ---
 
 # Microsoft 365 Integration
@@ -23,39 +23,21 @@ All Microsoft 365 services through one unified API: `https://graph.microsoft.com
 
 | Var | Purpose |
 |---|---|
-| `OPENCLAW_CONNECTION_MICROSOFT_CREDENTIALS_BASE64` | Base64 JSON with client_id, client_secret, token_url, refresh_token, scopes |
-| `OPENCLAW_CONNECTION_MICROSOFT_ACCOUNT` | Email of the connected Microsoft account |
+| `MICROSOFT_ACCESS_TOKEN` | Bearer access token for Microsoft Graph. The platform exchanges and refreshes this server-side; the runner receives a ready-to-use token (~1h TTL) and a fresh one after each refresh. |
+| `CHORUS_CONNECTION_MICROSOFT_ACCOUNT` | Email of the connected Microsoft account (may be empty for personal MSA accounts). |
 
 ## Setup (run once per session)
 
-Access tokens expire in ~1 hour. Create a refresh helper and get a token:
+The platform delivers a fresh access token via `$MICROSOFT_ACCESS_TOKEN`. Alias it to `$MS_TOKEN` once so the rest of this skill can reference it:
 
 ```bash
-# Decode credentials
-echo "$OPENCLAW_CONNECTION_MICROSOFT_CREDENTIALS_BASE64" | base64 -d > /tmp/ms-creds.json
-
-# Create token refresh script
-cat > /tmp/ms-refresh.sh << 'SCRIPT'
-#!/bin/bash
-C=/tmp/ms-creds.json
-curl -s -X POST "$(jq -r .token_url $C)" \
-  -d "client_id=$(jq -r .client_id $C)" \
-  -d "client_secret=$(jq -r .client_secret $C)" \
-  -d "refresh_token=$(jq -r .refresh_token $C)" \
-  -d "grant_type=refresh_token" \
-  -d "scope=$(jq -r '.scopes | join(" ")' $C)" \
-  | jq -r .access_token
-SCRIPT
-chmod +x /tmp/ms-refresh.sh
-
-# Get token
-export MS_TOKEN=$(/tmp/ms-refresh.sh)
+export MS_TOKEN="$MICROSOFT_ACCESS_TOKEN"
 
 # Verify
 curl -s -H "Authorization: Bearer $MS_TOKEN" https://graph.microsoft.com/v1.0/me | jq '{name:.displayName,email:.mail}'
 ```
 
-If you get a 401 on any call, re-run: `export MS_TOKEN=$(/tmp/ms-refresh.sh)`
+If you get a 401 on any call later, the cached `$MS_TOKEN` may be stale. The runtime keeps `$MICROSOFT_ACCESS_TOKEN` fresh, so just re-run: `export MS_TOKEN="$MICROSOFT_ACCESS_TOKEN"`
 
 **All curl commands below assume `$MS_TOKEN` is set.**
 
@@ -369,7 +351,7 @@ curl -s -H "Authorization: Bearer $MS_TOKEN" \
 
 ## Tips
 
-- **Token expires in ~1 hour** — re-run `export MS_TOKEN=$(/tmp/ms-refresh.sh)` on 401 errors.
+- **Token expires in ~1 hour** — the platform refreshes `$MICROSOFT_ACCESS_TOKEN` automatically. On 401 errors, re-run `export MS_TOKEN="$MICROSOFT_ACCESS_TOKEN"` to pick up the latest one.
 - **OData query params**: `$top` (page size), `$select` (fields), `$filter` (conditions), `$orderby` (sort), `$search` (text search), `$expand` (include related). Escape `$` in bash: `\$top`.
 - **Pagination**: Responses include `@odata.nextLink` — follow it for next page.
 - **Planner updates need `If-Match`** — GET the task first, extract `@odata.etag`, pass as `If-Match` header on PATCH.
