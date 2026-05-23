@@ -28,7 +28,11 @@ The Chorus Granola connection uses **MCP over OAuth** (not the REST API). `GRANO
 
 Every call is a JSON-RPC 2.0 POST to `https://mcp.granola.ai/mcp`. Required headers: `Authorization: Bearer $GRANOLA_API_KEY`, `Content-Type: application/json`, `Accept: application/json, text/event-stream`.
 
-Responses are returned as Server-Sent Events. Extract the `data:` line and parse it as JSON.
+Responses are returned as Server-Sent Events. Pipe through `sed` to strip the `data: ` prefix and `jq` to parse the JSON payload:
+
+```bash
+... | sed -n 's/^data: //p' | jq '.result.content[0].text | fromjson?'
+```
 
 ### Initialize the session (optional, but standard MCP handshake)
 
@@ -56,7 +60,7 @@ curl -s -X POST "https://mcp.granola.ai/mcp" \
 |---|---|
 | `query_granola_meetings` | Natural-language Q&A over meeting notes. Returns prose with inline citation links (`[[0]](url)`) — preserve them in user-facing responses. Best for open-ended questions ("what did we decide about X?", "any action items from last week?"). |
 | `list_meetings` | List meetings in a time range. `time_range` ∈ `this_week`, `last_week`, `last_30_days` (default). Returns titles, dates, participants, IDs. |
-| `list_meeting_folders` | List folders with IDs, titles, descriptions, note counts. Use folder IDs to scope `list_meetings`. |
+| `list_meeting_folders` | List folders with IDs, titles, descriptions, note counts. |
 | `get_meetings` | Retrieve detailed notes + AI summary + attendees for up to 10 meeting UUIDs. Use after `list_meetings`. |
 | `get_meeting_transcript` | Full verbatim transcript for one meeting UUID. Use when exact quotes matter. |
 | `get_account_info` | Returns the email + active workspace for the connected Granola account. |
@@ -68,7 +72,8 @@ curl -s -X POST "https://mcp.granola.ai/mcp" \
   -H "Authorization: Bearer $GRANOLA_API_KEY" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
-  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"list_meetings","arguments":{"time_range":"last_30_days"}}}'
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"list_meetings","arguments":{"time_range":"last_30_days"}}}' \
+  | sed -n 's/^data: //p' | jq '.result.content[0].text'
 ```
 
 ### Example — natural-language query
