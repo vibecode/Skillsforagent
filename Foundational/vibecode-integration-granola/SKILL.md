@@ -34,15 +34,19 @@ Every call is a JSON-RPC POST. Responses come back as SSE — strip `data: ` and
 ```bash
 granola() {
   # usage: granola <tool_name> '<json_args>'
+  local args="$2"
+  [ -z "$args" ] && args='{}'
   curl -s -X POST https://mcp.granola.ai/mcp \
     -H "Authorization: Bearer $GRANOLA_API_KEY" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
-    -d "$(jq -nc --arg name "$1" --argjson args "${2:-{}}" \
+    -d "$(jq -nc --arg name "$1" --argjson args "$args" \
         '{jsonrpc:"2.0",id:1,method:"tools/call",params:{name:$name,arguments:$args}}')" \
-    | sed -n 's/^data: //p' | jq -r '.result.content[0].text'
+    | sed -n 's/^data: //p' | jq -r '.result.content[0].text // empty'
 }
 ```
+
+The `// empty` filter is important: `query_granola_meetings` streams `notifications/progress` events before the final result — without it, every progress tick prints `null`.
 
 Then:
 
