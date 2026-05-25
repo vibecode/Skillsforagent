@@ -9,9 +9,9 @@ description: >
   templates, contacts, lists, suppressions, and stats. Consult this skill:
   1. When the user asks to send an email (transactional, broadcast, or test)
   2. When the user wants to create, list, update, or use dynamic email templates
-  3. When the user needs to manage marketing contacts, lists, or segments
+  3. When the user needs to manage marketing contacts or lists
   4. When the user asks about bounces, blocks, spam reports, or unsubscribes (suppressions)
-  5. When the user wants email delivery stats or to inspect recent sends
+  5. When the user wants aggregate email delivery stats
   6. When the user mentions SendGrid, Twilio SendGrid, or wants to act on email infra
 metadata: {"openclaw": {"emoji": "✉️", "requires": {"env": ["SENDGRID_API_KEY"]}}}
 ---
@@ -148,7 +148,7 @@ curl -s -X POST "https://api.sendgrid.com/v3/marketing/contacts/search" \
 curl -s "https://api.sendgrid.com/v3/marketing/contacts/{contactId}" \
   -H "Authorization: Bearer $SENDGRID_API_KEY"
 
-# Delete contacts (DELETE with query param)
+# Delete contacts (DELETE with query param — also async, returns 202 + job_id)
 curl -s -X DELETE "https://api.sendgrid.com/v3/marketing/contacts?ids={contactId1},{contactId2}" \
   -H "Authorization: Bearer $SENDGRID_API_KEY"
 
@@ -169,7 +169,7 @@ curl -s -X DELETE "https://api.sendgrid.com/v3/marketing/lists/{listId}/contacts
 
 ## Suppressions (bounces, blocks, spam reports, unsubscribes)
 
-Check before sending — emailing a suppressed address still counts against your reputation.
+SendGrid auto-honours these lists on `/mail/send` (a message to a suppressed address is silently dropped, not delivered), so there's no reputation hit at the mailbox-provider level. Worth checking before send anyway to avoid wasted API quota and to surface stale local data (e.g., a contact your app still treats as active that has bounced).
 
 ```bash
 # List bounces (delivery failures)
