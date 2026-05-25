@@ -161,11 +161,11 @@ curl -s -G "https://api.peopledatalabs.com/v5/autocomplete" \
   --data-urlencode "text=san fran"
 ```
 
-Supported `field` values: `title`, `company`, `location`, `school`, `industry`, `role`, `sub_role`, `skill`, `country`.
+Supported `field` values: `title`, `company`, `location`, `school`, `industry`, `role`, `sub_role`, `skill`, `country`, `class`, `major`, `region`, `website`.
 
 ## Bulk Person Enrichment
 
-Enrich up to 100 people per request — cheaper than 100 individual calls.
+Enrich up to 100 people per request — same credit cost as individual calls (1 credit per match), but 1 HTTP request instead of 100.
 
 ```bash
 curl -s -X POST "https://api.peopledatalabs.com/v5/person/bulk" \
@@ -199,5 +199,5 @@ curl -s -G "https://api.peopledatalabs.com/v5/ip/enrich" \
 - **Search endpoints use HTTP POST with a JSON body**, even though they're "GET-like" operations. The body uses either `query` (Elasticsearch DSL) or `sql` — never both.
 - **Credits are per matched record, not per query** on search. A `size: 100` query that returns 100 results = 100 credits.
 - **Use Person Identify only when disambiguating multiple candidate matches** (e.g., common name + company) — it costs 1 credit per call just like enrichment, so don't reflexively call it as a pre-check.
-- **Run `autocomplete` before search** when the user passes free-form strings ("VP Eng at SF startups") — search filters need canonical PDL values (`job_title_role: "engineering"`, `job_title_levels: "vp"`).
+- **Run `autocomplete` before search** when the user passes free-form strings ("VP Eng at SF startups") — search filters need canonical PDL values (`job_title_role: "engineering"`, `job_title_levels: "vp"`). Autocomplete does not consume credits (rate-limited only), so it is always safe to call.
 - **Rate limits depend on plan** — 429 responses include a `Retry-After` header; back off and retry.
