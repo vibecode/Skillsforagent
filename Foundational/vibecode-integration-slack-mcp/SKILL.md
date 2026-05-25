@@ -150,7 +150,7 @@ curl -s -X POST "https://slack.com/api/conversations.open" \
   -d '{"users": "U0123ABCD"}'
 ```
 
-Scopes: `users:read`, `users:read.email`, `channels:read`, `groups:read`, `im:read`, `mpim:read`.
+Scopes: `users:read`, `users:read.email`, `channels:read`, `groups:read`, `im:read`, `mpim:read`. `conversations.open` additionally requires `im:write` (1:1 DMs) and `mpim:write` (group DMs) — without these the open call returns `missing_scope` even if the user-read scopes are present.
 
 **Pagination**: Both `users.list` and `conversations.list` are cursor-paginated. Slack caps `limit` at ~200 (users) / ~1000 (conversations) per page and returns `response_metadata.next_cursor` when more pages exist. **Always loop until `next_cursor` is empty** — otherwise a workspace with 300 members will silently return only the first page, and a "user not found" result might just be on page 2.
 
