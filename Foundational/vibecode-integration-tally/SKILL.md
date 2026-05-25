@@ -75,6 +75,18 @@ curl -s -X DELETE "https://api.tally.so/forms/{formId}" \
 curl -s "https://api.tally.so/forms/{formId}/submissions?page=1&limit=20" \
   -H "Authorization: Bearer $TALLY_API_KEY"
 
+# Filter by status (all | partial | completed)
+curl -s "https://api.tally.so/forms/{formId}/submissions?filter=completed&limit=50" \
+  -H "Authorization: Bearer $TALLY_API_KEY"
+
+# Filter by date range (ISO 8601)
+curl -s "https://api.tally.so/forms/{formId}/submissions?startDate=2026-01-01T00:00:00Z&endDate=2026-02-01T00:00:00Z" \
+  -H "Authorization: Bearer $TALLY_API_KEY"
+
+# Incremental fetch: get submissions after a known submission ID
+curl -s "https://api.tally.so/forms/{formId}/submissions?afterId={lastSubmissionId}" \
+  -H "Authorization: Bearer $TALLY_API_KEY"
+
 # Get a single submission
 curl -s "https://api.tally.so/forms/{formId}/submissions/{submissionId}" \
   -H "Authorization: Bearer $TALLY_API_KEY"
@@ -176,6 +188,6 @@ curl -s -X DELETE "https://api.tally.so/organizations/invites/{inviteId}" \
 
 - **Pagination**: List endpoints use `?page=` and `?limit=` query params. Default page size is small; bump `limit` (e.g., `limit=100`) for fewer round trips.
 - **Forms vs Questions**: `GET /forms/{id}` returns the full form including blocks (heavy). If you only need field metadata, use `GET /forms/{id}/questions` instead.
-- **Form status values**: `DRAFT`, `PUBLISHED`, `BLOCKED` — set via `PATCH /forms/{id}`.
+- **Form status values**: `BLANK` (no blocks yet), `DRAFT`, `PUBLISHED`, `BLOCKED` — set via `PATCH /forms/{id}`.
 - **Webhook event types**: `FORM_RESPONSE` is the main one (fires on new submission). Always prefer webhooks over polling for live data — saves rate limit and gives you sub-second latency.
-- **Don't poll `/submissions` in a loop** — at 100 req/min you'll burn the limit fast. If you must poll, cache last-seen submission ID and only fetch `since`.
+- **Don't poll `/submissions` in a loop** — at 100 req/min you'll burn the limit fast. If you must poll, cache the last-seen submission ID and fetch `?afterId=<lastSubmissionId>` (the API's cursor parameter).
