@@ -162,7 +162,7 @@ curl -s -X POST "https://api.sendgrid.com/v3/marketing/lists" \
   -H "Content-Type: application/json" \
   -d '{"name": "Beta Users"}'
 
-# Remove a contact from a list
+# Remove a contact from a list (async — returns 200 + job_id; poll imports/{jobId} to confirm removal)
 curl -s -X DELETE "https://api.sendgrid.com/v3/marketing/lists/{listId}/contacts?contact_ids={contactId}" \
   -H "Authorization: Bearer $SENDGRID_API_KEY"
 ```
