@@ -96,14 +96,14 @@ curl -s -X POST "https://api.peopledatalabs.com/v5/person/search" \
 curl -s -X POST "https://api.peopledatalabs.com/v5/person/search" \
   -H "X-Api-Key: $PEOPLEDATALABS_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"size": 10, "scroll_token": "<token-from-prev-response>", "sql": "..."}'
+  -d '{"size": 10, "scroll_token": "<token-from-prev-response>", "sql": "SELECT * FROM person WHERE location_country='\''united states'\'' AND job_title_role='\''engineering'\''"}'
 ```
 
 Returns: `{ status, data: [...], scroll_token, total }`. Each record in `data` consumes one credit.
 
 ## Person Identify
 
-Match a partial record against PDL's index without consuming a credit. Useful as a pre-check before enrichment.
+Match a partial record against PDL's index — returns candidate matches ranked by confidence. Useful when you have ambiguous identifiers (e.g., common name + company) and want to disambiguate before pulling a full record. **Costs 1 credit per call** (same tier as Person Enrichment) — don't run it as a free pre-check.
 
 ```bash
 curl -s -G "https://api.peopledatalabs.com/v5/person/identify" \
@@ -195,9 +195,9 @@ curl -s -G "https://api.peopledatalabs.com/v5/ip" \
 
 - **`X-Api-Key` header is the cleaner auth** — avoid `?api_key=` query param so the key doesn't end up in webserver logs.
 - **No-match returns `status: 404`** and no credit is consumed — safe to retry with different identifiers.
-- **`min_likelihood` (1–10)** raises the match confidence threshold for enrichment. Default returns any match; production lookups should set 6+ to avoid false positives.
+- **`min_likelihood` (0–10)** raises the match confidence threshold for enrichment. Default returns any match; production lookups should set 6+ to avoid false positives.
 - **Search endpoints use HTTP POST with a JSON body**, even though they're "GET-like" operations. The body uses either `query` (Elasticsearch DSL) or `sql` — never both.
 - **Credits are per matched record, not per query** on search. A `size: 100` query that returns 100 results = 100 credits.
-- **Use Person Identify first when prospecting from sparse data** (just name+company) — it's free and tells you whether an enrichment will succeed.
+- **Use Person Identify only when disambiguating multiple candidate matches** (e.g., common name + company) — it costs 1 credit per call just like enrichment, so don't reflexively call it as a pre-check.
 - **Run `autocomplete` before search** when the user passes free-form strings ("VP Eng at SF startups") — search filters need canonical PDL values (`job_title_role: "engineering"`, `job_title_levels: "vp"`).
 - **Rate limits depend on plan** — 429 responses include a `Retry-After` header; back off and retry.
