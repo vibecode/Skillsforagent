@@ -186,7 +186,7 @@ Returns an array in the same order as `requests`, each with its own `status`.
 
 ```bash
 # Look up company / location from an IP address
-curl -s -G "https://api.peopledatalabs.com/v5/ip" \
+curl -s -G "https://api.peopledatalabs.com/v5/ip/enrich" \
   -H "X-Api-Key: $PEOPLEDATALABS_API_KEY" \
   --data-urlencode "ip=72.212.42.169"
 ```
