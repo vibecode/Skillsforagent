@@ -126,7 +126,7 @@ curl -s "https://api.tally.so/webhooks/{webhookId}/events" \
   -H "Authorization: Bearer $TALLY_API_KEY"
 
 # Retry a failed delivery
-curl -s -X POST "https://api.tally.so/webhooks/{webhookId}/events/{eventId}/retry" \
+curl -s -X POST "https://api.tally.so/webhooks/{webhookId}/events/{eventId}" \
   -H "Authorization: Bearer $TALLY_API_KEY"
 ```
 
