@@ -78,9 +78,21 @@ curl -s -X POST "https://slack.com/api/chat.postMessage" \
   -H "Authorization: Bearer $SLACK_MCP_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"channel": "C0123ABCD", "blocks": [{"type":"section","text":{"type":"mrkdwn","text":"*Bold* update"}}]}'
+
+# Edit a previously-posted message (need its ts)
+curl -s -X POST "https://slack.com/api/chat.update" \
+  -H "Authorization: Bearer $SLACK_MCP_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"channel": "C0123ABCD", "ts": "1779565166.477149", "text": "edited text"}'
+
+# Delete a message
+curl -s -X POST "https://slack.com/api/chat.delete" \
+  -H "Authorization: Bearer $SLACK_MCP_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"channel": "C0123ABCD", "ts": "1779565166.477149"}'
 ```
 
-Scope: `chat:write`. Posts go from the **user**, not a bot — they show the user's name/avatar.
+Scope: `chat:write` (covers post, update, and delete of the user's own messages). Posts go from the **user**, not a bot — they show the user's name/avatar.
 
 ## Search
 
@@ -97,7 +109,7 @@ curl -s -G "https://slack.com/api/search.messages" \
   --data-urlencode "query=in:#general after:2026-05-01"
 ```
 
-Scopes: `search:read.public`, `search:read.private`, `search:read.mpim`, `search:read.im`. Each scope unlocks search in that conversation type — missing one = those messages silently absent from results.
+Scope: `search:read` (legacy — still the only scope `search.messages` honors). The granular `search:read.public` / `.private` / `.mpim` / `.im` scopes are for Slack's newer Real-time Search API (`assistant.search.context`), **not** this method. If `search.messages` returns `missing_scope` despite having the granular ones, the user needs to reconnect with `search:read` added.
 
 ## Reactions
 
@@ -139,6 +151,20 @@ curl -s -X POST "https://slack.com/api/conversations.open" \
 ```
 
 Scopes: `users:read`, `users:read.email`, `channels:read`, `groups:read`, `im:read`, `mpim:read`.
+
+**Pagination**: Both `users.list` and `conversations.list` are cursor-paginated. Slack caps `limit` at ~200 (users) / ~1000 (conversations) per page and returns `response_metadata.next_cursor` when more pages exist. **Always loop until `next_cursor` is empty** — otherwise a workspace with 300 members will silently return only the first page, and a "user not found" result might just be on page 2.
+
+```bash
+# Paginate users.list
+NEXT_CURSOR=""
+while :; do
+  RESP=$(curl -s "https://slack.com/api/users.list?limit=200&cursor=$NEXT_CURSOR" \
+    -H "Authorization: Bearer $SLACK_MCP_ACCESS_TOKEN")
+  echo "$RESP" | jq '.members[]'
+  NEXT_CURSOR=$(echo "$RESP" | jq -r '.response_metadata.next_cursor // ""')
+  [ -z "$NEXT_CURSOR" ] && break
+done
+```
 
 ## Tips & gotchas
 
