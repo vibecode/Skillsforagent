@@ -16,80 +16,75 @@ metadata: {"openclaw": {"emoji": "🎙️", "requires": {"env": ["GRANOLA_API_KE
 
 # Granola Integration
 
-Meeting notes, transcripts, and summaries via the Granola public API.
+Meeting notes, transcripts, and summaries via Granola's MCP server.
 
-**Auth**: Bearer token via `GRANOLA_API_KEY`.
-**Base URL**: `https://public-api.granola.ai`
-**Rate limit**: 25 requests per 5-second burst, 5 req/s sustained.
+## Important — Chorus uses MCP OAuth, not the REST API
 
-## List meetings
+The Chorus Granola connection authenticates via **MCP over OAuth**. `GRANOLA_API_KEY` holds a JWT issued by `mcp-auth.granola.ai`, **not** a dashboard-issued API key. The public REST API (`public-api.granola.ai`) will reject this token with `INVALID_API_KEY` — always use the MCP endpoint.
+
+- **Endpoint**: `https://mcp.granola.ai/mcp`
+- **Transport**: Streamable HTTP, JSON-RPC 2.0
+- **Auth header**: `Authorization: Bearer $GRANOLA_API_KEY`
+- **If a call returns 401 / "Session expired"**: reconnect with `masterclaw connections ensure --provider granola`
+
+## Calling MCP
+
+Every call is a JSON-RPC POST. Responses come back as SSE — strip `data: ` and parse with `jq`. Define a helper once and reuse it:
 
 ```bash
-# List recent notes (default: 10 most recent)
-curl -s https://public-api.granola.ai/v1/notes \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
-
-# List with date filter
-curl -s "https://public-api.granola.ai/v1/notes?created_after=2026-03-20&page_size=20" \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
-
-# Filter by update date
-curl -s "https://public-api.granola.ai/v1/notes?updated_after=2026-03-24&page_size=30" \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
-
-# List notes before a date
-curl -s "https://public-api.granola.ai/v1/notes?created_before=2026-03-15" \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
-
-# Paginate (when hasMore is true, use cursor)
-curl -s "https://public-api.granola.ai/v1/notes?cursor=CURSOR_VALUE&page_size=10" \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
-```
-
-Response:
-```json
-{
-  "notes": [{"id": "not_abc123...", "title": "Weekly standup", "owner": {"name": "...", "email": "..."}, "created_at": "...", "updated_at": "..."}],
-  "hasMore": true,
-  "cursor": "next_cursor_value"
+granola() {
+  # usage: granola <tool_name> '<json_args>'
+  local args="$2"
+  [ -z "$args" ] && args='{}'
+  curl -s -X POST https://mcp.granola.ai/mcp \
+    -H "Authorization: Bearer $GRANOLA_API_KEY" \
+    -H "Content-Type: application/json" \
+    -H "Accept: application/json, text/event-stream" \
+    -d "$(jq -nc --arg name "$1" --argjson args "$args" \
+        '{jsonrpc:"2.0",id:1,method:"tools/call",params:{name:$name,arguments:$args}}')" \
+    | sed -n 's/^data: //p' | jq -r '.result.content[0].text // empty'
 }
 ```
 
-## Get meeting details
+The `// empty` filter is important: `query_granola_meetings` streams `notifications/progress` events before the final result — without it, every progress tick prints `null`.
+
+Then:
 
 ```bash
-# Get note with summary
-curl -s https://public-api.granola.ai/v1/notes/{note_id} \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
-
-# Get note with full transcript
-curl -s "https://public-api.granola.ai/v1/notes/{note_id}?include=transcript" \
-  -H "Authorization: Bearer $GRANOLA_API_KEY"
+granola list_meetings '{"time_range":"last_30_days"}'
+granola query_granola_meetings '{"query":"action items from this week"}'
+granola get_meetings '{"meeting_ids":["c81d271e-99b1-4489-8ec0-fb0e2b262560"]}'
+granola get_account_info
 ```
 
-Note IDs follow the pattern `not_[a-zA-Z0-9]{14}`.
+## Available tools
 
-Response includes:
-- `title`, `owner`, `created_at`, `updated_at`
-- `calendar_event` — event title, invitees, organiser, scheduled start/end
-- `attendees` — array of `{name, email}`
-- `folder_membership` — folders the note belongs to
-- `summary_text` — plain text summary
-- `summary_markdown` — markdown summary
-- `transcript` (if requested) — array of `{speaker_source, text, start_time, end_time}`
+| Tool | Purpose |
+|---|---|
+| `query_granola_meetings` | Natural-language Q&A over notes. Returns prose with inline citation links (`[[0]](url)`) — preserve these when relaying to the user. Best for open-ended questions. Args: `query` (required), `document_ids` (optional). |
+| `list_meetings` | List meetings in a time range. Args: `time_range` ∈ `this_week`, `last_week`, `last_30_days` (default). Returns titles, dates, participants, UUIDs. |
+| `list_meeting_folders` | List folders with IDs, titles, descriptions, note counts. |
+| `get_meetings` | Detailed notes + AI summary + attendees for up to 10 meeting UUIDs. Args: `meeting_ids` (array). Use after `list_meetings`. |
+| `get_meeting_transcript` | Verbatim transcript for one meeting UUID. Args: `meeting_id`. Use when exact quotes matter — payloads are large. |
+| `get_account_info` | Email + active workspace for the connected account. |
 
-Speaker sources: `"microphone"` (the user) or `"speaker"` (others in the meeting).
+For the canonical tool schemas, call `tools/list`:
+
+```bash
+curl -s -X POST https://mcp.granola.ai/mcp \
+  -H "Authorization: Bearer $GRANOLA_API_KEY" \
+  -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' \
+  | sed -n 's/^data: //p' | jq
+```
 
 ## Tips
 
-- **Page size**: 1–30, default 10.
-- **Note IDs** match pattern `not_[a-zA-Z0-9]{14}`.
-- **Transcripts are large** — only fetch with `?include=transcript` when needed.
-- **Timestamps are UTC** in ISO 8601 format.
-- **Date filters accept both date and datetime**: `2026-03-25` or `2026-03-25T10:00:00Z`.
-- **No search endpoint** in the public API — filter by date range and scan titles client-side.
-- **Only 2 endpoints**: list notes and get note. The API is simple but covers the core use case.
+- **Meeting IDs are UUIDs** under MCP (e.g. `c81d271e-99b1-4489-8ec0-fb0e2b262560`). The legacy REST API used `not_*` strings — don't confuse them.
+- **Prefer `query_granola_meetings`** for natural-language questions — it synthesizes an answer with citations in one call.
+- **Use `list_meetings` → `get_meetings`** when you need structured data on specific meetings.
+- **Preserve citation links** (`[[0]](url)`) in `query_granola_meetings` output when relaying to the user.
 
 ---
 
-*Extracted from [joelhooks/joelclaw/granola](https://skills.sh/joelhooks/joelclaw/granola) and [Granola API Reference](https://docs.granola.ai/introduction).*
+*Reference: [Granola MCP docs](https://docs.granola.ai/help-center/sharing/integrations/mcp).*
