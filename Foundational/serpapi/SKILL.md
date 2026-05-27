@@ -25,7 +25,7 @@ Use this skill to answer two questions before calling the API:
 1. Which engine should be used?
 2. Which response fields should be trusted?
 
-The platform recommender should use this skill when a user task needs SerpApi. This skill then performs the second-stage routing: it chooses the exact engine, parameters, and result fields. Do not create one shallow skill per query type when this master router can handle the choice directly.
+This skill performs second-stage routing for SerpApi: it chooses the exact engine, parameters, and result fields for the user's intent. Do not create one shallow skill per query type when this master router can handle the choice directly.
 
 ## Routing Contract
 
@@ -37,7 +37,7 @@ When this skill is active, follow this sequence:
 4. Only load a specialized skill when the route needs deeper workflow judgment, such as flights, maps venue research, YouTube transcript workflows, Tripadvisor, or OpenTable reviews.
 5. Return concise results with links, source names, and caveats about weak matches.
 
-The recommender's job is only to select this master skill. The master skill's job is to decide what gets called.
+This skill's job is to decide which SerpApi engine gets called for the user's intent.
 
 ## Master Decision Table
 
