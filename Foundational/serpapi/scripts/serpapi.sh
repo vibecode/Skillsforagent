@@ -161,7 +161,11 @@ if [[ -n "${VIBECODE_API_KEY:-}" ]]; then
   CURL_HEADERS+=(--header "x-api-key: ${VIBECODE_API_KEY}")
 fi
 
-http_code=$(curl "${CURL_HEADERS[@]}" -sw '%{http_code}' -o "$tmpfile" "$url")
+if [[ ${#CURL_HEADERS[@]} -gt 0 ]]; then
+  http_code=$(curl "${CURL_HEADERS[@]}" -sw '%{http_code}' -o "$tmpfile" "$url")
+else
+  http_code=$(curl -sw '%{http_code}' -o "$tmpfile" "$url")
+fi
 
 if [[ "$http_code" -ge 400 ]]; then
   echo "HTTP $http_code error:" >&2
