@@ -1,6 +1,6 @@
 ---
 name: SerpApi
-displayName: SerpApi Master Router
+display_name: SerpApi Master Router
 description: >
   Master router skill for SerpApi search engine APIs. Use this whenever a task
   needs current or web-sourced data from search, news, shopping, product price
