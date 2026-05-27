@@ -2,7 +2,7 @@
 
 Complete parameter reference for all supported engines. Each engine section documents required/optional parameters and key response fields.
 
-All requests use `https://serpapi.com.cloudproxy.vibecodeapp.com/search` with `engine=<engine_name>&api_key=$SERPAPI_API_KEY`.
+All requests use `${SERPAPI_BASE_URL:-https://serpapi.com.proxy.chorus.com}/search.json` with `engine=<engine_name>&api_key=<key>`. The wrapper uses `SERPAPI_API_KEY` when present and otherwise falls back to the Chorus SerpApi proxy key documented by the environment skill. When `VIBECODE_API_KEY` is present, the wrapper sends it as `x-api-key` for the proxy.
 
 ---
 
@@ -32,6 +32,7 @@ All requests use `https://serpapi.com.cloudproxy.vibecodeapp.com/search` with `e
 - [Baidu](#baidu)
 - [Yandex](#yandex)
 - [Naver](#naver)
+- [Amazon](#amazon)
 - [Walmart](#walmart)
 - [eBay](#ebay)
 - [Home Depot](#home-depot)
@@ -269,7 +270,7 @@ Use `data_id` from maps results. Photos returns image URLs; posts returns busine
 | `tz` | No | Timezone offset in minutes (default 420/PDT) |
 | `hl` | No | Language |
 
-**Key response fields:** Depends on data_type. TIMESERIES: `interest_over_time.timeline_data[]`; GEO_MAP: `compared_breakdown_by_region[]`; RELATED: `related_topics/queries.rising[]`, `.top[]`
+**Key response fields:** Depends on data_type. TIMESERIES commonly returns `interest_over_time` and may include nested `timeline_data[]`; GEO_MAP: `compared_breakdown_by_region[]`; RELATED: `related_topics/queries.rising[]`, `.top[]`
 
 ---
 
@@ -472,6 +473,21 @@ Use `data_id` from maps results. Photos returns image URLs; posts returns busine
 
 ---
 
+## Amazon
+
+**Engine:** `amazon`
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `k` or `field-keywords` | Yes | Product search query. Prefer `k` with the local wrapper unless a task explicitly needs the legacy parameter name. |
+| `amazon_domain` | No | Marketplace domain, e.g. `amazon.com`, `amazon.co.uk` |
+| `page` | No | Page number |
+| `sort` | No | Sort option when supported |
+
+**Key response fields:** Result shape can vary by marketplace and query. Inspect `organic_results[]`, `shopping_results[]`, and any product arrays before assuming a key.
+
+---
+
 ## Walmart
 
 **Engine:** `walmart`
@@ -510,6 +526,8 @@ Use `data_id` from maps results. Photos returns image URLs; posts returns busine
 |-----------|----------|-------------|
 | `term` | Yes | Search query (note: `term`, not `q`) |
 
+**Key response fields:** `organic_results[]` with app title, developer, link/product id, rating fields, and thumbnail fields when available.
+
 ---
 
 ## Google Play
@@ -521,3 +539,5 @@ Use `data_id` from maps results. Photos returns image URLs; posts returns busine
 | `q` | Yes | Search query |
 | `store` | No | `apps`, `books`, `movies` |
 | `gl`, `hl` | No | Localization |
+
+**Key response fields:** Often nested as `organic_results[].items[]` for app lists. Inspect both `organic_results[]` and nested `items[]` before extracting titles, ratings, product ids, or links.

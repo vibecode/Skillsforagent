@@ -1,29 +1,70 @@
 ---
 name: SerpApi
+display_name: SerpApi Master Router
 description: >
-  Foundational skill for the SerpApi search engine API — structured JSON from 30+ engines
-  including Google (web, images, maps, flights, hotels, scholar, news, shopping, jobs,
-  finance, trends, ads), YouTube (search, video details, transcripts), Tripadvisor,
-  OpenTable, Bing, DuckDuckGo, Walmart, eBay, and more. Use when: (1) searching any
-  search engine via SerpApi, (2) Google Flights/Hotels pricing, (3) Google Maps local
-  search or place details, (4) YouTube search/video/transcript, (5) Google Scholar
-  papers, (6) Google Trends, (7) Tripadvisor/OpenTable reviews, (8) e-commerce search
-  (Walmart, eBay), (9) app store search, (10) Google Ads transparency, (11) any task
-  involving serpapi.com. Base SerpApi skill — specialized skills reference it.
-metadata: {"openclaw": {"emoji": "🔍", "requires": {"env": ["SERPAPI_API_KEY"]}, "primaryEnv": "SERPAPI_API_KEY"}}
+  Master router skill for SerpApi search engine APIs. Use this whenever a task
+  needs current or web-sourced data from search, news, shopping, product price
+  comparison, retailer comparison, Reddit/forum opinion research, maps, hotels, flights,
+  jobs, reviews, trends, finance, app stores, YouTube, Tripadvisor, OpenTable, or any
+  serpapi.com engine. This skill is valuable because it selects the right SerpApi engine,
+  avoids common parameter mistakes, reads the correct response keys, uses the local
+  proxy wrapper, and returns concise evidence-backed results instead of generic browsing.
+  Use it for prompts like hotels near an airport under a budget, Reddit opinions on two
+  tools, compare iPhone prices across retailers, or junior software jobs in a city.
+  Specialized skills may reference it, but this skill should be the first stop for
+  SerpApi engine routing and API usage.
+metadata: {"openclaw": {"emoji": "🔍"}}
 ---
 
 # SerpApi
 
-Structured JSON data from 30+ search engines via a single API endpoint.
+Master router for structured search results from SerpApi through the Vibecode proxy.
+
+Use this skill to answer two questions before calling the API:
+
+1. Which engine should be used?
+2. Which response fields should be trusted?
+
+This skill performs second-stage routing for SerpApi: it chooses the exact engine, parameters, and result fields for the user's intent. Do not create one shallow skill per query type when this master router can handle the choice directly.
+
+## Routing Contract
+
+When this skill is active, follow this sequence:
+
+1. Classify the user intent into one of the routes below.
+2. Use the matching SerpApi engine and query parameters.
+3. Inspect the listed response keys instead of guessing.
+4. Only load a specialized skill when the route needs deeper workflow judgment, such as flights, maps venue research, YouTube transcript workflows, Tripadvisor, or OpenTable reviews.
+5. Return concise results with links, source names, and caveats about weak matches.
+
+This skill's job is to decide which SerpApi engine gets called for the user's intent.
+
+## Master Decision Table
+
+| If the user asks for... | Use this route | Engine | Key parameters | Read |
+|-------------------------|----------------|--------|----------------|------|
+| "hotels near JFK under 200" | Lodging search | `google_hotels` | `q`, `check_in_date`, `check_out_date`, `max_price`, `currency`, `gl` | `properties[]` |
+| "book flights to New York" | Flight planning | `google_flights` | `departure_id`, `arrival_id`, `outbound_date`, `return_date`, `type` | `best_flights[]`, `other_flights[]` |
+| "reddit opinions on Cursor vs Windsurf" | Forum/opinion research | `google` | `q="site:reddit.com ..."` | `organic_results[]` |
+| "compare iPhone prices across retailers" | Product price comparison | `google_shopping` first, then marketplace engines if needed | `q`, `gl`, `location` | `shopping_results[]` |
+| "junior SWE jobs in SF TypeScript" | Job search | `google_jobs` | `q`, `location`, `gl`, `chips` | `jobs_results[]` |
+| "restaurants near this venue" | Local search | `google_maps` | `q`, `location` or `ll`, `type=search` | `local_results[]` |
+| "reviews for this place" | Place review retrieval | `google_maps` then `google_maps_reviews` | `data_id` from real maps result | `reviews[]` |
+| "latest news on X" | News/current events | `google_news` | `q`, `gl`, `hl` | `news_results[]` |
+| "images of X" | Image search | `google_images` | `q`, image filters | `images_results[]` |
+| "trend for X vs Y" | Search interest trend | `google_trends` | `q`, `data_type`, `geo`, `date` | `interest_over_time`, related keys |
+| "stock quote/company finance" | Finance lookup | `google_finance` | `q` | `summary`, `graph[]`, `news_results[]` |
+| "iOS/Android app search" | App marketplace search | `apple_app_store` or `google_play` | `term` or `q`, `store` | `organic_results[]`, nested `items[]` |
+
+If the user asks for something not listed, read [references/engines.md](references/engines.md), pick the closest specific engine, then call it through `scripts/serpapi.sh`.
 
 ## Setup
 
-Requires `SERPAPI_API_KEY` environment variable. All requests go to `https://serpapi.com.cloudproxy.vibecodeapp.com/search` as GET requests with `engine` and `api_key` parameters.
+The wrapper uses `SERPAPI_API_KEY` when present. In Chorus runner containers it falls back to the SerpApi cloud-proxy dummy key documented by the environment skill, so agents can call the proxy without user-managed secrets. Requests go to `${SERPAPI_BASE_URL:-https://serpapi.com.proxy.chorus.com}/search.json` with `engine` and `api_key` parameters. When `VIBECODE_API_KEY` is present, the wrapper sends it as `x-api-key` for the proxy.
 
 ## Wrapper Script
 
-Use `scripts/serpapi.sh` for all API calls. It handles auth, URL encoding, error handling, and JSON formatting.
+Use `scripts/serpapi.sh` for API calls. It handles auth, URL encoding, error handling, and JSON formatting.
 
 ```bash
 bash scripts/serpapi.sh <engine> [--param value ...]
@@ -33,7 +74,97 @@ bash scripts/serpapi.sh <engine> [--param value ...]
 - `--no-cache` — force fresh results (costs a search credit)
 - `--raw` — skip jq formatting
 
-## Quick Reference
+## High-Value Workflows
+
+### Hotels near an airport or venue
+
+Use `google_hotels`, not generic search. Ask for or infer check-in/check-out dates before treating prices as useful; hotel prices without dates are weak evidence.
+
+```bash
+bash scripts/serpapi.sh google_hotels \
+  --q "hotels near JFK" \
+  --check_in_date 2026-06-12 \
+  --check_out_date 2026-06-13 \
+  --max_price 200 \
+  --currency USD \
+  --gl us
+```
+
+Inspect `properties[]`. Prefer options with a usable rating, review count, location clue, and price. For airports, surface shuttle/transport clues when present. Do not recommend a property only because it is cheapest.
+
+### Reddit or forum opinions
+
+SerpApi does not need a separate Reddit engine for most opinion research. Use `google` with search operators, then summarize linked discussions and dates.
+
+```bash
+bash scripts/serpapi.sh google \
+  --q "site:reddit.com Cursor vs Windsurf reddit" \
+  --gl us \
+  --num 10
+```
+
+Use `organic_results[]`. Prefer recent, discussion-style pages. Label results as opinions, not facts.
+
+### Product price comparison
+
+Use `google_shopping` first for cross-retailer comparison. Use retailer-specific engines like `amazon`, `walmart`, or `ebay` when the user names a marketplace or when Shopping results are too noisy.
+
+```bash
+bash scripts/serpapi.sh google_shopping \
+  --q "iPhone 16 Pro 256GB unlocked" \
+  --gl us
+```
+
+Inspect `shopping_results[]`. Normalize variants before comparing prices. Separate new/refurbished/used, storage size, color, carrier lock, bundles, and seller reliability. A lower price is not automatically the best recommendation.
+
+### Job search
+
+Use `google_jobs` for structured listings. Keep seniority, role, and core skills in `q`; put geography in `location`.
+
+```bash
+bash scripts/serpapi.sh google_jobs \
+  --q "junior software engineer TypeScript" \
+  --location "San Francisco, California" \
+  --gl us
+```
+
+Inspect `jobs_results[]`. Verify locations because Google Jobs may return remote or out-of-area listings. Use `job_highlights[]`, `detected_extensions`, and descriptions to explain why each role matches.
+
+### Venue or restaurant review checks
+
+First call `google_maps` and collect `data_id` from a real returned place. Then call `google_maps_reviews`. Never invent `data_id`.
+
+```bash
+bash scripts/serpapi.sh google_maps \
+  --q "Sushi Yasuda New York" \
+  --location "New York, New York" \
+  --type search
+
+bash scripts/serpapi.sh google_maps_reviews \
+  --data_id DATA_ID_FROM_LOCAL_RESULTS \
+  --sort_by newestFirst
+```
+
+If the exact place is not found, broaden the maps query before falling back to generic web search.
+
+## Response Discipline
+
+- Check `search_metadata.status` and `error` before using results.
+- Read the engine's actual response key; do not assume every engine returns `organic_results`.
+- Use the first page for quick answers, then paginate only when the result quality is weak or the user asks for breadth.
+- Prefer concise extraction with `jq` when the response is large.
+- Cite or include links from result objects when making recommendations.
+- Tell the user when SerpApi results are sparse, stale-looking, region-mismatched, or variant-mismatched.
+
+## Query Construction
+
+- Use `gl`, `hl`, and `location` when geography affects the answer.
+- Use `--no-cache` only when freshness matters enough to spend a search credit.
+- Keep constraints structured when the engine supports them: hotel dates/prices, flight dates/airports, job location, maps coordinates.
+- Use search operators with `google` for source-scoped research: `site:reddit.com`, `site:news.ycombinator.com`, `intitle:`, exact quotes.
+- For ambiguous places, products, or apps, run a broad search first, then a more exact second call.
+
+## Common Calls
 
 ### Google Web Search
 
@@ -66,6 +197,19 @@ bash scripts/serpapi.sh google_hotels --q "hotels in Paris" \
 bash scripts/serpapi.sh google_hotels --q "hotels Tokyo" \
   --check_in_date 2026-07-01 --check_out_date 2026-07-05 \
   --sort_by 3 --max_price 150
+```
+
+### Google Shopping
+
+```bash
+bash scripts/serpapi.sh google_shopping --q "iphone 16 pro 256gb unlocked" --gl us
+```
+
+### Google Jobs
+
+```bash
+bash scripts/serpapi.sh google_jobs --q "junior software engineer TypeScript" \
+  --location "San Francisco, California" --gl us
 ```
 
 ### Google Maps
@@ -174,43 +318,6 @@ bash scripts/serpapi.sh apple_app_store --term "weather"
 bash scripts/serpapi.sh google_play --q "fitness tracker" --store apps
 ```
 
-## Engine Catalog
-
-| Engine | Key Param | Use Case |
-|--------|-----------|----------|
-| `google` | `q` | Web search, ads, local results, knowledge graph |
-| `google_images` | `q` | Image search with size/color/license/date filters |
-| `google_maps` | `q`, `ll` | Local business search, place details |
-| `google_maps_reviews` | `data_id` | Business reviews (from maps results) |
-| `google_flights` | `departure_id`, `arrival_id` | Flight search, pricing, booking links |
-| `google_hotels` | `q`, `check_in_date` | Hotel search, pricing, property details |
-| `google_scholar` | `q` | Academic papers, citations, authors |
-| `google_news` | `q` | News articles |
-| `google_shopping` | `q` | Product search, price comparison |
-| `google_jobs` | `q` | Job listings |
-| `google_finance` | `q` | Stock/crypto quotes, financials |
-| `google_trends` | `q` | Search trends, regional interest, related topics |
-| `google_autocomplete` | `q` | Search suggestions |
-| `google_ads_transparency_center` | `advertiser_id` or `text` | Advertiser ad history |
-| `youtube` | `search_query` | YouTube search |
-| `youtube_video` | `v` | Video details, comments, related videos |
-| `youtube_video_transcript` | `v` | Video transcripts/captions |
-| `tripadvisor` | `q` | Travel search (restaurants, hotels, attractions) |
-| `open_table_reviews` | `rid` | Restaurant reviews |
-| `bing` | `q` | Bing web search |
-| `duckduckgo` | `q` | Privacy-focused search |
-| `yahoo` | `p` | Yahoo web search |
-| `baidu` | `q` | Chinese web search |
-| `yandex` | `text` | Russian web search |
-| `naver` | `query` | Korean web search |
-| `walmart` | `query` | Walmart products |
-| `ebay` | `_nkw` | eBay listings |
-| `home_depot` | `q` | Home Depot products |
-| `apple_app_store` | `term` | iOS app search |
-| `google_play` | `q` | Android app search |
-
-> **Note:** Some engines use non-standard query parameters (`p`, `text`, `query`, `_nkw`, `term`, `search_query`). See the engine catalog above.
-
 ## Pagination
 
 Pagination varies by engine:
@@ -241,6 +348,10 @@ Non-Google engines may use domain-specific parameters (e.g., `tripadvisor_domain
 - Cache is 1h by default; use `--no-cache` for fresh results (costs a credit)
 - Don't combine `no_cache` and `async`
 - Rate limits depend on your SerpApi plan
+
+## When This Skill Is Not Enough
+
+Use a specialized skill when the task needs a deeper workflow that exists locally, such as flight itinerary analysis, Google Maps venue research, YouTube transcript workflows, Tripadvisor analysis, or OpenTable review analysis. Keep this foundational skill loaded for API mechanics and engine routing.
 
 ## Detailed Reference
 

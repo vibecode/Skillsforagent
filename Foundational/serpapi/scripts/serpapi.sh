@@ -68,8 +68,12 @@
 
 set -euo pipefail
 
-API_KEY="${SERPAPI_API_KEY:?Set SERPAPI_API_KEY environment variable}"
-BASE_URL="https://serpapi.com.cloudproxy.vibecodeapp.com/search"
+# When using the Chorus proxy, `VIBECODE_API_KEY` (sent as `x-api-key`) is the auth.
+# SerpApi still requires an `api_key` query param, but it does not need to be a secret
+# when routed through the proxy. Do not embed real credentials in this repo.
+API_KEY="${SERPAPI_API_KEY:-chorus-proxy}"
+BASE_URL="${SERPAPI_BASE_URL:-https://serpapi.com.proxy.chorus.com}"
+BASE_URL="${BASE_URL%/}/search.json"
 USE_JQ=true
 NO_CACHE=""
 
@@ -153,7 +157,16 @@ url=$(build_url)
 tmpfile=$(mktemp)
 trap 'rm -f "$tmpfile"' EXIT
 
-http_code=$(curl -sw '%{http_code}' -o "$tmpfile" "$url")
+declare -a CURL_HEADERS=()
+if [[ -n "${VIBECODE_API_KEY:-}" ]]; then
+  CURL_HEADERS+=(--header "x-api-key: ${VIBECODE_API_KEY}")
+fi
+
+if [[ ${#CURL_HEADERS[@]} -gt 0 ]]; then
+  http_code=$(curl "${CURL_HEADERS[@]}" -sw '%{http_code}' -o "$tmpfile" "$url")
+else
+  http_code=$(curl -sw '%{http_code}' -o "$tmpfile" "$url")
+fi
 
 if [[ "$http_code" -ge 400 ]]; then
   echo "HTTP $http_code error:" >&2
