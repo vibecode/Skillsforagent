@@ -72,7 +72,8 @@ set -euo pipefail
 # SerpApi still requires an `api_key` query param, but it does not need to be a secret
 # when routed through the proxy. Do not embed real credentials in this repo.
 API_KEY="${SERPAPI_API_KEY:-chorus-proxy}"
-BASE_URL="${SERPAPI_BASE_URL:-https://serpapi.com.proxy.chorus.com}/search.json"
+BASE_URL="${SERPAPI_BASE_URL:-https://serpapi.com.proxy.chorus.com}"
+BASE_URL="${BASE_URL%/}/search.json"
 USE_JQ=true
 NO_CACHE=""
 
