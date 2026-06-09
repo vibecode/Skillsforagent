@@ -19,14 +19,6 @@ show_help() {
   cat <<'USAGE'
 
 Commands:
-  usage                       /api/usage
-  swipefile-ads               /api/swipefile/ads
-  boards                      /api/boards
-  board-brands                /api/board/brands
-  board-ads                   /api/board/ads
-  spyder-brands               /api/spyder/brands
-  spyder-brand                /api/spyder/brand
-  spyder-brand-ads            /api/spyder/brand/ads
   ad                          /api/ad
   brand-ads                   /api/brand/getAdsByBrandId
   page-ads                    /api/brand/getAdsByPageId
@@ -36,7 +28,8 @@ Commands:
   discovery-brands            /api/discovery/brands
   discovery-brands-explore    /api/discovery/brands/explore
 
-You may also pass a documented path directly, such as /api/ad/duplicates/ad_123.
+You may also pass any path from https://docs.foreplay.co directly, such as
+/api/ad/duplicates/ad_123.
 
 Global options:
   --key KEY          Override FOREPLAY_API_KEY
@@ -56,14 +49,6 @@ urlencode() {
 
 resolve_path() {
   case "$1" in
-    usage) echo "/api/usage" ;;
-    swipefile-ads) echo "/api/swipefile/ads" ;;
-    boards) echo "/api/boards" ;;
-    board-brands) echo "/api/board/brands" ;;
-    board-ads) echo "/api/board/ads" ;;
-    spyder-brands) echo "/api/spyder/brands" ;;
-    spyder-brand) echo "/api/spyder/brand" ;;
-    spyder-brand-ads) echo "/api/spyder/brand/ads" ;;
     ad) echo "/api/ad" ;;
     brand-ads) echo "/api/brand/getAdsByBrandId" ;;
     page-ads) echo "/api/brand/getAdsByPageId" ;;

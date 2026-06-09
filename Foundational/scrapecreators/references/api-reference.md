@@ -1,18 +1,11 @@
 # ScrapeCreators Endpoint Catalog
 
-Every endpoint from the live OpenAPI spec (`https://docs.scrapecreators.com/openapi.json`),
-verified with a real call through the Chorus proxy on 2026-06-09. All requests are GET.
-The example params column shows a parameter set that returned a successful response;
-pass any path directly to the wrapper: `bash scripts/scrapecreators.sh <path> [--param value ...]`.
-
-## account
-
-| Path | Example params | Notes |
-|---|---|---|
-| `/v1/account/credit-balance` |  |  |
-| `/v1/account/get-api-usage` | `page=1` |  |
-| `/v1/account/get-daily-usage-count` |  |  |
-| `/v1/account/get-most-used-routes` | `end_time=2025-04-15T23:59:59.000Z` `start_time=2025-04-01T00:00:00.000Z` |  |
+Every scraping endpoint from the live OpenAPI spec (`https://docs.scrapecreators.com/openapi.json`
+— the canonical source for all endpoints), verified with a real call through the Chorus proxy on
+2026-06-09. All requests are GET. The example params column shows a parameter set that returned a
+successful response; pass any path directly to the wrapper:
+`bash scripts/scrapecreators.sh <path> [--param value ...]`.
+Account endpoints (`/v1/account/*`) are omitted — this skill is for scraping data.
 
 ## amazon
 

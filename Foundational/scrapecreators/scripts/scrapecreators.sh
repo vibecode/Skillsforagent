@@ -19,7 +19,6 @@ show_help() {
   cat <<'USAGE'
 
 Examples:
-  scrapecreators.sh credit-balance
   scrapecreators.sh tiktok-profile --handle stoolpresidente
   scrapecreators.sh youtube-search --query "ai tutorials" --type video
   scrapecreators.sh facebook-ad-search --query nike --country US
@@ -42,10 +41,6 @@ urlencode() {
 
 resolve_path() {
   case "$1" in
-    credit-balance) echo "/v1/account/credit-balance" ;;
-    usage) echo "/v1/account/get-api-usage" ;;
-    daily-usage) echo "/v1/account/get-daily-usage-count" ;;
-    most-used-routes) echo "/v1/account/get-most-used-routes" ;;
     tiktok-profile) echo "/v1/tiktok/profile" ;;
     tiktok-videos) echo "/v3/tiktok/profile/videos" ;;
     tiktok-video) echo "/v2/tiktok/video" ;;

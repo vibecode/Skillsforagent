@@ -2,14 +2,17 @@
 name: scrapecreators
 display_name: ScrapeCreators
 description: >
-  Foundational skill for the ScrapeCreators social media scraping API. Use when:
-  (1) scraping public TikTok, Instagram, YouTube, Facebook, X/Twitter, Reddit,
-  LinkedIn, Threads, Bluesky, Pinterest, Twitch, Spotify, SoundCloud, GitHub,
-  Google search, or ad library data, (2) extracting social video transcripts,
-  comments, profiles, posts, reels, shorts, followers, or search results,
-  (3) researching creators or brands across social platforms, (4) checking
-  ScrapeCreators credit balance, usage history, daily usage, or most-used
-  routes, (5) any task involving api.scrapecreators.com or ScrapeCreators.
+  Foundational skill for the ScrapeCreators API: scraping public social-platform
+  data — profiles, posts, reels, shorts, comments, followers, creators, and
+  platform ad libraries — across TikTok, Instagram, YouTube, Facebook,
+  X/Twitter, Reddit, LinkedIn, Threads, Bluesky, Pinterest, Twitch, Spotify,
+  and more. Use when: (1) scraping a specific public social profile, post,
+  video, or comment thread, (2) researching creators or audiences on a social
+  platform, (3) pulling raw Facebook Ad Library, Google ads, or LinkedIn ad
+  data by URL/company, (4) any task involving api.scrapecreators.com or
+  ScrapeCreators. Not for general web search (use exa), Google SERP or
+  Maps/Shopping/Trends (use SerpApi), video transcription of arbitrary files
+  (use SupaData), or curated Meta ad-creative intelligence (use foreplay).
 metadata: {"openclaw": {"requires": {"env": ["SCRAPECREATORS_API_KEY"]}, "primaryEnv": "SCRAPECREATORS_API_KEY"}}
 ---
 
@@ -29,17 +32,11 @@ Base URL: ${SCRAPECREATORS_BASE_URL:-https://api.scrapecreators.com.proxy.chorus
 Header:   x-api-key: ${SCRAPECREATORS_API_KEY}
 ```
 
-The complete machine-readable API catalog is at `https://docs.scrapecreators.com/openapi.json`. If a needed endpoint is missing from this quick reference, pass the documented path directly to the wrapper.
+Live docs (canonical source for all endpoints and parameters): https://docs.scrapecreators.com — machine-readable catalog at `https://docs.scrapecreators.com/openapi.json`. If a needed endpoint is missing from this quick reference, pass the documented path directly to the wrapper.
 
 ## Quick Start
 
 ```bash
-# Account and usage
-bash scripts/scrapecreators.sh credit-balance
-bash scripts/scrapecreators.sh usage --page 1
-bash scripts/scrapecreators.sh daily-usage
-bash scripts/scrapecreators.sh most-used-routes
-
 # TikTok
 bash scripts/scrapecreators.sh tiktok-profile --handle "stoolpresidente"
 bash scripts/scrapecreators.sh tiktok-videos --handle "stoolpresidente" --sort_by latest
@@ -71,10 +68,6 @@ All commands are GET requests. Pagination is endpoint-specific; common cursor fi
 
 | Command | Path |
 |---|---|
-| `credit-balance` | `/v1/account/credit-balance` |
-| `usage` | `/v1/account/get-api-usage` |
-| `daily-usage` | `/v1/account/get-daily-usage-count` |
-| `most-used-routes` | `/v1/account/get-most-used-routes` |
 | `tiktok-profile` | `/v1/tiktok/profile` |
 | `tiktok-videos` | `/v3/tiktok/profile/videos` |
 | `tiktok-video` | `/v2/tiktok/video` |
@@ -147,7 +140,6 @@ For the complete catalog of all 158 endpoints with verified working example para
 - Use native transcript endpoints when the user asks for captions or spoken content.
 - Use `trim=true` for exploratory profile/post/video calls to reduce response size.
 - Use ad-library endpoints for competitive creative research.
-- Use account endpoints first when debugging auth, credit, or quota behavior.
 - Prefer direct URL endpoints for exact posts/videos; prefer search endpoints when the user gives only a topic, handle, or brand.
 
 ## Errors
@@ -168,4 +160,4 @@ Known flaky/broken endpoints (live sweep of all 158 routes, 2026-06-09; everythi
 - `/v1/rumble/video/comments`: intermittent 503.
 - `/v2/instagram/media/transcript` (`instagram-transcript`): intermittent 500; retry once.
 
-Note: `credit-balance` returns 200 with `creditCount: 0` for an unrecognized key — a zero balance can mean a bad key, not an empty account.
+Note: some endpoints return 200 with an empty/zero payload for an unrecognized key instead of a 401 — sanity-check a known-good request before concluding data is missing.
