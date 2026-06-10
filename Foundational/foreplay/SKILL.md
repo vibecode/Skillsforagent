@@ -10,8 +10,8 @@ description: >
   velocity, (3) resolving brands by name or domain to fetch their ads,
   (4) finding duplicate ads that reuse the same media, (5) any task involving
   public.api.foreplay.co or the Foreplay API. Not for scraping platform ad
-  libraries directly (use scrapecreators) or general SERP/ads-transparency
-  search (use SerpApi).
+  libraries or social platforms directly, and not for general web or
+  search-engine queries.
 metadata: {"openclaw": {"requires": {"env": ["FOREPLAY_API_KEY"]}, "primaryEnv": "FOREPLAY_API_KEY"}}
 ---
 

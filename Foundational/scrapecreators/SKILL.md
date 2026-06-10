@@ -10,9 +10,9 @@ description: >
   video, or comment thread, (2) researching creators or audiences on a social
   platform, (3) pulling raw Facebook Ad Library, Google ads, or LinkedIn ad
   data by URL/company, (4) any task involving api.scrapecreators.com or
-  ScrapeCreators. Not for general web search (use exa), Google SERP or
-  Maps/Shopping/Trends (use SerpApi), video transcription of arbitrary files
-  (use SupaData), or curated Meta ad-creative intelligence (use foreplay).
+  ScrapeCreators. Not for general web search, search-engine results pages
+  (SERP/Maps/Shopping/Trends), transcribing arbitrary video/audio files, or
+  querying a curated ad-intelligence database.
 metadata: {"openclaw": {"requires": {"env": ["SCRAPECREATORS_API_KEY"]}, "primaryEnv": "SCRAPECREATORS_API_KEY"}}
 ---
 
