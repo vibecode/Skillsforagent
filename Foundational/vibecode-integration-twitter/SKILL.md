@@ -247,7 +247,7 @@ curl -s -G "https://api.twitter.com/2/users" \
 curl -s "https://api.twitter.com/2/users/{user_id}/following" \
   -H "Authorization: Bearer $TWITTER_ACCESS_TOKEN"
 
-# Who follows the user
+# Who follows the user — Scope: follows.read users.read
 curl -s "https://api.twitter.com/2/users/{user_id}/followers" \
   -H "Authorization: Bearer $TWITTER_ACCESS_TOKEN"
 
