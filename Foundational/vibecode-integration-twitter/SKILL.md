@@ -25,7 +25,7 @@ REST v2 API for the X platform. Bearer-token authenticated, called as the connec
 **Auth**: Bearer token via `Authorization` header.
 **Base URL**: `https://api.twitter.com`
 **Scope-gated**: every endpoint below lists the OAuth scopes it needs. If a call returns `403 Forbidden` with `"required_enrollment"` or `"unauthorized_for_resource"`, the connection is missing a scope — broaden the scope list in Nango and have the user reconnect.
-**Tier note**: Free X API tier is severely limited (≈100 tweet reads / 500 writes per month). Basic ($100/mo) and Pro tiers raise these. Rate-limit headers (`x-rate-limit-remaining`, `x-rate-limit-reset`) appear on every response — always check before retrying.
+**Tier note**: Free X API tier is severely limited (≈100 tweet reads / 500 writes per month). Basic ($100/mo) and Pro tiers raise these. Rate-limit headers (`x-rate-limit-remaining`, `x-rate-limit-reset`) appear on every response — always check before retrying. When the monthly cap is exhausted the API returns a `200` body shaped like `{"account_id":..., "title":"CreditsDepleted", "detail":"Your enrolled account [...] does not have any credits to fulfill this request.", "type":"https://api.twitter.com/2/problems/credits"}` — this is a billing problem, not a code bug; do not retry, surface the message to the user so they can top up at `developer.x.com/portal`.
 
 ```bash
 # All requests use Bearer auth
@@ -416,6 +416,6 @@ curl -s -G "https://api.twitter.com/2/tweets/counts/recent" \
 - **Rate limits are per-endpoint, per-tier, and tight**: always parse `x-rate-limit-remaining` from the response. On `429`, honour the `x-rate-limit-reset` epoch — do not retry sooner.
 - **`max_results` caps vary**: timeline endpoints cap at 100; `GET /2/tweets/search/recent` caps at 100 on every tier; full-archive `GET /2/tweets/search/all` (Pro-only) caps at 500. Exceeding the cap returns `400 Bad Request` with a `value out of range` problem — clamp before sending.
 - **Pagination**: responses include a `meta.next_token`. Pass it back as `pagination_token` to get the next page. Stop when `next_token` is absent.
-- **Tweet text limits**: 280 chars for standard accounts, 4000 for X Premium. The API rejects over-length tweets with 400 — count grapheme clusters, not bytes.
+- **Tweet text limits**: 280 weighted chars for standard accounts, 4000 for X Premium. URLs are normalized to a fixed 23-char `t.co` shortener regardless of original length — count weighted characters (graphemes for text, 23 per URL), not raw bytes. The API rejects over-length tweets with 400.
 - **Soft-deleted tweets**: a tweet may return `200` with `errors[]` indicating it was deleted or the author was suspended. Always check for `errors[]` even on 200.
 - **Free-tier media uploads**: `POST /2/media/upload` works on Free tier with the `media.write` scope, but `/initialize` and `/finalize` are capped at ~17 requests / 24h on Free — a 403 most often means missing `media.write`, a 429 means you hit the cap.
