@@ -93,7 +93,7 @@ curl -s "https://api.twitter.com/2/users/{user_id}/timelines/reverse_chronologic
 ```bash
 # Scope: tweet.read
 
-# Recent search (last 7 days). Operators: from:, to:, @, #, lang:, has:media, -filter:retweets
+# Recent search (last 7 days). Operators: from:, to:, @, #, lang:, has:media, -is:retweet
 curl -s -G "https://api.twitter.com/2/tweets/search/recent" \
   -H "Authorization: Bearer $TWITTER_ACCESS_TOKEN" \
   --data-urlencode "query=from:elonmusk -is:retweet" \
@@ -161,7 +161,7 @@ curl -s -X PUT "https://api.twitter.com/2/tweets/{reply_tweet_id}/hidden" \
 
 ## Media upload
 
-The v2 native media upload endpoint (`POST /2/media/upload`) is gated by the `media.write` scope. It supports simple uploads (≤5 MB images) and chunked uploads (videos, GIFs, large images) via `INIT` / `APPEND` / `FINALIZE` commands.
+The v2 native media upload endpoint (`POST /2/media/upload`) is gated by the `media.write` scope. Simple uploads (≤5 MB images) post directly to it; chunked uploads (videos, GIFs, large images) use the dedicated `/initialize`, `/{media_id}/append`, `/{media_id}/finalize` endpoints and poll status via `GET /2/media/upload?media_id=...`.
 
 ```bash
 # Scope: media.write
@@ -172,33 +172,25 @@ curl -s -X POST "https://api.twitter.com/2/media/upload" \
   -F "media=@/path/to/image.png" \
   -F "media_category=tweet_image"
 
-# Chunked upload: INIT
-curl -s -X POST "https://api.twitter.com/2/media/upload" \
+# Chunked upload: INITIALIZE (dedicated endpoint, JSON body — returns media_id)
+curl -s -X POST "https://api.twitter.com/2/media/upload/initialize" \
   -H "Authorization: Bearer $TWITTER_ACCESS_TOKEN" \
-  -F "command=INIT" \
-  -F "total_bytes=12345678" \
-  -F "media_type=video/mp4" \
-  -F "media_category=tweet_video"
-# → returns media_id
+  -H "Content-Type: application/json" \
+  -d '{"total_bytes":12345678,"media_type":"video/mp4","media_category":"tweet_video"}'
 
-# Chunked upload: APPEND (one call per chunk, segment_index 0..N)
-curl -s -X POST "https://api.twitter.com/2/media/upload" \
+# Chunked upload: APPEND (one call per chunk, segment_index 0..999, max 5 MB per chunk)
+curl -s -X POST "https://api.twitter.com/2/media/upload/{media_id}/append" \
   -H "Authorization: Bearer $TWITTER_ACCESS_TOKEN" \
-  -F "command=APPEND" \
-  -F "media_id={media_id}" \
   -F "segment_index=0" \
   -F "media=@/path/to/chunk_0.bin"
 
 # Chunked upload: FINALIZE
-curl -s -X POST "https://api.twitter.com/2/media/upload" \
-  -H "Authorization: Bearer $TWITTER_ACCESS_TOKEN" \
-  -F "command=FINALIZE" \
-  -F "media_id={media_id}"
+curl -s -X POST "https://api.twitter.com/2/media/upload/{media_id}/finalize" \
+  -H "Authorization: Bearer $TWITTER_ACCESS_TOKEN"
 
 # Poll processing status (videos require this before they're attachable)
 curl -s -G "https://api.twitter.com/2/media/upload" \
   -H "Authorization: Bearer $TWITTER_ACCESS_TOKEN" \
-  --data-urlencode "command=STATUS" \
   --data-urlencode "media_id={media_id}"
 ```
 
@@ -425,4 +417,4 @@ curl -s -G "https://api.twitter.com/2/tweets/counts/recent" \
 - **Pagination**: responses include a `meta.next_token`. Pass it back as `pagination_token` to get the next page. Stop when `next_token` is absent.
 - **Tweet text limits**: 280 chars for standard accounts, 4000 for X Premium. The API rejects over-length tweets with 400 — count grapheme clusters, not bytes.
 - **Soft-deleted tweets**: a tweet may return `200` with `errors[]` indicating it was deleted or the author was suspended. Always check for `errors[]` even on 200.
-- **Free-tier users posting media** is functionally impossible via v2 alone (no media upload endpoint at v2). If the user asks for image tweets without paid tier, surface this constraint instead of failing silently.
+- **Free-tier media uploads**: `POST /2/media/upload` works on Free tier with the `media.write` scope, but `/initialize` and `/finalize` are capped at ~17 requests / 24h on Free — a 403 most often means missing `media.write`, a 429 means you hit the cap.
