@@ -24,7 +24,7 @@ REST v2 API for the X platform. Bearer-token authenticated, called as the connec
 
 **Auth**: Bearer token via `Authorization` header.
 **Base URL**: `https://api.twitter.com`
-**Scope-gated**: every endpoint below lists the OAuth scopes it needs. If a call returns `403 Forbidden` with `"required_enrollment"` or `"unauthorized_for_resource"`, the connection is missing a scope — broaden the scope list in Nango and have the user reconnect.
+**Scope-gated**: every endpoint below lists the OAuth scopes it needs. `403 Forbidden` with `"unauthorized_for_resource"` means the connection is missing a scope — broaden the scope list in Nango and have the user reconnect. `403 Forbidden` with `"required_enrollment"` is a different failure mode: the account's X API tier (Free/Basic/Pro) doesn't grant access to that endpoint — surface to the user that they need to upgrade their plan at `developer.x.com/portal`; reconnecting will not fix it.
 **Tier note**: Free X API tier is severely limited (≈100 tweet reads / 500 writes per month). Basic ($100/mo) and Pro tiers raise these. Rate-limit headers (`x-rate-limit-remaining`, `x-rate-limit-reset`) appear on every response — always check before retrying. When the monthly cap is exhausted the API returns a `200` body shaped like `{"account_id":..., "title":"CreditsDepleted", "detail":"Your enrolled account [...] does not have any credits to fulfill this request.", "type":"https://api.twitter.com/2/problems/credits"}` — this is a billing problem, not a code bug; do not retry, surface the message to the user so they can top up at `developer.x.com/portal`.
 
 ```bash
