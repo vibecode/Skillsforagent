@@ -161,7 +161,7 @@ curl -s -X PUT "https://api.twitter.com/2/tweets/{reply_tweet_id}/hidden" \
 
 ## Media upload
 
-The v2 native media upload endpoint (`POST /2/media/upload`) is gated by the `media.write` scope. Simple uploads (≤5 MB images) post directly to it; chunked uploads (videos, GIFs, large images) use the dedicated `/initialize`, `/{media_id}/append`, `/{media_id}/finalize` endpoints and poll status via `GET /2/media/upload?media_id=...`.
+The v2 native media upload endpoint (`POST /2/media/upload`) is gated by the `media.write` scope. Simple uploads (≤5 MB images) post directly to it; chunked uploads (videos, GIFs, large images) use the dedicated `/initialize`, `/{media_id}/append`, `/{media_id}/finalize` endpoints and poll status via `GET /2/media/upload?command=STATUS&media_id=...`.
 
 ```bash
 # Scope: media.write
@@ -191,6 +191,7 @@ curl -s -X POST "https://api.twitter.com/2/media/upload/{media_id}/finalize" \
 # Poll processing status (videos require this before they're attachable)
 curl -s -G "https://api.twitter.com/2/media/upload" \
   -H "Authorization: Bearer $TWITTER_ACCESS_TOKEN" \
+  --data-urlencode "command=STATUS" \
   --data-urlencode "media_id={media_id}"
 ```
 
