@@ -13,7 +13,7 @@ description: >
   3. When the user wants to search recent tweets by keyword, hashtag, or filter
   4. When the user wants to like, bookmark, follow, block, mute, or manage lists
   5. When the user wants to send or read direct messages on X / Twitter
-  6. When the user wants to upload media, look up Spaces, or fetch Space recordings
+  6. When the user wants to upload media, look up Spaces, or search Spaces by host
   7. When the user mentions Twitter, X, tweets, DMs, Spaces, or the X API
 metadata: {"openclaw": {"emoji": "🐦", "requires": {"env": ["TWITTER_ACCESS_TOKEN"]}}}
 ---
@@ -402,7 +402,7 @@ curl -s -X POST "https://api.twitter.com/2/dm_conversations" \
   -d '{"conversation_type":"Group","participant_ids":["123","456"],"message":{"text":"Group thread started"}}'
 ```
 
-DM target must follow the sender (or be a brand/business account). 403 means the recipient blocks DMs from strangers — surface that to the user; it is not a transient error.
+DM target must follow the sender or have DMs open to everyone. Triage a `403` using the top-level scope rules first: `"unauthorized_for_resource"` body means `dm.write` is missing — broaden the Nango scope and have the user reconnect; `"required_enrollment"` body means a tier upgrade is needed. A `403` with any other error type means the recipient has DMs restricted — surface that to the user; it is not a transient error.
 
 ## Tweet counts (analytics)
 
