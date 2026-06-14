@@ -413,7 +413,7 @@ curl -s -G "https://api.twitter.com/2/tweets/counts/recent" \
 
 - **Cache the connected user's `id`**: nearly every write endpoint requires `{user_id}` in the path, and it's stable for the lifetime of the account.
 - **Rate limits are per-endpoint, per-tier, and tight**: always parse `x-rate-limit-remaining` from the response. On `429`, honour the `x-rate-limit-reset` epoch — do not retry sooner.
-- **`max_results` caps vary**: timeline endpoints cap at 100; search at 100 (Free/Basic) or 500 (Pro). The API silently truncates if you ask for more.
+- **`max_results` caps vary**: timeline endpoints cap at 100; search at 100 (Free/Basic) or 500 (Pro). Exceeding the cap returns `400 Bad Request` with a `value out of range` problem — clamp before sending.
 - **Pagination**: responses include a `meta.next_token`. Pass it back as `pagination_token` to get the next page. Stop when `next_token` is absent.
 - **Tweet text limits**: 280 chars for standard accounts, 4000 for X Premium. The API rejects over-length tweets with 400 — count grapheme clusters, not bytes.
 - **Soft-deleted tweets**: a tweet may return `200` with `errors[]` indicating it was deleted or the author was suspended. Always check for `errors[]` even on 200.
