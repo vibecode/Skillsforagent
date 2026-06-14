@@ -161,7 +161,7 @@ curl -s -X PUT "https://api.twitter.com/2/tweets/{reply_tweet_id}/hidden" \
 
 ## Media upload
 
-The v2 native media upload endpoint (`POST /2/media/upload`) is gated by the `media.write` scope. Simple uploads (≤5 MB images) post directly to it; chunked uploads (videos, GIFs, large images) use the dedicated `/initialize`, `/{media_id}/append`, `/{media_id}/finalize` endpoints and poll status via `GET /2/media/upload?command=STATUS&media_id=...`.
+The v2 native media upload endpoint (`POST /2/media/upload`) is gated by the `media.write` scope. Simple uploads (≤5 MB images) post the media file directly; chunked uploads (videos, GIFs, large images) use the same URL with a `command` form field — `INIT`, `APPEND`, `FINALIZE`, `STATUS` — and all parameters are `multipart/form-data` form fields (never JSON).
 
 ```bash
 # Scope: media.write
@@ -172,21 +172,27 @@ curl -s -X POST "https://api.twitter.com/2/media/upload" \
   -F "media=@/path/to/image.png" \
   -F "media_category=tweet_image"
 
-# Chunked upload: INITIALIZE (dedicated endpoint, JSON body — returns media_id)
-curl -s -X POST "https://api.twitter.com/2/media/upload/initialize" \
+# Chunked upload: INIT — returns {data: {id: media_id}}
+curl -s -X POST "https://api.twitter.com/2/media/upload" \
   -H "Authorization: Bearer $TWITTER_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"total_bytes":12345678,"media_type":"video/mp4","media_category":"tweet_video"}'
+  -F "command=INIT" \
+  -F "total_bytes=12345678" \
+  -F "media_type=video/mp4" \
+  -F "media_category=tweet_video"
 
-# Chunked upload: APPEND (one call per chunk, segment_index 0..999, max 5 MB per chunk)
-curl -s -X POST "https://api.twitter.com/2/media/upload/{media_id}/append" \
+# Chunked upload: APPEND — one call per chunk, segment_index 0..999, max 5 MB per chunk
+curl -s -X POST "https://api.twitter.com/2/media/upload" \
   -H "Authorization: Bearer $TWITTER_ACCESS_TOKEN" \
+  -F "command=APPEND" \
+  -F "media_id={media_id}" \
   -F "segment_index=0" \
   -F "media=@/path/to/chunk_0.bin"
 
 # Chunked upload: FINALIZE
-curl -s -X POST "https://api.twitter.com/2/media/upload/{media_id}/finalize" \
-  -H "Authorization: Bearer $TWITTER_ACCESS_TOKEN"
+curl -s -X POST "https://api.twitter.com/2/media/upload" \
+  -H "Authorization: Bearer $TWITTER_ACCESS_TOKEN" \
+  -F "command=FINALIZE" \
+  -F "media_id={media_id}"
 
 # Poll processing status (videos require this before they're attachable)
 curl -s -G "https://api.twitter.com/2/media/upload" \
@@ -416,6 +422,6 @@ curl -s -G "https://api.twitter.com/2/tweets/counts/recent" \
 - **Rate limits are per-endpoint, per-tier, and tight**: always parse `x-rate-limit-remaining` from the response. On `429`, honour the `x-rate-limit-reset` epoch — do not retry sooner.
 - **`max_results` caps vary**: timeline endpoints cap at 100; `GET /2/tweets/search/recent` caps at 100 on every tier; full-archive `GET /2/tweets/search/all` (Pro-only) caps at 500. Exceeding the cap returns `400 Bad Request` with a `value out of range` problem — clamp before sending.
 - **Pagination**: responses include a `meta.next_token`. Pass it back as `pagination_token` to get the next page. Stop when `next_token` is absent.
-- **Tweet text limits**: 280 weighted chars for standard accounts, 4000 for X Premium. URLs are normalized to a fixed 23-char `t.co` shortener regardless of original length — count weighted characters (graphemes for text, 23 per URL), not raw bytes. The API rejects over-length tweets with 400.
+- **Tweet text limits**: 280 weighted chars for standard accounts, 25,000 for X Premium (Basic / Premium / Premium+). URLs are normalized to a fixed 23-char `t.co` shortener regardless of original length — count weighted characters (graphemes for text, 23 per URL), not raw bytes. The API rejects over-length tweets with 400.
 - **Soft-deleted tweets**: a tweet may return `200` with `errors[]` indicating it was deleted or the author was suspended. Always check for `errors[]` even on 200.
 - **Free-tier media uploads**: `POST /2/media/upload` works on Free tier with the `media.write` scope, but `/initialize` and `/finalize` are capped at ~17 requests / 24h on Free — a 403 most often means missing `media.write`, a 429 means you hit the cap.
