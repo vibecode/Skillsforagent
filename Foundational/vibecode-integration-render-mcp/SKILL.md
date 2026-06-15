@@ -92,7 +92,7 @@ curl -s -X POST "https://api.render.com/v1/services/srv-abc123/deploys/dep-xyz78
   -H "Authorization: Bearer $RENDER_MCP_ACCESS_TOKEN"
 ```
 
-Deploy IDs are prefixed `dep-…`. Poll the single-deploy endpoint with the returned `id` until `status` is `live`, `build_failed`, `update_failed`, `pre_deploy_failed`, or `canceled`. Without `pre_deploy_failed` in the terminal set, a deploy that fails during a pre-deploy command (DB migrations, asset sync, etc.) will look like it's still running forever.
+Deploy IDs are prefixed `dep-…`. Poll the single-deploy endpoint with the returned `id` until `status` is `live`, `build_failed`, `update_failed`, `pre_deploy_failed`, `canceled`, or `deactivated`. Without `pre_deploy_failed` in the terminal set, a deploy that fails during a pre-deploy command (DB migrations, asset sync, etc.) will look like it's still running forever — and without `deactivated`, a deploy superseded by a newer one will too.
 
 ## Logs
 
