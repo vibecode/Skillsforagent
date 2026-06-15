@@ -8,7 +8,7 @@ description: >
   Render REST API for managing the user's Render resources on their behalf —
   listing services, triggering deploys, reading deploy status and logs, and
   managing environment variables. Consult this skill:
-  1. When the user asks the agent to list, create, or modify Render services
+  1. When the user asks the agent to list or modify Render services
   2. When the user asks the agent to trigger or cancel a deploy
   3. When the user asks about deploy status or wants to read deploy logs
   4. When the user asks the agent to read/add/update/remove environment variables
