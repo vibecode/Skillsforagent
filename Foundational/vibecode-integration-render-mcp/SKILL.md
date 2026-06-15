@@ -99,8 +99,10 @@ Deploy IDs are prefixed `dep-…`. Poll the single-deploy endpoint with the retu
 `GET /v1/logs` requires **both** `ownerId` (workspace ID, `own-…`) and `resource` (service/deploy/cron/db ID). Resolve `ownerId` once per agent turn via `/v1/owners` and reuse it.
 
 ```bash
-# Resolve the workspace ID first (required for every logs call)
-OWNER_ID=$(curl -s "https://api.render.com/v1/owners?limit=1" \
+# Resolve the workspace ID first (required for every logs call). For multi-workspace
+# users, match by name against what the user said; for single-workspace users the
+# first entry is the right one.
+OWNER_ID=$(curl -s "https://api.render.com/v1/owners" \
   -H "Accept: application/json" \
   -H "Authorization: Bearer $RENDER_MCP_ACCESS_TOKEN" \
   | jq -r '.[0].owner.id')
