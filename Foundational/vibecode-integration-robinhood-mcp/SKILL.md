@@ -146,6 +146,7 @@ If a tool with a "cancel all" semantic shows up in `tools/list`, do not call it 
 
 JSON-RPC errors come back as `{ "jsonrpc": "2.0", "id": ..., "error": { "code": ..., "message": "..." } }`. Common codes:
 
+- **`-32000` (Server not initialized)** — you sent `tools/list` or `tools/call` before completing the `initialize` + `notifications/initialized` handshake, or you dropped the `Mcp-Session-Id` header on a follow-up POST. Re-run the handshake (steps 1–2) and re-thread the header on every subsequent call.
 - **`-32601` (Method not found)** — you called a method name that doesn't exist (e.g. `tool/call` instead of `tools/call`).
 - **`-32602` (Invalid params)** — `arguments` don't match the tool's `inputSchema`. Re-read the schema and retry.
 - **HTTP 401 / 403** — the Bearer token is missing, malformed, or revoked. Tell the user to reconnect the integration; don't try to refresh at call time.
