@@ -81,7 +81,7 @@ curl -s "https://api.render.com/v1/services/srv-abc123/deploys?limit=10" \
   -H "Accept: application/json" \
   -H "Authorization: Bearer $RENDER_MCP_ACCESS_TOKEN"
 
-# Get a specific deploy (status: created, build_in_progress, update_in_progress, live, deactivated, build_failed, update_failed, canceled)
+# Get a specific deploy (status: created, build_in_progress, update_in_progress, pre_deploy_in_progress, live, deactivated, build_failed, update_failed, pre_deploy_failed, canceled)
 curl -s "https://api.render.com/v1/services/srv-abc123/deploys/dep-xyz789" \
   -H "Accept: application/json" \
   -H "Authorization: Bearer $RENDER_MCP_ACCESS_TOKEN"
@@ -92,15 +92,24 @@ curl -s -X POST "https://api.render.com/v1/services/srv-abc123/deploys/dep-xyz78
   -H "Authorization: Bearer $RENDER_MCP_ACCESS_TOKEN"
 ```
 
-Deploy IDs are prefixed `dep-…`. Poll the single-deploy endpoint with the returned `id` until `status` is `live`, `build_failed`, `update_failed`, or `canceled`.
+Deploy IDs are prefixed `dep-…`. Poll the single-deploy endpoint with the returned `id` until `status` is `live`, `build_failed`, `update_failed`, `pre_deploy_failed`, or `canceled`. Without `pre_deploy_failed` in the terminal set, a deploy that fails during a pre-deploy command (DB migrations, asset sync, etc.) will look like it's still running forever.
 
 ## Logs
 
+`GET /v1/logs` requires **both** `ownerId` (workspace ID, `own-…`) and `resource` (service/deploy/cron/db ID). Resolve `ownerId` once per agent turn via `/v1/owners` and reuse it.
+
 ```bash
-# List logs for a resource — pass the service/deploy id as resource
+# Resolve the workspace ID first (required for every logs call)
+OWNER_ID=$(curl -s "https://api.render.com/v1/owners?limit=1" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer $RENDER_MCP_ACCESS_TOKEN" \
+  | jq -r '.[0].owner.id')
+
+# List recent logs for a resource (both ownerId and resource are required)
 curl -s -G "https://api.render.com/v1/logs" \
   -H "Accept: application/json" \
   -H "Authorization: Bearer $RENDER_MCP_ACCESS_TOKEN" \
+  --data-urlencode "ownerId=$OWNER_ID" \
   --data-urlencode "resource=srv-abc123" \
   --data-urlencode "limit=100"
 
@@ -108,6 +117,7 @@ curl -s -G "https://api.render.com/v1/logs" \
 curl -s -G "https://api.render.com/v1/logs" \
   -H "Accept: application/json" \
   -H "Authorization: Bearer $RENDER_MCP_ACCESS_TOKEN" \
+  --data-urlencode "ownerId=$OWNER_ID" \
   --data-urlencode "resource=srv-abc123" \
   --data-urlencode "startTime=2026-06-15T00:00:00Z" \
   --data-urlencode "endTime=2026-06-15T23:59:59Z"
@@ -116,11 +126,14 @@ curl -s -G "https://api.render.com/v1/logs" \
 curl -s -G "https://api.render.com/v1/logs" \
   -H "Accept: application/json" \
   -H "Authorization: Bearer $RENDER_MCP_ACCESS_TOKEN" \
+  --data-urlencode "ownerId=$OWNER_ID" \
   --data-urlencode "resource=srv-abc123" \
   --data-urlencode "level=error"
 ```
 
-For *live* log streaming, Render exposes `wss://api.render.com/v1/logs/stream` with the same Bearer header — usually overkill for an agent turn; the polled GET above is simpler.
+If the user belongs to multiple workspaces, `/v1/owners` returns each one — match by `name` against what the user said before passing the `id`.
+
+For *live* log streaming, Render exposes `wss://api.render.com/v1/logs/stream` with the same Bearer header (and the same `ownerId`/`resource` query params) — usually overkill for an agent turn; the polled GET above is simpler.
 
 ## Environment variables
 
