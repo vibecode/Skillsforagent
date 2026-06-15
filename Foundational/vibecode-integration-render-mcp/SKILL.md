@@ -133,7 +133,7 @@ curl -s -G "https://api.render.com/v1/logs" \
 
 If the user belongs to multiple workspaces, `/v1/owners` returns each one — match by `name` against what the user said before passing the `id`.
 
-For *live* log streaming, Render exposes `wss://api.render.com/v1/logs/stream` with the same Bearer header (and the same `ownerId`/`resource` query params) — usually overkill for an agent turn; the polled GET above is simpler.
+For *live* log streaming, Render exposes `GET /v1/logs/subscribe` (which the client upgrades to a WebSocket) with the same Bearer header and the same `ownerId`/`resource` query params — usually overkill for an agent turn; the polled GET above is simpler.
 
 ## Environment variables
 
@@ -143,7 +143,14 @@ curl -s "https://api.render.com/v1/services/srv-abc123/env-vars" \
   -H "Accept: application/json" \
   -H "Authorization: Bearer $RENDER_MCP_ACCESS_TOKEN"
 
-# Add or update env vars (PUT replaces the full set; PATCH-style upsert isn't supported — read existing first, merge, then send)
+# Add or update a single env var (safe — leaves all other vars untouched). PREFER this for one-off changes.
+curl -s -X PUT "https://api.render.com/v1/services/srv-abc123/env-vars/LOG_LEVEL" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer $RENDER_MCP_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"value": "debug"}'
+
+# Bulk set — REPLACES the entire env-var list on the service. Use only when the user truly wants a full rewrite (read existing first, merge locally, then send).
 curl -s -X PUT "https://api.render.com/v1/services/srv-abc123/env-vars" \
   -H "Accept: application/json" \
   -H "Authorization: Bearer $RENDER_MCP_ACCESS_TOKEN" \
@@ -156,7 +163,7 @@ curl -s -X DELETE "https://api.render.com/v1/services/srv-abc123/env-vars/LOG_LE
   -H "Authorization: Bearer $RENDER_MCP_ACCESS_TOKEN"
 ```
 
-Render auto-redeploys the service after an env-var change. If the user wants no redeploy, mention it — there's no flag to suppress it.
+Render auto-redeploys the service after an env-var change. If the user wants no redeploy, mention it — there's no flag to suppress it. Per-key `PUT /env-vars/{key}` does not work for variables linked from an environment group; those need to be updated on the group itself.
 
 ## Tips & gotchas
 
