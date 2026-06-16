@@ -1,22 +1,16 @@
 ---
-name: clipper
-display_name: Clipper
+name: youtube-downloader
+display_name: YouTube Downloader
 description: >
-  Clipper internal API for downloading YouTube videos to managed media storage and returning
-  MP4 URLs. Use when: (1) the user asks to download, save, or fetch an MP4 from a YouTube URL
-  or video ID, (2) the user needs a hosted R2/media URL for a YouTube video, (3) the user needs
-  to create and poll a YouTube download job, (4) local yt-dlp is blocked, unavailable, or should
-  not be used, (5) troubleshooting Clipper YouTube download statuses, file redirects, billing,
-  or project attribution. This is for downloading media files; use YouTube Data API skills for
-  search/metadata/channel operations and Supadata for transcripts.
+  YouTube Downloader API for downloading 3rd party YouTube videos. Use when: (1) the user asks to download, save, or fetch an MP4 from a YouTube URL or video ID (2) local yt-dlp is blocked, unavailable, or should not be used. This is for downloading media files; use YouTube Data API skills for search/metadata/channel operations and Supadata for transcripts. This is for downloading 3rd party YouTube videos only.
 metadata: {"openclaw": {"emoji": "🎬", "requires": {"bins": ["curl", "jq"]}}}
 ---
 
 # Clipper
 
-Download YouTube videos through the internal Clipper API and return the managed MP4 URL.
+Download YouTube videos through the Chorus Clipper service API and return the managed MP4 URL.
 Clipper owns the provider credentials, object storage, and billing event; callers only provide
-the YouTube URL plus project attribution.
+the YouTube URL.
 
 Wrapper script: `scripts/clipper-download.sh`
 
@@ -27,19 +21,14 @@ bash scripts/clipper-download.sh --url "https://www.youtube.com/watch?v=OxFyVcO1
 ## Setup
 
 Clipper is private infrastructure. Use it from Pylon, Vibecode, Chorus private networking, or
-another allowed client IP.
+another allowed client IP. `CHORUS_PROJECT_ID` should already be set.
 
 ```bash
 export CLIPPER_BASE_URL="${CLIPPER_BASE_URL:-https://clipper.chorus.com}"
 export VIBECODE_PROJECT_ID="<project-id>"
 ```
 
-Send exactly one project attribution header on every request. Prefer
-`X-Vibecode-Project`, then fall back to `X-Chorus-Project-ID` or `X-Project-ID` only when the
-caller already uses those names.
-
-Do not pass R2, Oxylabs, or Cloudflare credentials to Clipper API calls. Those secrets live in
-Clipper's runtime, not in client requests or skills.
+Send exactly one project attribution header on every request. Use `X-Chorus-Project-ID`.
 
 ## Quick Reference
 
