@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# clipper-download.sh - create and poll a Clipper YouTube download job.
+# clipper-download.sh - create and poll a YouTube Downloader job.
 #
 # Examples:
 #   bash scripts/clipper-download.sh --url "https://www.youtube.com/watch?v=OxFyVcO1Yow&t=73s"
@@ -8,8 +8,8 @@
 set -euo pipefail
 
 BASE_URL="${CLIPPER_BASE_URL:-https://clipper.chorus.com}"
-PROJECT_ID="${CLIPPER_PROJECT_ID:-${VIBECODE_PROJECT_ID:-${CHORUS_PROJECT_ID:-${PROJECT_ID:-}}}}"
-PROJECT_HEADER="${CLIPPER_PROJECT_HEADER:-X-Vibecode-Project}"
+PROJECT_ID="${VIBECODE_PROJECT_ID:-${CHORUS_PROJECT_ID:-${PROJECT_ID:-}}}"
+PROJECT_HEADER="${CLIPPER_PROJECT_HEADER:-X-Chorus-Project-ID}"
 POLL_SECONDS="${CLIPPER_POLL_SECONDS:-15}"
 TIMEOUT_SECONDS="${CLIPPER_TIMEOUT_SECONDS:-900}"
 URL=""
@@ -29,9 +29,9 @@ usage() {
 Options:
   --url URL               YouTube URL or video ID to download
   --quality QUALITY       Optional target quality, for example 720
-  --base-url URL          Clipper base URL
+  --base-url URL          Downloader base URL
   --project-id ID         Project attribution value
-  --project-header NAME   Project header name, default X-Vibecode-Project
+  --project-header NAME   Project header name, default X-Chorus-Project-ID
   --poll-seconds N        Poll interval, default 15
   --timeout-seconds N     Overall wait timeout, default 900
   --create-only           Create the job and do not poll
@@ -64,7 +64,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ -n "$URL" ]] || die "Pass --url or provide a YouTube URL as the first positional argument"
-[[ -n "$PROJECT_ID" ]] || die "Set CLIPPER_PROJECT_ID, VIBECODE_PROJECT_ID, CHORUS_PROJECT_ID, or pass --project-id"
+[[ -n "$PROJECT_ID" ]] || die "Set VIBECODE_PROJECT_ID, CHORUS_PROJECT_ID, or pass --project-id"
 command -v jq >/dev/null 2>&1 || die "jq is required"
 command -v curl >/dev/null 2>&1 || die "curl is required"
 
