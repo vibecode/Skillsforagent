@@ -1,8 +1,8 @@
 ---
-name: youtube-downloader
-display_name: YouTube Downloader
+name: youtube-video-downloader
+display_name: YouTube Video Downloader
 description: >
-  YouTube Downloader API for downloading 3rd party YouTube videos. Use when:
+  YouTube Video Downloader API for downloading 3rd party YouTube videos. Use when:
   (1) the user asks to download, save, or fetch an MP4 from a YouTube URL or
   video ID (2) local yt-dlp is blocked, unavailable, or should not be used.
   This is for downloading media files; use YouTube Data API skills for
@@ -11,14 +11,14 @@ description: >
 metadata: {"openclaw": {"emoji": "▶️", "requires": {"bins": ["curl", "jq"]}}}
 ---
 
-# YouTube Downloader
+# YouTube Video Downloader
 
 Download a YouTube video through the Chorus downloader service and return the hosted MP4 URL.
 
 Use the helper script when possible:
 
 ```bash
-bash scripts/clipper-download.sh --url "https://www.youtube.com/watch?v=OxFyVcO1Yow&t=73s"
+bash scripts/youtube-video-download.sh --url "https://www.youtube.com/watch?v=OxFyVcO1Yow&t=73s"
 ```
 
 ## Setup

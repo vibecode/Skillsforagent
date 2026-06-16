@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# clipper-download.sh - create and poll a YouTube Downloader job.
+# youtube-video-download.sh - create and poll a YouTube Video Downloader job.
 #
 # Examples:
-#   bash scripts/clipper-download.sh --url "https://www.youtube.com/watch?v=OxFyVcO1Yow&t=73s"
-#   bash scripts/clipper-download.sh --url "https://youtu.be/OxFyVcO1Yow" --quality 720
+#   bash scripts/youtube-video-download.sh --url "https://www.youtube.com/watch?v=OxFyVcO1Yow&t=73s"
+#   bash scripts/youtube-video-download.sh --url "https://youtu.be/OxFyVcO1Yow" --quality 720
 
 set -euo pipefail
 
