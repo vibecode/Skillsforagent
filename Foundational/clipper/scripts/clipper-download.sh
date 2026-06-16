@@ -16,6 +16,8 @@ URL=""
 QUALITY=""
 CREATE_ONLY=false
 RAW=false
+RESPONSE_BODY=""
+RESPONSE_STATUS=""
 
 die() {
   echo "ERROR: $*" >&2
@@ -40,15 +42,22 @@ Options:
 USAGE
 }
 
+require_next() {
+  local flag="$1"
+  local value="${2:-}"
+
+  [[ $# -ge 2 && -n "$value" ]] || die "${flag} requires a value"
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --url) URL="${2:-}"; shift 2 ;;
-    --quality) QUALITY="${2:-}"; shift 2 ;;
-    --base-url) BASE_URL="${2:-}"; shift 2 ;;
-    --project-id) PROJECT_ID="${2:-}"; shift 2 ;;
-    --project-header) PROJECT_HEADER="${2:-}"; shift 2 ;;
-    --poll-seconds) POLL_SECONDS="${2:-}"; shift 2 ;;
-    --timeout-seconds) TIMEOUT_SECONDS="${2:-}"; shift 2 ;;
+    --url) require_next "$@"; URL="$2"; shift 2 ;;
+    --quality) require_next "$@"; QUALITY="$2"; shift 2 ;;
+    --base-url) require_next "$@"; BASE_URL="$2"; shift 2 ;;
+    --project-id) require_next "$@"; PROJECT_ID="$2"; shift 2 ;;
+    --project-header) require_next "$@"; PROJECT_HEADER="$2"; shift 2 ;;
+    --poll-seconds) require_next "$@"; POLL_SECONDS="$2"; shift 2 ;;
+    --timeout-seconds) require_next "$@"; TIMEOUT_SECONDS="$2"; shift 2 ;;
     --create-only) CREATE_ONLY=true; shift ;;
     --raw) RAW=true; shift ;;
     --help|-h) usage; exit 0 ;;
@@ -68,32 +77,55 @@ done
 command -v jq >/dev/null 2>&1 || die "jq is required"
 command -v curl >/dev/null 2>&1 || die "curl is required"
 
+http_status_allowed() {
+  local status="$1"
+  shift
+
+  [[ "$status" =~ ^[0-9][0-9][0-9]$ ]] || return 1
+  if [[ "$status" -ge 200 && "$status" -lt 300 ]]; then
+    return 0
+  fi
+  for allowed in "$@"; do
+    [[ "$status" == "$allowed" ]] && return 0
+  done
+  return 1
+}
+
 api_request() {
   local method="$1"
   local url="$2"
   local body="${3:-}"
+  shift 3
   local tmp status
+  RESPONSE_BODY=""
+  RESPONSE_STATUS=""
   tmp="$(mktemp)"
 
   if [[ -n "$body" ]]; then
-    status="$(curl -sS -o "$tmp" -w "%{http_code}" -X "$method" "$url" \
+    if ! status="$(curl -sS -o "$tmp" -w "%{http_code}" -X "$method" "$url" \
       -H "Content-Type: application/json" \
       -H "${PROJECT_HEADER}: ${PROJECT_ID}" \
-      -d "$body")"
+      -d "$body")"; then
+      rm -f "$tmp"
+      return 1
+    fi
   else
-    status="$(curl -sS -o "$tmp" -w "%{http_code}" -X "$method" "$url" \
-      -H "${PROJECT_HEADER}: ${PROJECT_ID}")"
+    if ! status="$(curl -sS -o "$tmp" -w "%{http_code}" -X "$method" "$url" \
+      -H "${PROJECT_HEADER}: ${PROJECT_ID}")"; then
+      rm -f "$tmp"
+      return 1
+    fi
   fi
 
-  if [[ "$status" -lt 200 || "$status" -ge 300 ]]; then
-    echo "HTTP $status from $url" >&2
-    cat "$tmp" >&2
-    rm -f "$tmp"
-    exit 1
-  fi
-
-  cat "$tmp"
+  RESPONSE_STATUS="$status"
+  RESPONSE_BODY="$(cat "$tmp")"
   rm -f "$tmp"
+
+  if ! http_status_allowed "$status" "$@"; then
+    echo "HTTP $status from $url" >&2
+    printf '%s' "$RESPONSE_BODY" >&2
+    return 1
+  fi
 }
 
 print_json() {
@@ -104,12 +136,43 @@ print_json() {
   fi
 }
 
+exit_if_terminal() {
+  local response="$1"
+  local http_status="$2"
+  local status
+  status="$(jq -r '.download.status // empty' <<<"$response")"
+
+  case "$status" in
+    failed)
+      print_json <<<"$response" >&2
+      exit 2
+      ;;
+    expired)
+      print_json <<<"$response" >&2
+      exit 3
+      ;;
+  esac
+
+  case "$http_status" in
+    409)
+      print_json <<<"$response" >&2
+      exit 2
+      ;;
+    410)
+      print_json <<<"$response" >&2
+      exit 3
+      ;;
+  esac
+}
+
 payload="$(
   jq -cn --arg url "$URL" --arg quality "$QUALITY" \
     'if $quality == "" then {url: $url} else {url: $url, quality: $quality} end'
 )"
 
-create_response="$(api_request POST "${BASE_URL%/}/v1/youtube/downloads" "$payload")"
+api_request POST "${BASE_URL%/}/v1/youtube/downloads" "$payload" 409
+create_response="$RESPONSE_BODY"
+exit_if_terminal "$create_response" "$RESPONSE_STATUS"
 download_id="$(jq -er '.download.id' <<<"$create_response")"
 
 if $CREATE_ONLY; then
@@ -119,7 +182,9 @@ fi
 
 deadline=$((SECONDS + TIMEOUT_SECONDS))
 while true; do
-  status_response="$(api_request GET "${BASE_URL%/}/v1/youtube/downloads/${download_id}")"
+  api_request GET "${BASE_URL%/}/v1/youtube/downloads/${download_id}" "" 409 410
+  status_response="$RESPONSE_BODY"
+  exit_if_terminal "$status_response" "$RESPONSE_STATUS"
   status="$(jq -r '.download.status // empty' <<<"$status_response")"
   progress="$(jq -r '.download.progress // empty' <<<"$status_response")"
 
