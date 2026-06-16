@@ -47,6 +47,7 @@ require_next() {
   local value="${2:-}"
 
   [[ $# -ge 2 && -n "$value" ]] || die "${flag} requires a value"
+  [[ "$value" != --* ]] || die "${flag} requires a value"
 }
 
 while [[ $# -gt 0 ]]; do
