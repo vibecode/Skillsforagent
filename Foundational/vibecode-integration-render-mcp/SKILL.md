@@ -96,16 +96,15 @@ Deploy IDs are prefixed `dep-…`. Poll the single-deploy endpoint with the retu
 
 ## Logs
 
-`GET /v1/logs` requires **both** `ownerId` (workspace ID, `own-…`) and `resource` (service/deploy/cron/db ID). Resolve `ownerId` once per agent turn via `/v1/owners` and reuse it.
+`GET /v1/logs` requires **both** `ownerId` (workspace identifier — `tea-…` for team workspaces, `own-…` for an individual user's default workspace) and `resource` (service/deploy/cron/db ID). Resolve `ownerId` from the **target resource itself**, not from the first entry of `/v1/owners` — service IDs are workspace-scoped, so a multi-workspace key paired with the wrong owner will fail or return logs for the wrong workspace.
 
 ```bash
-# Resolve the workspace ID first (required for every logs call). For multi-workspace
-# users, match by name against what the user said; for single-workspace users the
-# first entry is the right one.
-OWNER_ID=$(curl -s "https://api.render.com/v1/owners" \
+# Resolve the workspace that owns the SPECIFIC service you're querying. The
+# Render service object has ownerId at the top level (per the public OpenAPI).
+OWNER_ID=$(curl -s "https://api.render.com/v1/services/srv-abc123" \
   -H "Accept: application/json" \
   -H "Authorization: Bearer $RENDER_MCP_ACCESS_TOKEN" \
-  | jq -r '.[0].owner.id')
+  | jq -r '.ownerId')
 
 # List recent logs for a resource (both ownerId and resource are required)
 curl -s -G "https://api.render.com/v1/logs" \
@@ -133,7 +132,7 @@ curl -s -G "https://api.render.com/v1/logs" \
   --data-urlencode "level=error"
 ```
 
-If the user belongs to multiple workspaces, `/v1/owners` returns each one — match by `name` against what the user said before passing the `id`.
+For non-service resources (`dep-…`, `crn-…`, `dpg-…`, etc.) the same rule applies: hit the resource's detail endpoint and read its `ownerId`. Falling back to `/v1/owners[0]` is the bug — multi-workspace keys often have a service in a workspace that isn't first in that list. Only use `/v1/owners` when the user hasn't named a resource yet and you genuinely need to enumerate available workspaces.
 
 For *live* log streaming, Render exposes `GET /v1/logs/subscribe` (which the client upgrades to a WebSocket) with the same Bearer header and the same `ownerId`/`resource` query params — usually overkill for an agent turn; the polled GET above is simpler.
 
