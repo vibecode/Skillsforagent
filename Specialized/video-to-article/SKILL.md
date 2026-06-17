@@ -12,7 +12,7 @@ description: >
 dependencies:
   - yt-dlp
   - supadata
-  - serpapi
+  - serpapi-youtube
 metadata:
   openclaw:
     emoji: "📝"

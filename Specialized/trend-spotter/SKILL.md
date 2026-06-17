@@ -11,7 +11,7 @@ description: >
   foundational skills. The unique value is cross-platform signal comparison: YouTube heat vs web
   depth reveals where a trend sits in its lifecycle.
 dependencies:
-  - serpapi
+  - serpapi-youtube
   - exa
 metadata: {"openclaw": {"emoji": "📈"}}
 ---
