@@ -10,18 +10,18 @@ description: >
   (6) researching YouTube content for a topic or niche, (7) filtering YouTube search results
   by upload date, duration, type, or resolution, (8) paginating through YouTube search results
   or video comments, (9) building content briefs from YouTube research, (10) any YouTube
-  data task using SerpApi. This skill builds on the foundational serpapi skill for all API details.
+  data task using SerpApi. This skill builds on the serpapi runner built-in for all API details.
 metadata: {"openclaw": {"emoji": "▶️", "requires": {"env": ["SERPAPI_KEY"]}, "primaryEnv": "SERPAPI_KEY"}}
 ---
 
 # YouTube Search & Analysis Workflows
 
-YouTube search, video analysis, transcript extraction, comment mining, and content research via SerpApi's YouTube engines. This skill covers workflow logic — load the **serpapi** foundational skill for API details, parameters, and wrapper script usage.
+YouTube search, video analysis, transcript extraction, comment mining, and content research via SerpApi's YouTube engines. This skill covers workflow logic — the **serpapi** skill is a runner built-in that provides API details, parameters, and the wrapper at `~/.chorus/skills/serpapi/scripts/serpapi.sh`.
 
 ## Dependencies
 
 This skill builds on:
-- **serpapi** — SerpApi wrapper script and full API reference (engines: `youtube`, `youtube_video`, `youtube_video_transcript`)
+- **serpapi** (runner built-in) — SerpApi wrapper at `~/.chorus/skills/serpapi/scripts/serpapi.sh` and full API reference (engines: `youtube`, `youtube_video`, `youtube_video_transcript`)
 
 ## Core Concepts
 

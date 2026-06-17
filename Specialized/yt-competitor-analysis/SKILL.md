@@ -17,9 +17,9 @@ Analyze YouTube competitors in any niche — find who's creating content, what's
 
 ## Foundational Skills Used
 
-This skill builds on three foundational skills. Load each skill for API details and usage:
+This skill builds on the **serpapi** runner built-in plus two foundational skills (supadata, exa). Load the foundational skills for API details and usage:
 
-- **serpapi** — YouTube search, video details, channel data, transcripts (wrapper: `scripts/serpapi.sh`)
+- **serpapi** (runner built-in) — YouTube search, video details, channel data, transcripts (wrapper: `~/.chorus/skills/serpapi/scripts/serpapi.sh`)
 - **supadata** — Video transcripts and metadata extraction (wrapper: `scripts/supadata.sh`)
 - **exa** — Web research for company/creator background info (load the exa skill for its search/answer interface)
 
@@ -32,7 +32,7 @@ Search YouTube for the niche to find active channels and top-performing videos.
 Use the **serpapi** skill's `youtube` engine to search:
 
 ```bash
-bash scripts/serpapi.sh youtube --search_query "NICHE_KEYWORDS"
+bash ~/.chorus/skills/serpapi/scripts/serpapi.sh youtube --search_query "NICHE_KEYWORDS"
 ```
 
 This returns video results (title, channel, views, date, link) and channel results (title, handle, subscribers).
@@ -47,10 +47,10 @@ Use the **serpapi** skill to search a channel's content and get video metrics:
 
 ```bash
 # Search for a specific channel's content
-bash scripts/serpapi.sh youtube --search_query "CHANNEL_NAME NICHE"
+bash ~/.chorus/skills/serpapi/scripts/serpapi.sh youtube --search_query "CHANNEL_NAME NICHE"
 
 # Get detailed metrics on their top videos
-bash scripts/serpapi.sh youtube_video --v "VIDEO_ID"
+bash ~/.chorus/skills/serpapi/scripts/serpapi.sh youtube_video --v "VIDEO_ID"
 ```
 
 The video details include: title, views, likes, published date, description, and chapters.
@@ -75,7 +75,7 @@ bash scripts/supadata.sh yt-transcript --url "https://youtube.com/watch?v=VIDEO_
 If `SUPADATA_API_KEY` is not available, use the **serpapi** skill's transcript engine as fallback:
 
 ```bash
-bash scripts/serpapi.sh youtube_video_transcript --v "VIDEO_ID"
+bash ~/.chorus/skills/serpapi/scripts/serpapi.sh youtube_video_transcript --v "VIDEO_ID"
 ```
 
 From transcripts, identify:
