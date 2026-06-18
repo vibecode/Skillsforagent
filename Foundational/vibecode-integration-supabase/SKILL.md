@@ -54,6 +54,45 @@ curl -s "$SUPABASE_PROJECT_URL/rest/v1/<table>" \
   -H "Content-Type: application/json"
 ```
 
+## Supabase CLI (on-demand)
+
+For schema-level work — migrations, `db diff`/`db push`, `gen types`, seeding — the
+`supabase` CLI is more reliable than hand-rolled HTTP. This skill ships an installer
+that fetches a pinned, SHA-256-verified CLI on first use and caches it under
+`~/.vibecode/bin`. Same trust model as the Vibecode iOS pipeline.
+
+```bash
+# Install (or reuse cached) supabase CLI. Prints the binary path; safe to re-run.
+SUPABASE_BIN="$(bash "$(dirname "$0")/scripts/ensure-supabase-cli.sh")"
+# Outside the skill dir, call the script by its installed path, e.g.:
+#   SUPABASE_BIN="$(bash scripts/ensure-supabase-cli.sh)"
+"$SUPABASE_BIN" --version
+```
+
+### Which auth the CLI needs — read before using
+
+The CLI does **not** authenticate with the project API key in `SUPABASE_ACCESS_TOKEN`.
+That key is for PostgREST/Storage/Auth HTTP only. CLI commands need one of:
+
+- **`SUPABASE_DB_URL`** — a Postgres connection string
+  (`postgresql://postgres:<db-password>@db.<ref>.supabase.co:5432/postgres`). With it,
+  schema/migration commands work against the remote DB directly:
+  ```bash
+  "$SUPABASE_BIN" db push   --db-url "$SUPABASE_DB_URL"
+  "$SUPABASE_BIN" db diff   --db-url "$SUPABASE_DB_URL"
+  "$SUPABASE_BIN" gen types --db-url "$SUPABASE_DB_URL" --lang typescript
+  ```
+- **A Personal Access Token (`sbp_…`)** — for account/platform commands
+  (`supabase login --token`, `projects list`, linking). This is a different token type
+  than the project key and is **not** captured by this integration today.
+
+If neither is present in the environment, **stay on the PostgREST/curl flow below** for
+CRUD — it is the only path the project-key connection can authenticate. Do not attempt
+`supabase db`/`login` commands without the credential above; they will fail auth.
+
+> Status: the connection provider does not yet inject `SUPABASE_DB_URL`. Until it does,
+> the CLI path is usable only when a DB connection string is supplied out-of-band.
+
 ## Database — Read
 
 ```bash
