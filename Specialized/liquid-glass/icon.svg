@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Liquid Glass icon">
+  <defs>
+    <linearGradient id="g" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7dd3fc"/>
+      <stop offset="0.55" stop-color="#c4b5fd"/>
+      <stop offset="1" stop-color="#f9a8d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#101827"/>
+  <path d="M34 26h60c10 0 18 8 18 18v40c0 10-8 18-18 18H34c-10 0-18-8-18-18V44c0-10 8-18 18-18z" fill="url(#g)" fill-opacity="0.38" stroke="#f8fafc" stroke-opacity="0.72" stroke-width="4"/>
+  <path d="M34 36h54c6 0 10 4 10 10" fill="none" stroke="#ffffff" stroke-opacity="0.78" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="46" cy="78" r="12" fill="#ffffff" fill-opacity="0.28"/>
+  <circle cx="78" cy="66" r="18" fill="#ffffff" fill-opacity="0.18"/>
+</svg>
