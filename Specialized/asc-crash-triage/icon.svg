@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="ASC Crash Triage icon">
+  <defs>
+    <linearGradient id="g" x1="18" y1="18" x2="110" y2="110" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#fb7185"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="24" fill="#111827"/>
+  <circle cx="64" cy="64" r="43" fill="none" stroke="url(#g)" stroke-width="14"/>
+  <circle cx="64" cy="64" r="20" fill="#111827" stroke="#e5e7eb" stroke-width="6"/>
+  <path d="M64 25v24M64 79v24M25 64h24M79 64h24" stroke="#e5e7eb" stroke-width="8" stroke-linecap="round"/>
+  <path d="M46 46l36 36M82 46L46 82" stroke="#fca5a5" stroke-width="7" stroke-linecap="round"/>
+</svg>
