@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="SwiftUI Design icon">
+  <defs>
+    <linearGradient id="g" x1="24" y1="16" x2="104" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38bdf8"/>
+      <stop offset="0.5" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#ec4899"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="24" fill="#0f172a"/>
+  <rect x="25" y="18" width="78" height="92" rx="18" fill="url(#g)" stroke="#e0f2fe" stroke-width="4"/>
+  <rect x="37" y="34" width="54" height="12" rx="6" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="37" y="56" width="24" height="24" rx="7" fill="#ffffff" fill-opacity="0.72"/>
+  <rect x="67" y="56" width="24" height="24" rx="7" fill="#ffffff" fill-opacity="0.5"/>
+  <path d="M40 94h48" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-opacity="0.75"/>
+</svg>
