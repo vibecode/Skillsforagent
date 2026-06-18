@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="SF Symbols icon">
+  <defs>
+    <linearGradient id="g" x1="20" y1="18" x2="108" y2="108" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22c55e"/>
+      <stop offset="0.5" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="24" fill="#101827"/>
+  <circle cx="64" cy="64" r="44" fill="url(#g)" fill-opacity="0.28" stroke="#dbeafe" stroke-width="4"/>
+  <path d="M64 25l10 26 28 2-22 18 7 27-23-15-23 15 7-27-22-18 28-2z" fill="url(#g)" stroke="#f8fafc" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="64" cy="64" r="9" fill="#101827"/>
+</svg>
