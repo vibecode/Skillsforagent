@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- Google Books: open book with Google blue cover and multi-color page edges -->
+  <rect x="2" y="3" width="9.5" height="18" rx="1.5" fill="#4285F4"/>
+  <rect x="12.5" y="3" width="9.5" height="18" rx="1.5" fill="#4285F4"/>
+  <!-- page edges on left cover -->
+  <rect x="9" y="4.5" width="1" height="15" rx="0.5" fill="#EA4335"/>
+  <rect x="10" y="4.5" width="0.5" height="15" rx="0.25" fill="#FBBC04"/>
+  <!-- page edges on right cover -->
+  <rect x="14" y="4.5" width="1" height="15" rx="0.5" fill="#34A853"/>
+  <rect x="13.5" y="4.5" width="0.5" height="15" rx="0.25" fill="#FBBC04"/>
+  <!-- spine gap -->
+  <rect x="11" y="3" width="2" height="18" rx="0" fill="white"/>
+</svg>
