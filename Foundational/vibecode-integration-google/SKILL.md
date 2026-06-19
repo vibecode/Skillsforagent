@@ -12,7 +12,7 @@ description: >
   4. When the user asks to work with Google Docs, Sheets, Slides, or Forms
   5. When the user needs to search contacts or use any Google Workspace service
   6. When the user mentions email, calendar, spreadsheet, document, or presentation without specifying a provider
-metadata: {"openclaw": {"emoji": "📧", "requires": {"env": ["OPENCLAW_CONNECTION_GOOGLE_APPLICATION_CREDENTIALS_BASE64"], "anyBins": ["gog", "gws"]}}}
+metadata: {"openclaw": {"emoji": "📧", "requires": {"env": ["CHORUS_CONNECTION_GOOGLE_APPLICATION_CREDENTIALS_BASE64"], "anyBins": ["gog", "gws"]}}}
 ---
 
 # Google Workspace Integration
@@ -23,8 +23,8 @@ Authenticated access to the user's Google Workspace: Gmail, Drive, Docs, Sheets,
 
 | Var | Purpose |
 |---|---|
-| `OPENCLAW_CONNECTION_GOOGLE_APPLICATION_CREDENTIALS_BASE64` | Base64-encoded JSON with OAuth client credentials, refresh token, email, scopes |
-| `OPENCLAW_CONNECTION_GOG_ACCOUNT` | Email address of the connected Google account |
+| `CHORUS_CONNECTION_GOOGLE_APPLICATION_CREDENTIALS_BASE64` | Base64-encoded JSON with OAuth client credentials, refresh token, email, scopes |
+| `CHORUS_CONNECTION_GOG_ACCOUNT` | Email address of the connected Google account |
 | `GOG_KEYRING_PASSWORD` | Keyring password for gog CLI (set automatically) |
 
 ## Setup (run once per session)
@@ -35,7 +35,7 @@ The credentials JSON contains `installed.client_id`, `installed.client_secret`, 
 
 ```bash
 # Decode and transform credentials to authorized_user format for gws
-echo "$OPENCLAW_CONNECTION_GOOGLE_APPLICATION_CREDENTIALS_BASE64" | base64 -d | \
+echo "$CHORUS_CONNECTION_GOOGLE_APPLICATION_CREDENTIALS_BASE64" | base64 -d | \
   jq '{type:"authorized_user", client_id:.installed.client_id, client_secret:.installed.client_secret, refresh_token:.refresh_token}' \
   > /tmp/gws-creds.json
 export GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE=/tmp/gws-creds.json
@@ -52,14 +52,14 @@ gws gmail users.getProfile --userId me
 
 ```bash
 gog auth keyring file
-echo "$OPENCLAW_CONNECTION_GOOGLE_APPLICATION_CREDENTIALS_BASE64" | base64 -d > /tmp/gog-setup.json
+echo "$CHORUS_CONNECTION_GOOGLE_APPLICATION_CREDENTIALS_BASE64" | base64 -d > /tmp/gog-setup.json
 jq '{"installed": .installed}' /tmp/gog-setup.json | gog auth credentials set -
 jq '{email: .email, client: "default", scopes: .scopes, refresh_token: .refresh_token}' /tmp/gog-setup.json | gog auth tokens import -
 rm /tmp/gog-setup.json
 gog auth list
 ```
 
-For gog commands, append `--account $OPENCLAW_CONNECTION_GOG_ACCOUNT` when multiple accounts exist.
+For gog commands, append `--account $CHORUS_CONNECTION_GOG_ACCOUNT` when multiple accounts exist.
 
 ## Gmail
 

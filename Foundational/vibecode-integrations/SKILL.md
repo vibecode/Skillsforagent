@@ -18,7 +18,7 @@ The user connects third-party services through the Vibecode dashboard. When conn
 
 ```bash
 # List all integration env vars
-env | grep -iE '(TOKEN|API_KEY|ACCESS_TOKEN|SECRET_KEY|OPENCLAW_CONNECTION)' | sort
+env | grep -iE '(TOKEN|API_KEY|ACCESS_TOKEN|SECRET_KEY|CHORUS_CONNECTION)' | sort
 ```
 
 Only services with active connections will have env vars set.
@@ -64,8 +64,8 @@ Many more integrations follow the same pattern — if an `_ACCESS_TOKEN` or `_AP
 
 | Service | Env Var | Notes |
 |---|---|---|
-| Google | `OPENCLAW_CONNECTION_GOOGLE_APPLICATION_CREDENTIALS_BASE64` | Use `gws` or `gog` CLI. See `vibecode-integration-google` skill. |
-| Microsoft | `OPENCLAW_CONNECTION_MICROSOFT_CREDENTIALS_BASE64` | Use Microsoft Graph API with token refresh. |
+| Google | `CHORUS_CONNECTION_GOOGLE_APPLICATION_CREDENTIALS_BASE64` | Use `gws` or `gog` CLI. See `vibecode-integration-google` skill. |
+| Microsoft | `CHORUS_CONNECTION_MICROSOFT_CREDENTIALS_BASE64` | Use Microsoft Graph API with token refresh. |
 
 ## Tips
 
