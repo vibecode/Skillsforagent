@@ -5,7 +5,7 @@ Raw API details for the Gemini image generation endpoint. In most cases, use the
 ## Endpoint
 
 ```
-POST https://generativelanguage.googleapis.com.cloudproxy.vibecodeapp.com/v1beta/models/gemini-3-pro-image-preview:generateContent
+POST https://generativelanguage.googleapis.com.proxy.chorus.com/v1beta/models/gemini-3-pro-image-preview:generateContent
 ```
 
 ## Authentication

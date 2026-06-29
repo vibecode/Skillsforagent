@@ -70,7 +70,7 @@
 
 set -euo pipefail
 
-BASE="https://api.supadata.ai.cloudproxy.vibecodeapp.com/v1"
+BASE="https://api.supadata.ai.proxy.chorus.com/v1"
 API_KEY="${SUPADATA_API_KEY:-}"
 USE_JQ=true
 TIMEOUT=60

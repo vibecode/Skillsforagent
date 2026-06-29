@@ -23,7 +23,7 @@ Financial data API: stocks, fundamentals, forex, crypto, commodities, economic i
 ## Authentication
 
 ```
-Base URL: https://www.alphavantage.co.cloudproxy.vibecodeapp.com/query
+Base URL: https://www.alphavantage.co.proxy.chorus.com/query
 Auth:     apikey=YOUR_KEY (query parameter on every request)
 ```
 
@@ -302,7 +302,7 @@ These endpoints return exit code 3 (`PREMIUM_ONLY`) on the free tier — per [of
 For edge cases the wrapper doesn't cover, call the API directly:
 
 ```bash
-curl -s "https://www.alphavantage.co.cloudproxy.vibecodeapp.com/query?function=FUNCTION_NAME&symbol=SYM&apikey=${ALPHA_VANTAGE_API_KEY}" | jq .
+curl -s "https://www.alphavantage.co.proxy.chorus.com/query?function=FUNCTION_NAME&symbol=SYM&apikey=${ALPHA_VANTAGE_API_KEY}" | jq .
 ```
 
 All endpoints accept the same base pattern: `function=` + endpoint-specific params + `apikey=`.

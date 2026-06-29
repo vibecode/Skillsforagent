@@ -19,7 +19,7 @@
 
 set -euo pipefail
 
-BASE="https://generativelanguage.googleapis.com.cloudproxy.vibecodeapp.com/v1beta"
+BASE="https://generativelanguage.googleapis.com.proxy.chorus.com/v1beta"
 MODEL="gemini-3-pro-image-preview"
 API_KEY="${GOOGLE_API_KEY:?Set GOOGLE_API_KEY}"
 

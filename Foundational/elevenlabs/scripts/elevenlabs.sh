@@ -22,7 +22,7 @@
 
 set -euo pipefail
 
-BASE="https://api.elevenlabs.io.cloudproxy.vibecodeapp.com/v1"
+BASE="https://api.elevenlabs.io.proxy.chorus.com/v1"
 API_KEY="${ELEVENLABS_API_KEY:?Set ELEVENLABS_API_KEY}"
 
 # Defaults

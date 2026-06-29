@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-BASE="https://generativelanguage.googleapis.com.cloudproxy.vibecodeapp.com/v1beta"
+BASE="https://generativelanguage.googleapis.com.proxy.chorus.com/v1beta"
 
 if [[ -z "${GOOGLE_API_KEY:-}" ]]; then
   echo "Error: GOOGLE_API_KEY is not set" >&2

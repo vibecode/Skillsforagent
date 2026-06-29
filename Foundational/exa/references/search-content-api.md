@@ -15,7 +15,7 @@ Complete parameter and response reference for `/search`, `/contents`, and `/find
 
 ## Search
 
-**Endpoint:** `POST https://api.exa.ai.cloudproxy.vibecodeapp.com/search`
+**Endpoint:** `POST https://api.exa.ai.proxy.chorus.com/search`
 
 ### Parameters
 
@@ -70,7 +70,7 @@ Complete parameter and response reference for `/search`, `/contents`, and `/find
 
 ## Contents
 
-**Endpoint:** `POST https://api.exa.ai.cloudproxy.vibecodeapp.com/contents`
+**Endpoint:** `POST https://api.exa.ai.proxy.chorus.com/contents`
 
 ### Parameters
 
@@ -90,7 +90,7 @@ Complete parameter and response reference for `/search`, `/contents`, and `/find
 
 ## Find Similar
 
-**Endpoint:** `POST https://api.exa.ai.cloudproxy.vibecodeapp.com/findSimilar`
+**Endpoint:** `POST https://api.exa.ai.proxy.chorus.com/findSimilar`
 
 ### Parameters
 

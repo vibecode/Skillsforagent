@@ -85,9 +85,9 @@
 set -euo pipefail
 
 API_KEY="${FAL_API_KEY:-}"
-SYNC_BASE="https://fal.run.cloudproxy.vibecodeapp.com"
-QUEUE_BASE="https://queue.fal.run.cloudproxy.vibecodeapp.com"
-PLATFORM_BASE="https://api.fal.ai.cloudproxy.vibecodeapp.com/v1"
+SYNC_BASE="https://fal.run.proxy.chorus.com"
+QUEUE_BASE="https://queue.fal.run.proxy.chorus.com"
+PLATFORM_BASE="https://api.fal.ai.proxy.chorus.com/v1"
 USE_JQ=true
 TIMEOUT=120
 

@@ -17,7 +17,7 @@ Generate high-CTR YouTube-style thumbnails from a topic, title, or video URL. Us
 
 - **gemini-image** — Image generation and editing via Gemini (Nano Banana). Read it for API details.
 
-> **Cloud proxy fallback:** If the direct Gemini API returns a "key expired" or 400 error, use the cloud proxy endpoint per the **environment** skill. The proxy URL replaces the domain (e.g., `generativelanguage.googleapis.com` → `generativelanguage.googleapis.com.cloudproxy.vibecodeapp.com`). Read the environment skill for details.
+> **Cloud proxy fallback:** If the direct Gemini API returns a "key expired" or 400 error, use the cloud proxy endpoint per the **environment** skill. The proxy URL replaces the domain (e.g., `generativelanguage.googleapis.com` → `generativelanguage.googleapis.com.proxy.chorus.com`). Read the environment skill for details.
 
 ## Thumbnail Design Principles
 
