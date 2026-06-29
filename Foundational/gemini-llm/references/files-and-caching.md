@@ -15,7 +15,7 @@ Upload and manage files for use in Gemini prompts. Required for:
 
 ```bash
 UPLOAD_URL=$(curl -s -D - \
-  "https://generativelanguage.googleapis.com.cloudproxy.vibecodeapp.com/upload/v1beta/files" \
+  "https://generativelanguage.googleapis.com.proxy.chorus.com/upload/v1beta/files" \
   -H "x-goog-api-key: ${GOOGLE_API_KEY}" \
   -H "X-Goog-Upload-Protocol: resumable" \
   -H "X-Goog-Upload-Command: start" \

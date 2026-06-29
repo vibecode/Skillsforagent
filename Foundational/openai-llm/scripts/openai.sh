@@ -9,7 +9,7 @@
 
 set -euo pipefail
 
-BASE="https://api.openai.com.cloudproxy.vibecodeapp.com/v1"
+BASE="https://api.openai.com.proxy.chorus.com/v1"
 API_KEY="${OPENAI_API_KEY:?Set OPENAI_API_KEY}"
 DEFAULT_MODEL="gpt-5.2"
 

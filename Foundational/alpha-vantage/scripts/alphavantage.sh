@@ -77,7 +77,7 @@
 
 set -euo pipefail
 
-BASE="https://www.alphavantage.co.cloudproxy.vibecodeapp.com/query"
+BASE="https://www.alphavantage.co.proxy.chorus.com/query"
 USE_DEMO="false"
 API_KEY="${ALPHA_VANTAGE_API_KEY:-}"
 

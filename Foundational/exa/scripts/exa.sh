@@ -104,7 +104,7 @@
 
 set -euo pipefail
 
-BASE="https://api.exa.ai.cloudproxy.vibecodeapp.com"
+BASE="https://api.exa.ai.proxy.chorus.com"
 WEBSETS_BASE="${BASE}/websets/v0"
 API_KEY="${EXA_API_KEY:-}"
 USE_JQ=true

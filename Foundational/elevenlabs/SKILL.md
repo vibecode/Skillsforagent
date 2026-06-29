@@ -20,7 +20,7 @@ Audio AI platform: speech, sound effects, music, dubbing, transcription. All via
 ## Authentication
 
 ```
-Base URL: https://api.elevenlabs.io.cloudproxy.vibecodeapp.com/v1
+Base URL: https://api.elevenlabs.io.proxy.chorus.com/v1
 Header:   xi-api-key: ${ELEVENLABS_API_KEY}
 ```
 

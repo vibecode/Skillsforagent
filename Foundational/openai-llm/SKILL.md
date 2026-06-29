@@ -14,7 +14,7 @@ metadata: {"openclaw": {"emoji": "🤖", "requires": {"env": ["OPENAI_API_KEY"]}
 Chat completions with GPT-5.2, GPT-5.2-pro, and GPT-5.1 via HTTP.
 ## Authentication
 ```
-Base URL: https://api.openai.com.cloudproxy.vibecodeapp.com/v1
+Base URL: https://api.openai.com.proxy.chorus.com/v1
 Header:   Authorization: Bearer $OPENAI_API_KEY
 ```
 The cloud proxy handles credentials. Use `$OPENAI_API_KEY` as-is.

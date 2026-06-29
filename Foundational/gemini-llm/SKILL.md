@@ -19,7 +19,7 @@ Google's multimodal AI platform: text, vision, audio, video, code, reasoning, em
 ## Authentication
 
 ```
-Base URL: https://generativelanguage.googleapis.com.cloudproxy.vibecodeapp.com/v1beta
+Base URL: https://generativelanguage.googleapis.com.proxy.chorus.com/v1beta
 Header:   x-goog-api-key: ${GOOGLE_API_KEY}
 ```
 
