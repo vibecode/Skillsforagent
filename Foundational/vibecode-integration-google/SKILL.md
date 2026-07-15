@@ -5,269 +5,222 @@ provider_skill: true
 integration_dependencies:
   - google
 description: >
-  Google Workspace integration via the gws or gog CLI. Consult this skill:
-  1. When the user asks to read, send, or manage Gmail messages
-  2. When the user asks to create, edit, or organize Google Drive files
-  3. When the user asks to manage Google Calendar events or check their schedule
-  4. When the user asks to work with Google Docs, Sheets, Slides, or Forms
-  5. When the user needs to search contacts or use any Google Workspace service
-  6. When the user mentions email, calendar, spreadsheet, document, or presentation without specifying a provider
-metadata: {"openclaw": {"emoji": "📧", "requires": {"env": ["CHORUS_CONNECTION_GOOGLE_APPLICATION_CREDENTIALS_BASE64"], "anyBins": ["gog", "gws"]}}}
+  Google Workspace integration via the Chorus-managed gws CLI. Consult this skill
+  for Gmail, Drive, Calendar, Docs, Sheets, Slides, Forms, Tasks, and People.
+metadata: {"openclaw": {"emoji": "📧", "requires": {"bins": ["gws"]}}}
 ---
 
 # Google Workspace Integration
 
-Authenticated access to the user's Google Workspace: Gmail, Drive, Docs, Sheets, Slides, Calendar, Forms, Tasks, and People.
+Use the preinstalled `gws` CLI for authenticated access to the user's Google Workspace.
 
-## Environment variables
+## Chorus manages authentication
 
-| Var | Purpose |
-|---|---|
-| `CHORUS_CONNECTION_GOOGLE_APPLICATION_CREDENTIALS_BASE64` | Base64-encoded JSON with OAuth client credentials, refresh token, email, scopes |
-| `CHORUS_CONNECTION_GOG_ACCOUNT` | Email address of the connected Google account |
-| `GOG_KEYRING_PASSWORD` | Keyring password for gog CLI (set automatically) |
+Chorus installs and pins `gws`, supplies its credential file, and refreshes OAuth tokens.
 
-## Setup (run once per session)
+- Do **not** run `gws auth setup`, `gws auth login`, or install/upgrade `gws`.
+- Do **not** rebuild credential files, inspect `CHORUS_CONNECTION_*` variables, or ask the user for Google secrets.
+- Do **not** claim that a service is disconnected based only on a failed command. First validate the command with `gws schema` and retry with the current syntax.
+- If a correctly formed command reports missing authorization or scopes, run `masterclaw connections ensure --provider google` and give the returned connection action to the user.
 
-The credentials JSON contains `installed.client_id`, `installed.client_secret`, `refresh_token`, `email`, and `scopes`. Transform for whichever CLI is available:
+## Required workflow
 
-### Option A: gws CLI (preferred)
+The pinned CLI uses space-separated resources and JSON flags for API calls. Older API-call examples with dotted resources or flags such as `--userId`, `--documentId`, and `--requests` are invalid. Schema lookup is the exception: its method identifier uses dotted notation.
 
-```bash
-# Decode and transform credentials to authorized_user format for gws
-echo "$CHORUS_CONNECTION_GOOGLE_APPLICATION_CREDENTIALS_BASE64" | base64 -d | \
-  jq '{type:"authorized_user", client_id:.installed.client_id, client_secret:.installed.client_secret, refresh_token:.refresh_token}' \
-  > /tmp/gws-creds.json
-export GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE=/tmp/gws-creds.json
-export GOOGLE_WORKSPACE_CLI_KEYRING_BACKEND=file
+1. Confirm the installed version with `gws --version` when diagnosing a failure.
+2. Discover helpers and resources with `gws <service> --help`.
+3. Before an unfamiliar API call, inspect its exact contract with `gws schema <service>.<resource>.<method>` (dotted notation for schema lookup only).
+4. Pass URL/query parameters in one JSON object with `--params`.
+5. Pass request bodies in one JSON object with `--json`.
+6. When parsing JSON output, keep stderr separate: use `gws ... | jq ...`, never `gws ... 2>&1 | jq ...`. Status messages such as the keyring backend are written to stderr and are not JSON.
+7. Read-only calls may run immediately. Confirm with the user before sending email, creating or editing data, sharing files, or deleting anything. Prefer `--dry-run` when a mutating command supports it.
+8. Never reveal email bodies, contact details, file contents, calendar details, credentials, or tokens unless the user asked for that specific data.
 
-# Install if not present
-command -v gws &>/dev/null || npm install -g @googleworkspace/cli
-
-# Verify
-gws gmail users.getProfile --userId me
-```
-
-### Option B: gog CLI (fallback)
+General form:
 
 ```bash
-gog auth keyring file
-echo "$CHORUS_CONNECTION_GOOGLE_APPLICATION_CREDENTIALS_BASE64" | base64 -d > /tmp/gog-setup.json
-jq '{"installed": .installed}' /tmp/gog-setup.json | gog auth credentials set -
-jq '{email: .email, client: "default", scopes: .scopes, refresh_token: .refresh_token}' /tmp/gog-setup.json | gog auth tokens import -
-rm /tmp/gog-setup.json
-gog auth list
+gws <service> <resource> [sub-resource] <method> --params '{"parameter":"value"}' --json '{"body":"value"}'
 ```
-
-For gog commands, append `--account $CHORUS_CONNECTION_GOG_ACCOUNT` when multiple accounts exist.
 
 ## Gmail
 
 ```bash
-# Search messages (Gmail search syntax)
-gws gmail users.messages.list --userId me --q "newer_than:1d" --maxResults 10
+# Search messages
+gws gmail users messages list --params '{"userId":"me","q":"newer_than:1d","maxResults":10}'
 
-# Read a message (plaintext)
-gws gmail users.messages.get --userId me --id MSG_ID --format full
-
-# Search by sender
-gws gmail users.messages.list --userId me --q "from:alice@example.com newer_than:7d"
-
-# List unread
-gws gmail users.messages.list --userId me --q "is:unread" --maxResults 20
+# Read a message
+gws gmail users messages get --params '{"userId":"me","id":"MSG_ID","format":"full"}'
 
 # List labels
-gws gmail users.labels.list --userId me
+gws gmail users labels list --params '{"userId":"me"}'
 ```
 
-**Helpers** (if gws gmail helper skills are installed):
+Gmail helpers are available for common workflows. Inspect each helper before use:
+
 ```bash
-gws gmail +send --to "alice@example.com" --subject "Hello" --body "Message body"
-gws gmail +triage                         # Summarize unread inbox
-gws gmail +read MSG_ID                    # Pretty-print a message
-gws gmail +reply MSG_ID --body "Thanks!"
-gws gmail +forward MSG_ID --to "bob@example.com"
+gws gmail +send --help
+gws gmail +triage --help
+gws gmail +read --help
+gws gmail +reply --help
+gws gmail +forward --help
 ```
+
+Gmail search supports operators such as `from:`, `to:`, `subject:`, `is:unread`, `newer_than:`, `has:attachment`, `label:`, and `in:sent`.
 
 ## Google Drive
 
 ```bash
-# List files in root
-gws drive files.list --q "'root' in parents" --fields "files(id,name,mimeType,modifiedTime)" --orderBy "modifiedTime desc"
+# List recent files
+gws drive files list --params '{"pageSize":10,"orderBy":"modifiedTime desc","fields":"files(id,name,mimeType,modifiedTime)"}'
 
-# Search files by name
-gws drive files.list --q "name contains 'report'" --fields "files(id,name,mimeType,modifiedTime)"
+# Search by name
+gws drive files list --params '{"q":"name contains '\''report'\''","pageSize":10,"fields":"files(id,name,mimeType,modifiedTime)"}'
 
-# Search by type
-gws drive files.list --q "mimeType='application/vnd.google-apps.spreadsheet'" --fields "files(id,name)"
+# Get file metadata
+gws drive files get --params '{"fileId":"FILE_ID","fields":"id,name,mimeType,modifiedTime"}'
 
-# Download a file
-gws drive files.get --fileId FILE_ID --alt media > output.pdf
+# Download a stored binary file without printing its contents
+gws drive files get --params '{"fileId":"FILE_ID","alt":"media"}' --output ./download.bin
 
-# Upload a file
-gws drive files.create --uploadType multipart --metadata '{"name":"report.pdf"}' --media report.pdf
+# Export a Google-native Doc, Sheet, or Slide
+gws drive files export --params '{"fileId":"FILE_ID","mimeType":"application/pdf"}' --output ./export.pdf
+```
 
-# Upload to specific folder
-gws drive files.create --uploadType multipart --metadata '{"name":"data.csv","parents":["FOLDER_ID"]}' --media data.csv
+For uploads, inspect the maintained helper instead of constructing multipart requests manually:
 
-# Create a folder
-gws drive files.create --metadata '{"name":"My Folder","mimeType":"application/vnd.google-apps.folder"}'
-
-# Delete a file
-gws drive files.delete --fileId FILE_ID
+```bash
+gws drive +upload --help
 ```
 
 ## Google Sheets
 
 ```bash
 # Get spreadsheet metadata
-gws sheets spreadsheets.get --spreadsheetId SHEET_ID --fields "sheets.properties"
+gws sheets spreadsheets get --params '{"spreadsheetId":"SHEET_ID","fields":"sheets.properties"}'
 
 # Read a range
-gws sheets spreadsheets.values.get --spreadsheetId SHEET_ID --range "Sheet1!A1:D10"
+gws sheets spreadsheets values get --params '{"spreadsheetId":"SHEET_ID","range":"Sheet1!A1:D10"}'
 
-# Read entire sheet
-gws sheets spreadsheets.values.get --spreadsheetId SHEET_ID --range "Sheet1"
+# Update a range after user confirmation
+gws sheets spreadsheets values update \
+  --params '{"spreadsheetId":"SHEET_ID","range":"Sheet1!A1","valueInputOption":"USER_ENTERED"}' \
+  --json '{"values":[["Name","Age"],["Alice",30]]}'
+```
 
-# Write to a range
-gws sheets spreadsheets.values.update --spreadsheetId SHEET_ID --range "Sheet1!A1" \
-  --valueInputOption USER_ENTERED --values '[["Name","Age"],["Alice","30"],["Bob","25"]]'
+Maintained helpers:
 
-# Append rows
-gws sheets spreadsheets.values.append --spreadsheetId SHEET_ID --range "Sheet1" \
-  --valueInputOption USER_ENTERED --values '[["New","Row","Data"]]'
-
-# Create new spreadsheet
-gws sheets spreadsheets.create --title "My Spreadsheet"
-
-# Clear a range
-gws sheets spreadsheets.values.clear --spreadsheetId SHEET_ID --range "Sheet1!A1:D10"
+```bash
+gws sheets +read --help
+gws sheets +append --help
 ```
 
 ## Google Calendar
 
 ```bash
-# List upcoming events
-gws calendar events.list --calendarId primary \
-  --timeMin "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-  --maxResults 10 --singleEvents true --orderBy startTime
-
-# List events in date range
-gws calendar events.list --calendarId primary \
-  --timeMin "2026-03-25T00:00:00Z" --timeMax "2026-03-26T00:00:00Z" \
-  --singleEvents true --orderBy startTime
-
-# Create an event
-gws calendar events.insert --calendarId primary \
-  --summary "Team standup" \
-  --start '{"dateTime":"2026-03-25T10:00:00","timeZone":"America/New_York"}' \
-  --end '{"dateTime":"2026-03-25T10:30:00","timeZone":"America/New_York"}' \
-  --attendees '[{"email":"alice@example.com"}]'
-
-# Create all-day event
-gws calendar events.insert --calendarId primary \
-  --summary "Company offsite" \
-  --start '{"date":"2026-04-01"}' --end '{"date":"2026-04-03"}'
-
-# Delete event
-gws calendar events.delete --calendarId primary --eventId EVENT_ID
-
 # List calendars
-gws calendar calendarList.list
+gws calendar calendarList list
+
+# List upcoming events
+gws calendar events list --params '{"calendarId":"primary","timeMin":"TIME_MIN_RFC3339","maxResults":10,"singleEvents":true,"orderBy":"startTime"}'
+
+# Create an event after user confirmation
+gws calendar events insert \
+  --params '{"calendarId":"primary"}' \
+  --json '{"summary":"Team standup","start":{"dateTime":"START_RFC3339"},"end":{"dateTime":"END_RFC3339"}}'
 ```
+
+For agenda and event creation workflows, inspect the maintained helpers:
+
+```bash
+gws calendar +agenda --help
+gws calendar +insert --help
+```
+
+Calendar timestamps use RFC 3339. All-day events use `date` instead of `dateTime`.
 
 ## Google Docs
 
 ```bash
-# Get document content
-gws docs documents.get --documentId DOC_ID
+# Get a document
+gws docs documents get --params '{"documentId":"DOC_ID"}'
 
-# Create a document
-gws docs documents.create --title "My Document"
+# Create a document after user confirmation
+gws docs documents create --json '{"title":"My Document"}'
 
-# Insert text
-gws docs documents.batchUpdate --documentId DOC_ID \
-  --requests '[{"insertText":{"location":{"index":1},"text":"Hello World\n"}}]'
-
-# Replace text
-gws docs documents.batchUpdate --documentId DOC_ID \
-  --requests '[{"replaceAllText":{"containsText":{"text":"old text","matchCase":true},"replaceText":"new text"}}]'
+# Insert text after user confirmation
+gws docs documents batchUpdate \
+  --params '{"documentId":"DOC_ID"}' \
+  --json '{"requests":[{"insertText":{"location":{"index":1},"text":"Hello World\n"}}]}'
 ```
+
+For common writing workflows, inspect `gws docs +write --help`.
 
 ## Google Slides
 
 ```bash
-# Get presentation
-gws slides presentations.get --presentationId PRES_ID
+# Get a presentation
+gws slides presentations get --params '{"presentationId":"PRESENTATION_ID"}'
 
-# Create presentation
-gws slides presentations.create --title "My Presentation"
+# Create a presentation after user confirmation
+gws slides presentations create --json '{"title":"My Presentation"}'
 
-# Get specific slide
-gws slides presentations.pages.get --presentationId PRES_ID --pageObjectId SLIDE_ID
-
-# Add a slide
-gws slides presentations.batchUpdate --presentationId PRES_ID \
-  --requests '[{"createSlide":{"slideLayoutReference":{"predefinedLayout":"TITLE_AND_BODY"}}}]'
-
-# Insert text into a shape
-gws slides presentations.batchUpdate --presentationId PRES_ID \
-  --requests '[{"insertText":{"objectId":"SHAPE_ID","text":"Slide content"}}]'
+# Add a slide after user confirmation
+gws slides presentations batchUpdate \
+  --params '{"presentationId":"PRESENTATION_ID"}' \
+  --json '{"requests":[{"createSlide":{"slideLayoutReference":{"predefinedLayout":"TITLE_AND_BODY"}}}]}'
 ```
 
 ## Google Forms
 
 ```bash
-# Get form
-gws forms forms.get --formId FORM_ID
+# Get a form
+gws forms forms get --params '{"formId":"FORM_ID"}'
 
-# List form responses
-gws forms forms.responses.list --formId FORM_ID
+# List responses
+gws forms forms responses list --params '{"formId":"FORM_ID"}'
 
-# Get specific response
-gws forms forms.responses.get --formId FORM_ID --responseId RESPONSE_ID
-
-# Create form
-gws forms forms.create --info '{"title":"Survey","documentTitle":"My Survey"}'
+# Create a form after user confirmation
+gws forms forms create --json '{"info":{"title":"Survey","documentTitle":"My Survey"}}'
 ```
 
 ## Google Tasks
 
 ```bash
 # List task lists
-gws tasks tasklists.list
+gws tasks tasklists list
 
-# List tasks in a list
-gws tasks tasks.list --tasklist TASKLIST_ID
+# List tasks
+gws tasks tasks list --params '{"tasklist":"TASKLIST_ID"}'
 
-# Create task
-gws tasks tasks.insert --tasklist TASKLIST_ID --title "New task" --notes "Description"
+# Create a task after user confirmation
+gws tasks tasks insert --params '{"tasklist":"TASKLIST_ID"}' --json '{"title":"New task","notes":"Description"}'
 
-# Complete task
-gws tasks tasks.patch --tasklist TASKLIST_ID --task TASK_ID --status completed
+# Complete a task after user confirmation
+gws tasks tasks patch \
+  --params '{"tasklist":"TASKLIST_ID","task":"TASK_ID"}' \
+  --json '{"status":"completed"}'
 ```
 
 ## Google People (Contacts)
 
 ```bash
 # List contacts
-gws people people.connections.list --resourceName "people/me" \
-  --personFields "names,emailAddresses,phoneNumbers" --pageSize 100
+gws people people connections list \
+  --params '{"resourceName":"people/me","personFields":"names,emailAddresses,phoneNumbers","pageSize":100}'
 
 # Search contacts
-gws people people.searchContacts --query "alice" --readMask "names,emailAddresses"
+gws people people searchContacts \
+  --params '{"query":"alice","readMask":"names,emailAddresses"}'
 ```
 
-## Tips
+## Troubleshooting
 
-- **Always use `--userId me`** for Gmail (refers to the authenticated user).
-- **File/doc IDs are in the URL**: `docs.google.com/document/d/DOC_ID/edit` → use `DOC_ID`.
-- **Date formats**: RFC 3339 for Calendar (`2026-03-25T10:00:00Z`), all-day events use date only (`2026-03-25`).
-- **Discover commands**: `gws <service> --help` lists all available methods.
-- **The user may not say "Google"** — "check my email" = Gmail, "what's on my schedule" = Calendar, "open my spreadsheet" = Sheets.
-- **Re-run setup each session** — credentials don't persist across container restarts.
-- **Gmail search syntax**: `from:`, `to:`, `subject:`, `is:unread`, `newer_than:`, `older_than:`, `has:attachment`, `label:`, `in:sent`.
+- A usage or unknown-argument error usually means the command came from an older CLI example. Run `gws schema ...` and rebuild it using `--params` and `--json`.
+- A `403` can mean the connected account lacks that specific OAuth scope or the Google Workspace administrator has blocked the API. Do not assume all Google access is disconnected.
+- A `404` usually means an incorrect resource ID or a resource the connected account cannot access.
+- A `429` or `5xx` is generally transient. Retry with bounded exponential backoff; do not reconnect Google as the first response.
+- Document, spreadsheet, presentation, form, file, event, task, and message IDs come from their resource URLs or prior list/search results.
 
 ---
 
-*Based on [googleworkspace/cli](https://github.com/googleworkspace/cli) and its [skill library](https://github.com/googleworkspace/cli/tree/main/skills).*
+Based on the pinned [`googleworkspace/cli` v0.22.5](https://github.com/googleworkspace/cli/tree/v0.22.5) and its [generated skill library](https://github.com/googleworkspace/cli/tree/v0.22.5/skills).
