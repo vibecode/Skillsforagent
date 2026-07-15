@@ -25,11 +25,11 @@ Chorus installs and pins `gws`, supplies its credential file, and refreshes OAut
 
 ## Required workflow
 
-The pinned CLI uses space-separated resources and JSON flags. Older examples with dotted resources or flags such as `--userId`, `--documentId`, and `--requests` are invalid.
+The pinned CLI uses space-separated resources and JSON flags for API calls. Older API-call examples with dotted resources or flags such as `--userId`, `--documentId`, and `--requests` are invalid. Schema lookup is the exception: its method identifier uses dotted notation.
 
 1. Confirm the installed version with `gws --version` when diagnosing a failure.
 2. Discover helpers and resources with `gws <service> --help`.
-3. Before an unfamiliar API call, inspect its exact contract with `gws schema <service>.<resource>.<method>`.
+3. Before an unfamiliar API call, inspect its exact contract with `gws schema <service>.<resource>.<method>` (dotted notation for schema lookup only).
 4. Pass URL/query parameters in one JSON object with `--params`.
 5. Pass request bodies in one JSON object with `--json`.
 6. When parsing JSON output, keep stderr separate: use `gws ... | jq ...`, never `gws ... 2>&1 | jq ...`. Status messages such as the keyring backend are written to stderr and are not JSON.
@@ -78,6 +78,12 @@ gws drive files list --params '{"q":"name contains '\''report'\''","pageSize":10
 
 # Get file metadata
 gws drive files get --params '{"fileId":"FILE_ID","fields":"id,name,mimeType,modifiedTime"}'
+
+# Download a stored binary file without printing its contents
+gws drive files get --params '{"fileId":"FILE_ID","alt":"media"}' --output ./download.bin
+
+# Export a Google-native Doc, Sheet, or Slide
+gws drive files export --params '{"fileId":"FILE_ID","mimeType":"application/pdf"}' --output ./export.pdf
 ```
 
 For uploads, inspect the maintained helper instead of constructing multipart requests manually:
