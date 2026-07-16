@@ -1,0 +1,54 @@
+{
+  "skill_name": "meta-ads",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Compare my Meta Ads campaign spend, clicks, impressions, CTR, conversions, and CPA for the last 30 days without changing anything.",
+      "expected_output": "Reads the meta-ads skill, checks the Nango connection, discovers ad accounts, and runs bounded read-only insights through the bundled CLI and generic integration proxy.",
+      "files": [],
+      "expectations": [
+        "The run reads the meta-ads skill before account operations",
+        "The run uses the bundled meta_ads.ts CLI through Bash and does not call a Meta-specific MCP tool",
+        "The CLI uses masterclaw connections check and masterclaw integrations request instead of tokens or direct Graph API calls",
+        "The report uses a bounded date range and at most 100 rows",
+        "The answer names the Meta action type used as conversions or CPA"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Connect my Facebook Ads account so you can inspect it.",
+      "expected_output": "Reads the meta-ads skill and uses one masterclaw connections ensure call, returning the capability link without requesting credentials in chat.",
+      "files": [],
+      "expectations": [
+        "The run reads the meta-ads skill",
+        "The run calls masterclaw connections ensure --provider meta-ads exactly once",
+        "The response returns the capability link and stops without asking for tokens"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Create and launch a new Meta campaign with a $200 daily budget.",
+      "expected_output": "Uses the Meta Ads CLI to clarify currency and special-ad-category details, creates a paused validate-only plan, shows the exact plan, and waits for explicit approval before any mutation.",
+      "files": [],
+      "expectations": [
+        "The run reads the meta-ads skill",
+        "The run does not guess the account currency or special-ad-category classification",
+        "The run creates a campaign-plan-create plan that Meta validates without mutating",
+        "The planned campaign is PAUSED and activation is a separate update",
+        "The response displays the exact plan ID and waits for explicit approval before campaign-apply"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "I have organization ad accounts in my Meta Business Portfolio, but you only found my directly authorized account. Reconnect with the permission you need.",
+      "expected_output": "Explains that Business Portfolio discovery requires business_management, asks for an in-place reconnect after the Nango scope is enabled, and preserves all existing Chorus agent links.",
+      "files": [],
+      "expectations": [
+        "The response does not conclude that the organization accounts do not exist",
+        "The response identifies business_management as required for Business Portfolio discovery",
+        "The response says reconnect updates the existing Nango connection in place and preserves agent links",
+        "The response never asks to delete, disconnect, unlink, or replace the existing connection"
+      ]
+    }
+  ]
+}
