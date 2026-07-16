@@ -511,6 +511,15 @@ function planPathMatchesOperation(plan: Omit<StoredCampaignPlan, "planId">): boo
     : plan.operation === "update-campaign" && /^\d+$/.test(plan.path);
 }
 
+function isAmbiguousMutationOutcome(error: unknown): boolean {
+  if (!(error instanceof MetaAdsCliError)) return false;
+  return new Set([
+    "INTEGRATION_PROXY_TIMEOUT",
+    "INTEGRATION_PROXY_UPSTREAM_ERROR",
+    "INTEGRATION_PROXY_RESPONSE_TOO_LARGE",
+  ]).has(error.code);
+}
+
 async function validateAndStorePlan(input: {
   runCommand: CommandRunner;
   timeoutMs: number;
@@ -647,6 +656,13 @@ async function applyStoredPlan(input: {
       unsigned.backendPlanId,
     );
   } catch (error) {
+    if (isAmbiguousMutationOutcome(error)) {
+      await unlink(claimedPath).catch(() => {});
+      throw new MetaAdsCliError(
+        "Meta Ads mutation outcome is unknown; inspect the account before creating a new plan",
+        "META_ADS_MUTATION_OUTCOME_UNKNOWN",
+      );
+    }
     try {
       await rename(claimedPath, filePath);
     } catch {

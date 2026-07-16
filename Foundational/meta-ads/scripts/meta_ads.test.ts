@@ -353,6 +353,40 @@ describe("meta ads skill CLI", () => {
     }
   });
 
+  test("does not restore a plan when the mutation outcome is ambiguous", async () => {
+    const planDir = await mkdtemp(join(tmpdir(), "meta-ads-plans-"));
+    try {
+      const planned = await runMetaAdsCli([
+        "campaign-plan-update",
+        "--campaign-id", "987654321",
+        "--status", "PAUSED",
+      ], {
+        ...mockCommands([validationProxyResponse()]), planDir,
+      }) as { plan: { planId: string } };
+      const ambiguous = mockCommands([{
+        exitCode: 1,
+        stderr: {
+          error: {
+            code: "INTEGRATION_PROXY_UPSTREAM_ERROR",
+            message: "Provider response failed",
+          },
+        },
+      }]);
+      await expect(runMetaAdsCli([
+        "campaign-apply", "--plan-id", planned.plan.planId, "--confirm", planned.plan.planId,
+      ], { ...ambiguous, planDir })).rejects.toMatchObject({
+        code: "META_ADS_MUTATION_OUTCOME_UNKNOWN",
+      });
+      await expect(runMetaAdsCli([
+        "campaign-apply", "--plan-id", planned.plan.planId, "--confirm", planned.plan.planId,
+      ], { ...mockCommands([]), planDir })).rejects.toMatchObject({
+        code: "META_ADS_PLAN_NOT_FOUND",
+      });
+    } finally {
+      await rm(planDir, { recursive: true, force: true });
+    }
+  });
+
   test("requires the exact plan id as apply confirmation", async () => {
     await expect(runMetaAdsCli([
       "campaign-apply",
