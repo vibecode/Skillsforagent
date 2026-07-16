@@ -545,7 +545,20 @@ async function validateAndStorePlan(input: {
       "META_ADS_PLAN_NOT_ISSUED",
     );
   }
-  const { chorusMutationPlanId: _internalPlanId, ...validation } = validationRecord;
+  const approvalUrl = typeof validationRecord.chorusApprovalUrl === "string"
+    ? validationRecord.chorusApprovalUrl
+    : null;
+  if (!approvalUrl || !/^https?:\/\//.test(approvalUrl)) {
+    throw new MetaAdsCliError(
+      "Chorus did not issue a Meta Ads human approval link",
+      "META_ADS_APPROVAL_NOT_ISSUED",
+    );
+  }
+  const {
+    chorusMutationPlanId: _internalPlanId,
+    chorusApprovalUrl: _internalApprovalUrl,
+    ...validation
+  } = validationRecord;
   const unsigned: Omit<StoredCampaignPlan, "planId"> = {
     version: 1,
     provider: "meta-ads",
@@ -581,6 +594,8 @@ async function validateAndStorePlan(input: {
     validation,
     plan: publicPlan,
     approvalRequired: true,
+    approvalUrl,
+    approvalInstruction: "Show this Chorus link so the user can approve the exact changes in the authenticated Chorus approval card",
     approvalPhrase: `Approve Meta Ads plan ${plan.planId}`,
     applyCommand: `bun \"$META_ADS_CLI\" campaign-apply --plan-id ${plan.planId} --confirm ${plan.planId}`,
   };

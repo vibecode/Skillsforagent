@@ -131,12 +131,14 @@ budget affects an external system and may spend money:
 1. Create a plan. The CLI sends Meta `execution_options=["validate_only"]`, so
    Meta validates the exact payload without changing the account. The CLI then
    stores an immutable plan for 30 minutes and prints its fields, plan ID, and
-   approval phrase. Chorus also records a durable, request-bound one-time plan
-   in the backend; its internal ID is not printed.
-2. Show the complete plan to the user and wait for explicit approval. Do not
-   treat an earlier general request to "manage my ads" as approval of a newly
-   generated plan.
-3. Only after the user approves that exact plan ID, apply it with the matching
+   Chorus approval URL. Chorus also records a durable, request-bound plan in
+   the backend; its internal ID is not printed.
+2. Show the complete plan and approval URL to the user. Chorus renders that
+   link as an authenticated approval card in the conversation. Stop and wait
+   for the user to click **Approve exact changes** there. A chat reply alone
+   does not approve the backend plan, and an earlier general request to
+   "manage my ads" is never approval of a newly generated plan.
+3. Only after the approval page confirms the exact plan, apply it with matching
    `--plan-id` and `--confirm` values. Applying consumes the plan so it cannot
    be replayed. The backend independently rejects raw campaign POSTs without
    the matching validated one-time plan, so direct `masterclaw integrations

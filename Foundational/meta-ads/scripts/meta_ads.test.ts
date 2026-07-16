@@ -42,7 +42,11 @@ function proxyResponse(body: unknown, options: { ok?: boolean; status?: number; 
 }
 
 function validationProxyResponse(body: Record<string, unknown> = { success: true }) {
-  return proxyResponse({ ...body, chorusMutationPlanId: BACKEND_PLAN_ID });
+  return proxyResponse({
+    ...body,
+    chorusMutationPlanId: BACKEND_PLAN_ID,
+    chorusApprovalUrl: `https://chorus.com/a/${BACKEND_PLAN_ID}`,
+  });
 }
 
 function queryMap(argv: string[]): Record<string, string> {
@@ -199,11 +203,12 @@ describe("meta ads skill CLI", () => {
         ...validateCommands,
         planDir,
         now: () => new Date("2026-07-16T12:00:00.000Z"),
-      }) as { plan: { planId: string }; approvalPhrase: string };
+      }) as { plan: { planId: string }; approvalPhrase: string; approvalUrl: string };
 
       expect(planned.plan.planId).toMatch(/^[a-f0-9]{24}$/);
       expect(planned.plan).not.toHaveProperty("backendPlanId");
       expect(planned.approvalPhrase).toBe(`Approve Meta Ads plan ${planned.plan.planId}`);
+      expect(planned.approvalUrl).toBe(`https://chorus.com/a/${BACKEND_PLAN_ID}`);
       const validationArgv = validateCommands.calls[0]?.argv ?? [];
       expect(validationArgv).toContain("POST");
       expect(validationArgv).toContain("act_123456789/campaigns");
