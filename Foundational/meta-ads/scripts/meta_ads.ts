@@ -2,7 +2,7 @@
 
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
-import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -494,6 +494,22 @@ function planPath(planDir: string, planId: string): string {
   return join(planDir, `${planId}.json`);
 }
 
+function claimedPlanPath(planDir: string, planId: string): string {
+  return join(planDir, `${planId}.applying.json`);
+}
+
+function nodeErrorCode(error: unknown): string | undefined {
+  return error && typeof error === "object" && "code" in error
+    ? String((error as { code?: unknown }).code ?? "")
+    : undefined;
+}
+
+function planPathMatchesOperation(plan: Omit<StoredCampaignPlan, "planId">): boolean {
+  return plan.operation === "create-campaign"
+    ? /^act_\d+\/campaigns$/.test(plan.path)
+    : plan.operation === "update-campaign" && /^\d+$/.test(plan.path);
+}
+
 async function validateAndStorePlan(input: {
   runCommand: CommandRunner;
   timeoutMs: number;
@@ -520,10 +536,23 @@ async function validateAndStorePlan(input: {
   };
   const plan: StoredCampaignPlan = { ...unsigned, planId: planHash(unsigned) };
   await mkdir(input.planDir, { recursive: true, mode: 0o700 });
-  await writeFile(planPath(input.planDir, plan.planId), `${JSON.stringify(plan, null, 2)}\n`, {
-    flag: "wx",
-    mode: 0o600,
-  });
+  const serializedPlan = `${JSON.stringify(plan, null, 2)}\n`;
+  const filePath = planPath(input.planDir, plan.planId);
+  try {
+    await writeFile(filePath, serializedPlan, { flag: "wx", mode: 0o600 });
+  } catch (error) {
+    if (nodeErrorCode(error) === "EEXIST") {
+      const existing = await readFile(filePath, "utf8").catch(() => "");
+      if (existing !== serializedPlan) {
+        throw new MetaAdsCliError(
+          "A different Meta Ads plan already uses this plan ID; create a new plan",
+          "META_ADS_PLAN_COLLISION",
+        );
+      }
+    } else {
+      throw new MetaAdsCliError("Meta Ads plan could not be stored", "META_ADS_PLAN_STORE_FAILED");
+    }
+  }
   return {
     validated: true,
     validation,
@@ -544,9 +573,20 @@ async function applyStoredPlan(input: {
 }): Promise<Record<string, unknown>> {
   if (input.confirmation !== input.planId) usage("--confirm must exactly match --plan-id");
   const filePath = planPath(input.planDir, input.planId);
+  const claimedPath = claimedPlanPath(input.planDir, input.planId);
+  try {
+    // Atomic rename is the one-time execution barrier. Once claimed, another
+    // process cannot read the normal plan path and replay the same approval.
+    await rename(filePath, claimedPath);
+  } catch {
+    throw new MetaAdsCliError(
+      "Meta Ads plan was not found or is already being applied",
+      "META_ADS_PLAN_NOT_FOUND",
+    );
+  }
   let parsed: unknown;
   try {
-    parsed = JSON.parse(await readFile(filePath, "utf8"));
+    parsed = JSON.parse(await readFile(claimedPath, "utf8"));
   } catch (error) {
     throw new MetaAdsCliError(
       error instanceof SyntaxError ? "Meta Ads plan is invalid" : "Meta Ads plan was not found",
@@ -568,6 +608,7 @@ async function applyStoredPlan(input: {
     unsigned.version !== 1
     || unsigned.provider !== "meta-ads"
     || !new Set(["create-campaign", "update-campaign"]).has(unsigned.operation)
+    || !planPathMatchesOperation(unsigned)
     || planHash(unsigned) !== input.planId
     || record.planId !== input.planId
   ) {
@@ -575,15 +616,32 @@ async function applyStoredPlan(input: {
   }
   const expiresAt = new Date(unsigned.expiresAt);
   if (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() < input.now.getTime()) {
+    await unlink(claimedPath).catch(() => {});
     throw new MetaAdsCliError("Meta Ads plan expired; create and approve a new plan", "META_ADS_PLAN_EXPIRED");
   }
-  const response = await requestMetaAdsMutation(
-    input.runCommand,
-    input.timeoutMs,
-    unsigned.path,
-    body,
-  );
-  await unlink(filePath);
+  let response: unknown;
+  try {
+    response = await requestMetaAdsMutation(
+      input.runCommand,
+      input.timeoutMs,
+      unsigned.path,
+      body,
+    );
+  } catch (error) {
+    try {
+      await rename(claimedPath, filePath);
+    } catch {
+      throw new MetaAdsCliError(
+        "Meta Ads request failed and the plan could not be restored; create a new plan",
+        "META_ADS_PLAN_RECOVERY_FAILED",
+      );
+    }
+    throw error;
+  }
+  // Cleanup is best-effort after a confirmed upstream success. The claimed
+  // filename is never accepted by campaign-apply, so cleanup failure cannot
+  // make the approved mutation replayable.
+  await unlink(claimedPath).catch(() => {});
   return {
     applied: true,
     planId: input.planId,
@@ -749,43 +807,57 @@ function parseJson(value: string): unknown | null {
 }
 
 function extractEmbeddedJson(text: string): unknown | null {
-  for (let start = 0; start < text.length; start += 1) {
-    const opening = text[start];
-    if (opening !== "{" && opening !== "[") continue;
-
-    const stack: string[] = [];
-    let inString = false;
-    let escaped = false;
-    for (let index = start; index < text.length; index += 1) {
-      const character = text[index];
-      if (inString) {
-        if (escaped) {
-          escaped = false;
-        } else if (character === "\\") {
-          escaped = true;
-        } else if (character === '"') {
-          inString = false;
-        }
+  let start = -1;
+  let stack: string[] = [];
+  let inString = false;
+  let escaped = false;
+  let lineHasNonWhitespace = false;
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index]!;
+    if (start < 0) {
+      if (character === "\n") {
+        lineHasNonWhitespace = false;
         continue;
       }
-      if (character === '"') {
-        inString = true;
+      if (!lineHasNonWhitespace && (character === " " || character === "\t")) continue;
+      if (!lineHasNonWhitespace && (character === "{" || character === "[")) {
+        start = index;
+        stack = [character];
+        lineHasNonWhitespace = true;
         continue;
       }
-      if (character === "{" || character === "[") {
-        stack.push(character);
-        continue;
-      }
-      if (character !== "}" && character !== "]") continue;
-      const expectedOpening = character === "}" ? "{" : "[";
-      if (stack.pop() !== expectedOpening) break;
-      if (stack.length > 0) continue;
-
-      try {
-        return JSON.parse(text.slice(start, index + 1)) as unknown;
-      } catch {
-        break;
-      }
+      lineHasNonWhitespace = true;
+      continue;
+    }
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (character === "\\") escaped = true;
+      else if (character === '"') inString = false;
+      continue;
+    }
+    if (character === '"') {
+      inString = true;
+      continue;
+    }
+    if (character === "{" || character === "[") {
+      stack.push(character);
+      continue;
+    }
+    if (character !== "}" && character !== "]") continue;
+    const expectedOpening = character === "}" ? "{" : "[";
+    if (stack.pop() !== expectedOpening) {
+      start = -1;
+      stack = [];
+      continue;
+    }
+    if (stack.length > 0) continue;
+    try {
+      return JSON.parse(text.slice(start, index + 1)) as unknown;
+    } catch {
+      start = -1;
+      stack = [];
+      inString = false;
+      escaped = false;
     }
   }
   return null;

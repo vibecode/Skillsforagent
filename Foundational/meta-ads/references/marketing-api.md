@@ -57,9 +57,10 @@ embedded by upstream responses cannot enter model context.
 
 - Meta creates campaigns with `POST /act_{ad_account_id}/campaigns` and updates
   them with `POST /{campaign_id}`.
-- `special_ad_categories` is required when creating a campaign. An empty array
-  or `NONE` means no special category; it must not be mixed with another
-  category.
+- `special_ad_categories` is required when creating a campaign. Although Meta
+  accepts an empty array for no special category, Chorus requires the explicit
+  `NONE` value so the classification cannot be omitted accidentally. It must
+  not be mixed with another category.
 - The CLI forces every newly created campaign to `PAUSED`. Activation is a
   separate update because it can begin spending.
 - Meta's `execution_options=["validate_only"]` validates a mutation without

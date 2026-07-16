@@ -259,6 +259,93 @@ describe("meta ads skill CLI", () => {
     }
   });
 
+  test("reuses an identical plan when the deterministic plan file already exists", async () => {
+    const planDir = await mkdtemp(join(tmpdir(), "meta-ads-plans-"));
+    const argv = [
+      "campaign-plan-create",
+      "--account-id", "123456789",
+      "--name", "Collision-safe plan",
+      "--objective", "OUTCOME_TRAFFIC",
+      "--special-ad-categories", "NONE",
+    ];
+    const now = () => new Date("2026-07-16T12:00:00.000Z");
+    try {
+      const first = await runMetaAdsCli(argv, {
+        ...mockCommands([proxyResponse({ success: true })]), planDir, now,
+      }) as { plan: { planId: string } };
+      const second = await runMetaAdsCli(argv, {
+        ...mockCommands([proxyResponse({ success: true })]), planDir, now,
+      }) as { plan: { planId: string } };
+      expect(second.plan.planId).toBe(first.plan.planId);
+    } finally {
+      await rm(planDir, { recursive: true, force: true });
+    }
+  });
+
+  test("atomically claims a plan so concurrent apply cannot replay it", async () => {
+    const planDir = await mkdtemp(join(tmpdir(), "meta-ads-plans-"));
+    try {
+      const planned = await runMetaAdsCli([
+        "campaign-plan-update",
+        "--campaign-id", "987654321",
+        "--status", "PAUSED",
+      ], {
+        ...mockCommands([proxyResponse({ success: true })]), planDir,
+      }) as { plan: { planId: string } };
+      let releaseMutation!: () => void;
+      let signalStarted!: () => void;
+      const mutationStarted = new Promise<void>((resolve) => { signalStarted = resolve; });
+      const mutationReleased = new Promise<void>((resolve) => { releaseMutation = resolve; });
+      const firstApply = runMetaAdsCli([
+        "campaign-apply", "--plan-id", planned.plan.planId, "--confirm", planned.plan.planId,
+      ], {
+        planDir,
+        runCommand: async () => {
+          signalStarted();
+          await mutationReleased;
+          return { exitCode: 0, stdout: serialize(proxyResponse({ success: true }).stdout), stderr: "" };
+        },
+      });
+      await mutationStarted;
+      await expect(runMetaAdsCli([
+        "campaign-apply", "--plan-id", planned.plan.planId, "--confirm", planned.plan.planId,
+      ], { ...mockCommands([]), planDir })).rejects.toMatchObject({
+        code: "META_ADS_PLAN_NOT_FOUND",
+      });
+      releaseMutation();
+      await expect(firstApply).resolves.toMatchObject({ applied: true });
+    } finally {
+      await rm(planDir, { recursive: true, force: true });
+    }
+  });
+
+  test("restores a claimed plan when Meta rejects the mutation", async () => {
+    const planDir = await mkdtemp(join(tmpdir(), "meta-ads-plans-"));
+    try {
+      const planned = await runMetaAdsCli([
+        "campaign-plan-update",
+        "--campaign-id", "987654321",
+        "--status", "PAUSED",
+      ], {
+        ...mockCommands([proxyResponse({ success: true })]), planDir,
+      }) as { plan: { planId: string } };
+      const failed = mockCommands([proxyResponse(
+        { error: { message: "Temporary Meta failure", code: 2 } },
+        { ok: false, status: 500 },
+      )]);
+      await expect(runMetaAdsCli([
+        "campaign-apply", "--plan-id", planned.plan.planId, "--confirm", planned.plan.planId,
+      ], { ...failed, planDir })).rejects.toMatchObject({ message: "Temporary Meta failure" });
+
+      const retry = mockCommands([proxyResponse({ success: true })]);
+      await expect(runMetaAdsCli([
+        "campaign-apply", "--plan-id", planned.plan.planId, "--confirm", planned.plan.planId,
+      ], { ...retry, planDir })).resolves.toMatchObject({ applied: true });
+    } finally {
+      await rm(planDir, { recursive: true, force: true });
+    }
+  });
+
   test("requires the exact plan id as apply confirmation", async () => {
     await expect(runMetaAdsCli([
       "campaign-apply",
