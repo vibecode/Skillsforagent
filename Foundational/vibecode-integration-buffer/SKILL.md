@@ -6,9 +6,10 @@ integration_dependencies:
   - buffer
 description: >
   Buffer social media scheduling API for reading account/channel info and
-  drafting, queuing, or scheduling posts.
+  creating, editing, deleting, queuing, or scheduling posts.
   Consult this skill:
-  1. When the user asks to schedule, queue, draft, or publish a social media post
+  1. When the user asks to schedule, queue, draft, publish, edit, or delete a
+     social media post
   2. When the user asks which social channels are connected to their Buffer account
   3. When the user wants to see their Buffer queue or previously sent posts
   4. When the user mentions Buffer, social scheduling, or posting to Twitter/X,
@@ -106,6 +107,46 @@ curl -s -X POST https://api.buffer.com \
 
 If the API returns an error that `assets` is required, add `assets:[]` to the
 input for a text-only post (`assets` is a non-null list in the schema).
+
+## Edit a post
+
+`editPost` requires `id`, `schedulingType`, and `mode` (same enums as
+`createPost`) — re-send them alongside the fields you're changing. Same
+`PostActionSuccess` / `MutationError` payload. Confirm the change with the user
+first.
+
+```bash
+curl -s -X POST https://api.buffer.com \
+  -H "Authorization: Bearer $BUFFER_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query":"mutation { editPost(input:{ id:\"POST_ID\", text:\"Updated text\", schedulingType:automatic, mode:addToQueue }) { ... on PostActionSuccess { post { id text dueAt } } ... on MutationError { message } } }"}'
+```
+
+## Delete a post
+
+`deletePost` takes only the post `id`. Its payload is a different union
+(`DeletePostPayload`), so select `__typename` plus the success branch and check
+the top-level `errors` array for failures. This is destructive — confirm with
+the user first.
+
+```bash
+curl -s -X POST https://api.buffer.com \
+  -H "Authorization: Bearer $BUFFER_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"query":"mutation { deletePost(input:{ id:\"POST_ID\" }) { __typename ... on DeletePostSuccess { id } } }"}'
+```
+
+## Beyond posts
+
+Buffer exposes more operations, not detailed here — introspect the schema or see
+the [docs](https://developers.buffer.com/reference.html) for exact input shapes
+before using them:
+
+- `movePostInQueue` — reorder a queued post (`id` + `position: QueuePosition!`; experimental)
+- `post` / `channel` — fetch a single post or channel by id
+- `aggregatedPostMetrics`, `dailyPostingLimits` — analytics
+- **Ideas** library — `ideas`, `ideaGroups`, `createIdea`
+- **Post templates** — `postTemplates`, `createPostTemplate`, `updatePostTemplate`, `deletePostTemplate`
 
 ## Notes
 
