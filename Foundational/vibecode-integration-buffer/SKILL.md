@@ -102,7 +102,7 @@ curl -s -X POST https://api.buffer.com \
 curl -s -X POST https://api.buffer.com \
   -H "Authorization: Bearer $BUFFER_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"query":"mutation { createPost(input:{ text:\"Scheduled via API\", channelId:\"CHANNEL_ID\", schedulingType:automatic, mode:customScheduled, dueAt:\"2026-03-10T15:00:00.000Z\" }) { ... on PostActionSuccess { post { id text status dueAt } } ... on MutationError { message } } }"}'
+  -d '{"query":"mutation { createPost(input:{ text:\"Scheduled via API\", channelId:\"CHANNEL_ID\", schedulingType:automatic, mode:customScheduled, dueAt:\"2027-09-01T15:00:00.000Z\" }) { ... on PostActionSuccess { post { id text status dueAt } } ... on MutationError { message } } }"}'
 ```
 
 If the API returns an error that `assets` is required, add `assets:[]` to the
