@@ -42,7 +42,11 @@ function proxyResponse(body: unknown, options: { ok?: boolean; status?: number; 
 }
 
 function validationProxyResponse(body: Record<string, unknown> = { success: true }) {
-  return proxyResponse({ ...body, chorusMutationPlanId: BACKEND_PLAN_ID });
+  return proxyResponse({
+    ...body,
+    chorusMutationPlanId: BACKEND_PLAN_ID,
+    chorusApprovalUrl: `https://chorus.com/a/${BACKEND_PLAN_ID}`,
+  });
 }
 
 function queryMap(argv: string[]): Record<string, string> {
@@ -199,11 +203,12 @@ describe("meta ads skill CLI", () => {
         ...validateCommands,
         planDir,
         now: () => new Date("2026-07-16T12:00:00.000Z"),
-      }) as { plan: { planId: string }; approvalPhrase: string };
+      }) as { plan: { planId: string }; approvalPhrase: string; approvalUrl: string };
 
       expect(planned.plan.planId).toMatch(/^[a-f0-9]{24}$/);
       expect(planned.plan).not.toHaveProperty("backendPlanId");
       expect(planned.approvalPhrase).toBe(`Approve Meta Ads plan ${planned.plan.planId}`);
+      expect(planned.approvalUrl).toBe(`https://chorus.com/a/${BACKEND_PLAN_ID}`);
       const validationArgv = validateCommands.calls[0]?.argv ?? [];
       expect(validationArgv).toContain("POST");
       expect(validationArgv).toContain("act_123456789/campaigns");
@@ -261,6 +266,29 @@ describe("meta ads skill CLI", () => {
         daily_budget: "7500",
         execution_options: ["validate_only"],
       });
+    } finally {
+      await rm(planDir, { recursive: true, force: true });
+    }
+  });
+
+  test("rejects missing or insecure approval links before storing a plan", async () => {
+    const planDir = await mkdtemp(join(tmpdir(), "meta-ads-plans-"));
+    const argv = [
+      "campaign-plan-update",
+      "--campaign-id", "987654321",
+      "--status", "PAUSED",
+    ];
+    try {
+      const missing = proxyResponse({ chorusMutationPlanId: BACKEND_PLAN_ID });
+      await expect(runMetaAdsCli(argv, { ...mockCommands([missing]), planDir }))
+        .rejects.toMatchObject({ code: "META_ADS_APPROVAL_NOT_ISSUED" });
+
+      const insecure = proxyResponse({
+        chorusMutationPlanId: BACKEND_PLAN_ID,
+        chorusApprovalUrl: `http://chorus.example/a/${BACKEND_PLAN_ID}`,
+      });
+      await expect(runMetaAdsCli(argv, { ...mockCommands([insecure]), planDir }))
+        .rejects.toMatchObject({ code: "META_ADS_APPROVAL_NOT_ISSUED" });
     } finally {
       await rm(planDir, { recursive: true, force: true });
     }
