@@ -6,6 +6,7 @@ import { runMetaAdsCli } from "./meta_ads";
 
 type CapturedCommand = { argv: string[]; timeoutMs: number };
 type MockResponse = { exitCode?: number; stdout?: unknown; stderr?: unknown };
+const BACKEND_PLAN_ID = "123e4567-e89b-42d3-a456-426614174000";
 
 function mockCommands(responses: MockResponse[]) {
   const calls: CapturedCommand[] = [];
@@ -38,6 +39,10 @@ function proxyResponse(body: unknown, options: { ok?: boolean; status?: number; 
       requestId: options.requestId ?? "proxy-request-1",
     },
   };
+}
+
+function validationProxyResponse(body: Record<string, unknown> = { success: true }) {
+  return proxyResponse({ ...body, chorusMutationPlanId: BACKEND_PLAN_ID });
 }
 
 function queryMap(argv: string[]): Record<string, string> {
@@ -182,7 +187,7 @@ describe("meta ads skill CLI", () => {
   test("validates, stores, and applies an immutable paused campaign plan", async () => {
     const planDir = await mkdtemp(join(tmpdir(), "meta-ads-plans-"));
     try {
-      const validateCommands = mockCommands([proxyResponse({ success: true })]);
+      const validateCommands = mockCommands([validationProxyResponse()]);
       const planned = await runMetaAdsCli([
         "campaign-plan-create",
         "--account-id", "123456789",
@@ -197,6 +202,7 @@ describe("meta ads skill CLI", () => {
       }) as { plan: { planId: string }; approvalPhrase: string };
 
       expect(planned.plan.planId).toMatch(/^[a-f0-9]{24}$/);
+      expect(planned.plan).not.toHaveProperty("backendPlanId");
       expect(planned.approvalPhrase).toBe(`Approve Meta Ads plan ${planned.plan.planId}`);
       const validationArgv = validateCommands.calls[0]?.argv ?? [];
       expect(validationArgv).toContain("POST");
@@ -225,6 +231,7 @@ describe("meta ads skill CLI", () => {
         response: { id: "987654321" },
       });
       expect(requestBody(applyCommands.calls[0]?.argv ?? [])).not.toHaveProperty("execution_options");
+      expect(applyCommands.calls[0]?.argv).toContain(`x-chorus-mutation-plan-id:${BACKEND_PLAN_ID}`);
 
       await expect(runMetaAdsCli([
         "campaign-apply",
@@ -241,7 +248,7 @@ describe("meta ads skill CLI", () => {
   test("plans activation and budget changes without mutating during validation", async () => {
     const planDir = await mkdtemp(join(tmpdir(), "meta-ads-plans-"));
     try {
-      const commands = mockCommands([proxyResponse({ success: true })]);
+      const commands = mockCommands([validationProxyResponse()]);
       await runMetaAdsCli([
         "campaign-plan-update",
         "--campaign-id", "987654321",
@@ -271,10 +278,10 @@ describe("meta ads skill CLI", () => {
     const now = () => new Date("2026-07-16T12:00:00.000Z");
     try {
       const first = await runMetaAdsCli(argv, {
-        ...mockCommands([proxyResponse({ success: true })]), planDir, now,
+        ...mockCommands([validationProxyResponse()]), planDir, now,
       }) as { plan: { planId: string } };
       const second = await runMetaAdsCli(argv, {
-        ...mockCommands([proxyResponse({ success: true })]), planDir, now,
+        ...mockCommands([validationProxyResponse()]), planDir, now,
       }) as { plan: { planId: string } };
       expect(second.plan.planId).toBe(first.plan.planId);
     } finally {
@@ -290,7 +297,7 @@ describe("meta ads skill CLI", () => {
         "--campaign-id", "987654321",
         "--status", "PAUSED",
       ], {
-        ...mockCommands([proxyResponse({ success: true })]), planDir,
+        ...mockCommands([validationProxyResponse()]), planDir,
       }) as { plan: { planId: string } };
       let releaseMutation!: () => void;
       let signalStarted!: () => void;
@@ -327,7 +334,7 @@ describe("meta ads skill CLI", () => {
         "--campaign-id", "987654321",
         "--status", "PAUSED",
       ], {
-        ...mockCommands([proxyResponse({ success: true })]), planDir,
+        ...mockCommands([validationProxyResponse()]), planDir,
       }) as { plan: { planId: string } };
       const failed = mockCommands([proxyResponse(
         { error: { message: "Temporary Meta failure", code: 2 } },

@@ -63,6 +63,7 @@ type StoredCampaignPlan = {
   operation: "create-campaign" | "update-campaign";
   path: string;
   body: CampaignMutationBody;
+  backendPlanId: string;
   createdAt: string;
   expiresAt: string;
   planId: string;
@@ -519,18 +520,30 @@ async function validateAndStorePlan(input: {
   path: string;
   body: CampaignMutationBody;
 }): Promise<Record<string, unknown>> {
-  const validation = await requestMetaAdsMutation(
+  const validationResponse = await requestMetaAdsMutation(
     input.runCommand,
     input.timeoutMs,
     input.path,
     { ...input.body, execution_options: ["validate_only"] },
   );
+  const validationRecord = asRecord(validationResponse);
+  const backendPlanId = typeof validationRecord.chorusMutationPlanId === "string"
+    ? validationRecord.chorusMutationPlanId
+    : null;
+  if (!backendPlanId) {
+    throw new MetaAdsCliError(
+      "Chorus did not issue a one-time Meta Ads mutation plan",
+      "META_ADS_PLAN_NOT_ISSUED",
+    );
+  }
+  const { chorusMutationPlanId: _internalPlanId, ...validation } = validationRecord;
   const unsigned: Omit<StoredCampaignPlan, "planId"> = {
     version: 1,
     provider: "meta-ads",
     operation: input.operation,
     path: input.path,
     body: input.body,
+    backendPlanId,
     createdAt: input.now.toISOString(),
     expiresAt: new Date(input.now.getTime() + PLAN_TTL_MS).toISOString(),
   };
@@ -553,10 +566,11 @@ async function validateAndStorePlan(input: {
       throw new MetaAdsCliError("Meta Ads plan could not be stored", "META_ADS_PLAN_STORE_FAILED");
     }
   }
+  const { backendPlanId: _hiddenBackendPlanId, ...publicPlan } = plan;
   return {
     validated: true,
     validation,
-    plan,
+    plan: publicPlan,
     approvalRequired: true,
     approvalPhrase: `Approve Meta Ads plan ${plan.planId}`,
     applyCommand: `bun \"$META_ADS_CLI\" campaign-apply --plan-id ${plan.planId} --confirm ${plan.planId}`,
@@ -588,6 +602,7 @@ async function applyStoredPlan(input: {
   try {
     parsed = JSON.parse(await readFile(claimedPath, "utf8"));
   } catch (error) {
+    await unlink(claimedPath).catch(() => {});
     throw new MetaAdsCliError(
       error instanceof SyntaxError ? "Meta Ads plan is invalid" : "Meta Ads plan was not found",
       error instanceof SyntaxError ? "META_ADS_PLAN_INVALID" : "META_ADS_PLAN_NOT_FOUND",
@@ -601,6 +616,7 @@ async function applyStoredPlan(input: {
     operation: record.operation as StoredCampaignPlan["operation"],
     path: String(record.path ?? ""),
     body,
+    backendPlanId: String(record.backendPlanId ?? ""),
     createdAt: String(record.createdAt ?? ""),
     expiresAt: String(record.expiresAt ?? ""),
   };
@@ -609,9 +625,11 @@ async function applyStoredPlan(input: {
     || unsigned.provider !== "meta-ads"
     || !new Set(["create-campaign", "update-campaign"]).has(unsigned.operation)
     || !planPathMatchesOperation(unsigned)
+    || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(unsigned.backendPlanId)
     || planHash(unsigned) !== input.planId
     || record.planId !== input.planId
   ) {
+    await unlink(claimedPath).catch(() => {});
     throw new MetaAdsCliError("Meta Ads plan integrity check failed", "META_ADS_PLAN_INVALID");
   }
   const expiresAt = new Date(unsigned.expiresAt);
@@ -626,6 +644,7 @@ async function applyStoredPlan(input: {
       input.timeoutMs,
       unsigned.path,
       body,
+      unsigned.backendPlanId,
     );
   } catch (error) {
     try {
@@ -655,6 +674,7 @@ async function requestMetaAdsMutation(
   timeoutMs: number,
   path: string,
   body: CampaignMutationBody & { execution_options?: string[] },
+  mutationPlanId?: string,
 ): Promise<unknown> {
   const argv = [
     "masterclaw", "integrations", "request",
@@ -663,6 +683,9 @@ async function requestMetaAdsMutation(
     "--path", path,
     "--body", JSON.stringify(body),
   ];
+  if (mutationPlanId) {
+    argv.push("--header", `x-chorus-mutation-plan-id:${mutationPlanId}`);
+  }
   const response = parseIntegrationResponse(await runMasterclawJson(runCommand, timeoutMs, argv));
   if (!response.ok) {
     throw metaResponseError(response.status, response.body, response.requestId ?? undefined);
