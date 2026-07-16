@@ -3,17 +3,21 @@ name: google-ads
 display_name: Google Ads
 description: >
   Operate connected Google Ads accounts through the installed read-only CLI.
-  Consult this skill: 1. When the user asks about Google Ads, Ads Manager,
-  campaigns, ad groups, keywords, search terms, spend, conversions, ROAS, CPA,
-  CTR, or performance reporting. 2. When the user needs direct or manager
-  account discovery or a bounded GAQL report. 3. When a Google Ads connection
-  is missing or needs verification. 4. When the user asks to create or mutate
-  Google Ads resources, so the current read-only boundary must be explained.
-  The workflow never exposes credentials.
+  Consult this skill:
+  1. When the user asks about Google Ads, Ads Manager, campaigns, ad groups,
+     keywords, search terms, or account hierarchy
+  2. When the user wants spend, conversions, ROAS, CPA, CTR, or performance
+     reporting and optimization
+  3. When Google Ads authorization is missing and the user needs the managed
+     Chorus connection flow
+  4. When a request could mutate Google Ads and the read-only safety boundary
+     must be enforced
+  It discovers direct and manager accounts and runs bounded GAQL reports
+  without exposing credentials.
 provider_skill: true
 integration_dependencies:
   - google-ads
-metadata: {"openclaw": {"emoji": "📈"}}
+metadata: {"openclaw": {"emoji": "📈", "requires": {"bins": ["bun", "masterclaw"]}}}
 ---
 
 # Google Ads

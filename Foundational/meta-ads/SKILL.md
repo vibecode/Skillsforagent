@@ -3,18 +3,20 @@ name: meta-ads
 display_name: Meta Ads
 description: >
   Inspect connected Meta Ads accounts through the installed read-only CLI.
-  Consult this skill: 1. When the user asks about Meta Ads, Facebook Ads,
-  Instagram Ads, Ads Manager, campaigns, ad sets, ads, spend, impressions,
-  clicks, CTR, CPC, CPM, conversions, CPA, ROAS, or performance. 2. When the
-  user needs ad-account or Business Portfolio discovery. 3. When a Meta Ads
-  connection or permission needs verification or in-place reconnection. 4.
-  When the user asks to create or mutate Meta Ads resources, so the current
-  read-only boundary must be explained. The workflow never exposes OAuth
-  credentials.
+  Consult this skill:
+  1. When the user asks about Meta Ads, Facebook Ads, Instagram Ads, Ads
+     Manager, ad accounts, campaigns, ad sets, or ads
+  2. When the user wants spend, impressions, reach, clicks, CTR, CPC, CPM,
+     conversions, CPA, ROAS, or marketing performance
+  3. When the user needs direct account or Business Portfolio discovery through
+     the managed Chorus connection
+  4. When a request could mutate Meta Ads and the read-only safety boundary must
+     be enforced
+  It runs bounded Marketing API reports without exposing OAuth credentials.
 provider_skill: true
 integration_dependencies:
   - meta-ads
-metadata: {"openclaw": {"emoji": "📊"}}
+metadata: {"openclaw": {"emoji": "📊", "requires": {"bins": ["bun", "masterclaw"]}}}
 ---
 
 # Meta Ads
