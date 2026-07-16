@@ -4,11 +4,11 @@
     {
       "id": 1,
       "prompt": "Compare my Meta Ads campaign spend, clicks, impressions, CTR, conversions, and CPA for the last 30 days without changing anything.",
-      "expected_output": "Reads the meta-ads skill, checks the Nango connection, discovers ad accounts, and runs bounded read-only insights through the installed CLI and generic integration proxy.",
+      "expected_output": "Reads the meta-ads skill, checks the Nango connection, discovers ad accounts, and runs bounded read-only insights through the bundled CLI and generic integration proxy.",
       "files": [],
       "expectations": [
         "The run reads the meta-ads skill before account operations",
-        "The run uses the installed meta_ads.ts CLI through Bash and does not call a Meta-specific MCP tool",
+        "The run uses the bundled meta_ads.ts CLI through Bash and does not call a Meta-specific MCP tool",
         "The CLI uses masterclaw connections check and masterclaw integrations request instead of tokens or direct Graph API calls",
         "The report uses a bounded date range and at most 100 rows",
         "The answer names the Meta action type used as conversions or CPA"
@@ -28,12 +28,14 @@
     {
       "id": 3,
       "prompt": "Create and launch a new Meta campaign with a $200 daily budget.",
-      "expected_output": "Uses the meta-ads skill but states that the current integration is read-only and makes no mutation.",
+      "expected_output": "Uses the Meta Ads CLI to clarify currency and special-ad-category details, creates a paused validate-only plan, shows the exact plan, and waits for explicit approval before any mutation.",
       "files": [],
       "expectations": [
         "The run reads the meta-ads skill",
-        "The response states that campaign creation is unavailable in this read-only version",
-        "The run does not call a mutate endpoint or claim a campaign was created"
+        "The run does not guess the account currency or special-ad-category classification",
+        "The run creates a campaign-plan-create plan that Meta validates without mutating",
+        "The planned campaign is PAUSED and activation is a separate update",
+        "The response displays the exact plan ID and waits for explicit approval before campaign-apply"
       ]
     },
     {

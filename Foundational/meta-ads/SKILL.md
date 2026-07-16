@@ -2,17 +2,15 @@
 name: meta-ads
 display_name: Meta Ads
 description: >
-  Inspect connected Meta Ads accounts through the installed read-only CLI.
-  Consult this skill:
-  1. When the user asks about Meta Ads, Facebook Ads, Instagram Ads, Ads
-     Manager, ad accounts, campaigns, ad sets, or ads
-  2. When the user wants spend, impressions, reach, clicks, CTR, CPC, CPM,
-     conversions, CPA, ROAS, or marketing performance
-  3. When the user needs direct account or Business Portfolio discovery through
-     the managed Chorus connection
-  4. When a request could mutate Meta Ads and the read-only safety boundary must
-     be enforced
-  It runs bounded Marketing API reports without exposing OAuth credentials.
+  Inspect connected Meta Ads accounts and safely create or update campaigns
+  through the installed CLI. Consult this skill whenever the user asks about
+  Meta Ads, Facebook Ads, Instagram
+  Ads, Ads Manager, ad accounts, campaigns, ad sets, ads, spend, impressions,
+  clicks, CTR, CPC, CPM, conversions, CPA, ROAS, or marketing performance—even
+  if they do not explicitly ask for a Meta Ads skill. It discovers ad accounts
+  and runs bounded Marketing API reports without exposing OAuth credentials.
+  It supports approval-gated campaign creation, activation, pausing, renaming,
+  and budget changes while keeping credentials out of the agent runtime.
 provider_skill: true
 integration_dependencies:
   - meta-ads
@@ -53,7 +51,7 @@ Run `status` before the first API call in a task.
   agents may be temporarily unable to use it until the in-place reconnect
   finishes, but their links remain intact.
 
-## Read-only commands
+## Reporting commands
 
 List accessible ad accounts:
 
@@ -125,6 +123,76 @@ Every list is capped at 100 objects per call. If `nextCursor` is non-null,
 repeat the same command with `--after '<nextCursor>'` until it is null or the
 requested analysis has enough evidence.
 
+## Campaign management
+
+Campaign mutations use two phases because creating, activating, or changing a
+budget affects an external system and may spend money:
+
+1. Create a plan. The CLI sends Meta `execution_options=["validate_only"]`, so
+   Meta validates the exact payload without changing the account. The CLI then
+   stores an immutable plan for 30 minutes and prints its fields, plan ID, and
+   approval phrase.
+2. Show the complete plan to the user and wait for explicit approval. Do not
+   treat an earlier general request to "manage my ads" as approval of a newly
+   generated plan.
+3. Only after the user approves that exact plan ID, apply it with the matching
+   `--plan-id` and `--confirm` values. Applying consumes the plan so it cannot
+   be replayed.
+
+Create a campaign plan:
+
+```bash
+bun "$META_ADS_CLI" campaign-plan-create \
+  --account-id act_123456789 \
+  --name 'July product launch' \
+  --objective OUTCOME_TRAFFIC \
+  --special-ad-categories NONE \
+  --daily-budget 20000
+```
+
+Budget values are positive integers in the ad account currency's smallest
+unit. Confirm the account currency and restate the human-readable amount before
+requesting approval. `--daily-budget` and `--lifetime-budget` are mutually
+exclusive. New campaigns are always created `PAUSED`; activation requires a
+separate approved update plan.
+
+The special-ad-category classification is required. Never guess it. Ask the
+user whether the campaign concerns employment, housing, credit, political or
+social issues, online gambling/gaming, or financial products/services. Use
+`NONE` only when the user confirms none apply.
+
+Optional creation flags are `--lifetime-budget`, `--spend-cap`,
+`--bid-strategy`, and `--adset-budget-sharing true|false`. If the objective,
+special category, budget ownership, or bidding choice is unclear, ask before
+planning.
+
+Plan an update to an existing campaign:
+
+```bash
+bun "$META_ADS_CLI" campaign-plan-update \
+  --campaign-id 987654321 \
+  --status ACTIVE \
+  --daily-budget 25000
+```
+
+Supported update fields are `--name`, `--status ACTIVE|PAUSED|ARCHIVED`,
+`--daily-budget`, `--lifetime-budget`, and `--spend-cap`. Read the campaign and
+account currency first so the plan includes the current state and an accurate
+before/after explanation.
+
+After the user explicitly says `Approve Meta Ads plan <planId>` or otherwise
+unambiguously approves that displayed ID, apply it exactly once:
+
+```bash
+bun "$META_ADS_CLI" campaign-apply \
+  --plan-id '<planId>' \
+  --confirm '<planId>'
+```
+
+If the plan expired, validation failed, the user changed any field, or the
+account state changed materially, generate a new plan and request approval
+again. Never apply a different payload under an earlier approval.
+
 ## Reporting semantics
 
 - Meta Business Portfolios can own or receive partner access to ad accounts;
@@ -141,8 +209,12 @@ requested analysis has enough evidence.
 
 ## Safety boundary
 
-- This version is read-only. Do not imply that a campaign, budget, ad set, ad,
-  audience, creative, or status was changed.
+- Reporting is read-only. Campaign creation and updates are available only
+  through the plan/validate/approve/apply workflow above.
+- Never apply a plan without explicit user approval of the exact plan ID.
+- New campaigns must remain paused until a separate activation plan is
+  approved. The current integration does not create ad sets, creatives, ads,
+  audiences, or pixels; do not imply those were created.
 - Do not call Graph API with ad-hoc `curl`. The wrapper uses `masterclaw
   integrations request`; Chorus owns authorization, API versioning, allowlists,
   response bounds, timeouts, and error redaction.

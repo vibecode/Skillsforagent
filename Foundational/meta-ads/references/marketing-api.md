@@ -52,3 +52,20 @@ The backend accepts at most 100 rows per request and reports at most 90 days for
 custom ranges. Follow `nextCursor` only as far as needed for the user's task.
 The CLI intentionally discards Graph API `next` and `previous` URLs so tokens
 embedded by upstream responses cannot enter model context.
+
+## Campaign mutation semantics
+
+- Meta creates campaigns with `POST /act_{ad_account_id}/campaigns` and updates
+  them with `POST /{campaign_id}`.
+- `special_ad_categories` is required when creating a campaign. An empty array
+  or `NONE` means no special category; it must not be mixed with another
+  category.
+- The CLI forces every newly created campaign to `PAUSED`. Activation is a
+  separate update because it can begin spending.
+- Meta's `execution_options=["validate_only"]` validates a mutation without
+  applying it. Every Chorus mutation plan uses this before asking for approval.
+- Daily budget, lifetime budget, and spend cap are expressed as integer account
+  currency subunits. Campaign-level daily and lifetime budgets are mutually
+  exclusive.
+- Updating a campaign supports only the fields explicitly exposed by the CLI.
+  Deletion is intentionally unsupported.

@@ -1,4 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { runMetaAdsCli } from "./meta_ads";
 
 type CapturedCommand = { argv: string[]; timeoutMs: number };
@@ -48,6 +51,11 @@ function queryMap(argv: string[]): Record<string, string> {
   return result;
 }
 
+function requestBody(argv: string[]): Record<string, unknown> {
+  const index = argv.indexOf("--body");
+  return JSON.parse(argv[index + 1] ?? "{}") as Record<string, unknown>;
+}
+
 describe("meta ads skill CLI", () => {
   test("checks the agent-scoped Nango connection", async () => {
     const commands = mockCommands([{
@@ -62,7 +70,7 @@ describe("meta ads skill CLI", () => {
     await expect(runMetaAdsCli(["status"], commands)).resolves.toMatchObject({
       connected: true,
       provider: "meta-ads",
-      mode: "read-only",
+      mode: "campaign-management",
     });
     expect(commands.calls[0]).toEqual({
       argv: ["masterclaw", "connections", "check", "--provider", "meta-ads"],
@@ -169,6 +177,94 @@ describe("meta ads skill CLI", () => {
       date_preset: "last_30d",
     });
     expect(queryMap(argv).fields).toContain("cost_per_action_type");
+  });
+
+  test("validates, stores, and applies an immutable paused campaign plan", async () => {
+    const planDir = await mkdtemp(join(tmpdir(), "meta-ads-plans-"));
+    try {
+      const validateCommands = mockCommands([proxyResponse({ success: true })]);
+      const planned = await runMetaAdsCli([
+        "campaign-plan-create",
+        "--account-id", "123456789",
+        "--name", "Launch campaign",
+        "--objective", "OUTCOME_TRAFFIC",
+        "--special-ad-categories", "NONE",
+        "--daily-budget", "5000",
+      ], {
+        ...validateCommands,
+        planDir,
+        now: () => new Date("2026-07-16T12:00:00.000Z"),
+      }) as { plan: { planId: string }; approvalPhrase: string };
+
+      expect(planned.plan.planId).toMatch(/^[a-f0-9]{24}$/);
+      expect(planned.approvalPhrase).toBe(`Approve Meta Ads plan ${planned.plan.planId}`);
+      const validationArgv = validateCommands.calls[0]?.argv ?? [];
+      expect(validationArgv).toContain("POST");
+      expect(validationArgv).toContain("act_123456789/campaigns");
+      expect(requestBody(validationArgv)).toMatchObject({
+        name: "Launch campaign",
+        objective: "OUTCOME_TRAFFIC",
+        status: "PAUSED",
+        daily_budget: "5000",
+        execution_options: ["validate_only"],
+      });
+
+      const applyCommands = mockCommands([proxyResponse({ id: "987654321" })]);
+      await expect(runMetaAdsCli([
+        "campaign-apply",
+        "--plan-id", planned.plan.planId,
+        "--confirm", planned.plan.planId,
+      ], {
+        ...applyCommands,
+        planDir,
+        now: () => new Date("2026-07-16T12:05:00.000Z"),
+      })).resolves.toMatchObject({
+        applied: true,
+        planId: planned.plan.planId,
+        operation: "create-campaign",
+        response: { id: "987654321" },
+      });
+      expect(requestBody(applyCommands.calls[0]?.argv ?? [])).not.toHaveProperty("execution_options");
+
+      await expect(runMetaAdsCli([
+        "campaign-apply",
+        "--plan-id", planned.plan.planId,
+        "--confirm", planned.plan.planId,
+      ], { ...mockCommands([]), planDir })).rejects.toMatchObject({
+        code: "META_ADS_PLAN_NOT_FOUND",
+      });
+    } finally {
+      await rm(planDir, { recursive: true, force: true });
+    }
+  });
+
+  test("plans activation and budget changes without mutating during validation", async () => {
+    const planDir = await mkdtemp(join(tmpdir(), "meta-ads-plans-"));
+    try {
+      const commands = mockCommands([proxyResponse({ success: true })]);
+      await runMetaAdsCli([
+        "campaign-plan-update",
+        "--campaign-id", "987654321",
+        "--status", "ACTIVE",
+        "--daily-budget", "7500",
+      ], { ...commands, planDir });
+      expect(commands.calls[0]?.argv).toContain("987654321");
+      expect(requestBody(commands.calls[0]?.argv ?? [])).toEqual({
+        status: "ACTIVE",
+        daily_budget: "7500",
+        execution_options: ["validate_only"],
+      });
+    } finally {
+      await rm(planDir, { recursive: true, force: true });
+    }
+  });
+
+  test("requires the exact plan id as apply confirmation", async () => {
+    await expect(runMetaAdsCli([
+      "campaign-apply",
+      "--plan-id", "0123456789abcdef01234567",
+      "--confirm", "wrong",
+    ], mockCommands([]))).rejects.toMatchObject({ code: "META_ADS_USAGE" });
   });
 
   test("serializes a validated custom date range", async () => {

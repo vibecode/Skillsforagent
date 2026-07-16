@@ -1,5 +1,10 @@
 #!/usr/bin/env bun
 
+import { createHash } from "node:crypto";
+import { homedir } from "node:os";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+
 const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_LIMIT = "100";
 // The `business` field requires the optional `business_management` permission.
@@ -17,10 +22,33 @@ const DATE_PRESETS = new Set([
   "this_week_sun_today", "this_week_mon_today", "last_week_sun_sat", "last_week_mon_sun",
 ]);
 const LEVELS = new Set(["account", "campaign", "adset", "ad"]);
+const CAMPAIGN_OBJECTIVES = new Set([
+  "APP_INSTALLS", "BRAND_AWARENESS", "CONVERSIONS", "EVENT_RESPONSES",
+  "LEAD_GENERATION", "LINK_CLICKS", "LOCAL_AWARENESS", "MESSAGES",
+  "OFFER_CLAIMS", "OUTCOME_APP_PROMOTION", "OUTCOME_AWARENESS",
+  "OUTCOME_ENGAGEMENT", "OUTCOME_LEADS", "OUTCOME_SALES", "OUTCOME_TRAFFIC",
+  "PAGE_LIKES", "POST_ENGAGEMENT", "PRODUCT_CATALOG_SALES", "REACH",
+  "STORE_VISITS", "VIDEO_VIEWS",
+]);
+const SPECIAL_AD_CATEGORIES = new Set([
+  "NONE", "EMPLOYMENT", "HOUSING", "CREDIT", "ISSUES_ELECTIONS_POLITICS",
+  "ONLINE_GAMBLING_AND_GAMING", "FINANCIAL_PRODUCTS_SERVICES",
+]);
+const CAMPAIGN_STATUSES = new Set(["ACTIVE", "PAUSED", "ARCHIVED"]);
+const BID_STRATEGIES = new Set([
+  "LOWEST_COST_WITHOUT_CAP", "LOWEST_COST_WITH_BID_CAP", "COST_CAP",
+  "LOWEST_COST_WITH_MIN_ROAS",
+]);
+const PLAN_TTL_MS = 30 * 60 * 1000;
 
 type CommandResult = { exitCode: number; stdout: string; stderr: string };
 type CommandRunner = (argv: string[], timeoutMs: number) => Promise<CommandResult>;
-type CliDependencies = { runCommand?: CommandRunner; timeoutMs?: number };
+type CliDependencies = {
+  runCommand?: CommandRunner;
+  timeoutMs?: number;
+  planDir?: string;
+  now?: () => Date;
+};
 type IntegrationResponse = {
   ok: boolean;
   status: number;
@@ -28,6 +56,17 @@ type IntegrationResponse = {
   requestId?: string | null;
 };
 type CollectionCommand = "accounts" | "campaigns" | "adsets" | "ads";
+type CampaignMutationBody = Record<string, string | string[] | boolean>;
+type StoredCampaignPlan = {
+  version: 1;
+  provider: "meta-ads";
+  operation: "create-campaign" | "update-campaign";
+  path: string;
+  body: CampaignMutationBody;
+  createdAt: string;
+  expiresAt: string;
+  planId: string;
+};
 type ParsedCommand =
   | { command: "status" }
   | { command: "accounts"; after?: string }
@@ -47,7 +86,18 @@ type ParsedCommand =
       since?: string;
       until?: string;
       after?: string;
-    };
+    }
+  | {
+      command: "campaign-plan-create";
+      accountId: string;
+      body: CampaignMutationBody;
+    }
+  | {
+      command: "campaign-plan-update";
+      campaignId: string;
+      body: CampaignMutationBody;
+    }
+  | { command: "campaign-apply"; planId: string; confirmation: string };
 
 export class MetaAdsCliError extends Error {
   constructor(
@@ -68,6 +118,9 @@ export async function runMetaAdsCli(
   const parsed = parseCommand(argv);
   const runCommand = dependencies.runCommand ?? runProcess;
   const timeoutMs = dependencies.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const chorusDataDir = process.env.CHORUS_DATA_DIR ?? join(homedir(), ".chorus");
+  const planDir = dependencies.planDir ?? join(chorusDataDir, "meta-ads", "plans");
+  const now = dependencies.now ?? (() => new Date());
 
   if (parsed.command === "status") {
     const connection = asRecord(await runMasterclawJson(
@@ -82,9 +135,46 @@ export async function runMetaAdsCli(
         && connected.includes("meta-ads")
         && !missing.includes("meta-ads"),
       provider: "meta-ads",
-      mode: "read-only",
+      mode: "campaign-management",
       connection,
     };
+  }
+
+  if (parsed.command === "campaign-plan-create") {
+    const accountId = normalizeAccountId(parsed.accountId);
+    return validateAndStorePlan({
+      runCommand,
+      timeoutMs,
+      planDir,
+      now: now(),
+      operation: "create-campaign",
+      path: `${accountId}/campaigns`,
+      body: parsed.body,
+    });
+  }
+
+  if (parsed.command === "campaign-plan-update") {
+    const campaignId = normalizeCampaignId(parsed.campaignId);
+    return validateAndStorePlan({
+      runCommand,
+      timeoutMs,
+      planDir,
+      now: now(),
+      operation: "update-campaign",
+      path: campaignId,
+      body: parsed.body,
+    });
+  }
+
+  if (parsed.command === "campaign-apply") {
+    return applyStoredPlan({
+      runCommand,
+      timeoutMs,
+      planDir,
+      now: now(),
+      planId: parsed.planId,
+      confirmation: parsed.confirmation,
+    });
   }
 
   if (parsed.command === "accounts") {
@@ -211,7 +301,36 @@ function parseCommand(argv: string[]): ParsedCommand {
       after: flags.after,
     };
   }
-  usage("Usage: meta_ads.ts status | accounts|businesses [--after CURSOR] | business-accounts --business-id ID [--relationship owned|client] [--after CURSOR] | campaigns|adsets|ads --account-id ID [--after CURSOR] | insights --account-id ID [--level LEVEL] (--date-preset PRESET | --since YYYY-MM-DD --until YYYY-MM-DD) [--after CURSOR]");
+  if (command === "campaign-plan-create") {
+    const flags = parseFlags(rest, new Set([
+      "account-id", "name", "objective", "special-ad-categories", "daily-budget",
+      "lifetime-budget", "spend-cap", "bid-strategy", "adset-budget-sharing",
+    ]));
+    return {
+      command,
+      accountId: requiredFlag(flags, "account-id"),
+      body: campaignCreateBody(flags),
+    };
+  }
+  if (command === "campaign-plan-update") {
+    const flags = parseFlags(rest, new Set([
+      "campaign-id", "name", "status", "daily-budget", "lifetime-budget", "spend-cap",
+    ]));
+    return {
+      command,
+      campaignId: requiredFlag(flags, "campaign-id"),
+      body: campaignUpdateBody(flags),
+    };
+  }
+  if (command === "campaign-apply") {
+    const flags = parseFlags(rest, new Set(["plan-id", "confirm"]));
+    return {
+      command,
+      planId: requiredFlag(flags, "plan-id"),
+      confirmation: requiredFlag(flags, "confirm"),
+    };
+  }
+  usage("Usage: meta_ads.ts status | accounts|businesses [--after CURSOR] | business-accounts --business-id ID [--relationship owned|client] [--after CURSOR] | campaigns|adsets|ads --account-id ID [--after CURSOR] | insights --account-id ID [--level LEVEL] (--date-preset PRESET | --since YYYY-MM-DD --until YYYY-MM-DD) [--after CURSOR] | campaign-plan-create --account-id ID --name NAME --objective OBJECTIVE --special-ad-categories NONE [budget options] | campaign-plan-update --campaign-id ID [changes] | campaign-apply --plan-id ID --confirm ID");
 }
 
 function parseFlags(argv: string[], allowed: Set<string>): Record<string, string> {
@@ -234,6 +353,82 @@ function requiredFlag(flags: Record<string, string>, name: string): string {
   return value;
 }
 
+function optionalMoney(flags: Record<string, string>, name: string): string | undefined {
+  const value = flags[name];
+  if (value === undefined) return undefined;
+  if (!/^[1-9]\d{0,17}$/.test(value)) {
+    usage(`--${name} must be a positive integer in account currency subunits`);
+  }
+  return value;
+}
+
+function campaignCreateBody(flags: Record<string, string>): CampaignMutationBody {
+  const name = requiredFlag(flags, "name").trim();
+  if (!name || name.length > 255) usage("--name must be between 1 and 255 characters");
+  const objective = requiredFlag(flags, "objective");
+  if (!CAMPAIGN_OBJECTIVES.has(objective)) usage("Unsupported --objective");
+  const categories = requiredFlag(flags, "special-ad-categories")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  if (
+    categories.length === 0
+    || new Set(categories).size !== categories.length
+    || categories.some((value) => !SPECIAL_AD_CATEGORIES.has(value))
+    || (categories.includes("NONE") && categories.length > 1)
+  ) {
+    usage("Unsupported --special-ad-categories");
+  }
+  const dailyBudget = optionalMoney(flags, "daily-budget");
+  const lifetimeBudget = optionalMoney(flags, "lifetime-budget");
+  if (dailyBudget && lifetimeBudget) usage("Use either --daily-budget or --lifetime-budget, not both");
+  const body: CampaignMutationBody = {
+    name,
+    objective,
+    status: "PAUSED",
+    special_ad_categories: categories,
+  };
+  if (dailyBudget) body.daily_budget = dailyBudget;
+  if (lifetimeBudget) body.lifetime_budget = lifetimeBudget;
+  const spendCap = optionalMoney(flags, "spend-cap");
+  if (spendCap) body.spend_cap = spendCap;
+  const bidStrategy = flags["bid-strategy"];
+  if (bidStrategy) {
+    if (!BID_STRATEGIES.has(bidStrategy)) usage("Unsupported --bid-strategy");
+    body.bid_strategy = bidStrategy;
+  }
+  const sharing = flags["adset-budget-sharing"];
+  if (sharing !== undefined) {
+    if (sharing !== "true" && sharing !== "false") {
+      usage("--adset-budget-sharing must be true or false");
+    }
+    body.is_adset_budget_sharing_enabled = sharing === "true";
+  }
+  return body;
+}
+
+function campaignUpdateBody(flags: Record<string, string>): CampaignMutationBody {
+  const body: CampaignMutationBody = {};
+  if (flags.name !== undefined) {
+    const name = flags.name.trim();
+    if (!name || name.length > 255) usage("--name must be between 1 and 255 characters");
+    body.name = name;
+  }
+  if (flags.status !== undefined) {
+    if (!CAMPAIGN_STATUSES.has(flags.status)) usage("--status must be ACTIVE, PAUSED, or ARCHIVED");
+    body.status = flags.status;
+  }
+  const dailyBudget = optionalMoney(flags, "daily-budget");
+  const lifetimeBudget = optionalMoney(flags, "lifetime-budget");
+  if (dailyBudget && lifetimeBudget) usage("Use either --daily-budget or --lifetime-budget, not both");
+  if (dailyBudget) body.daily_budget = dailyBudget;
+  if (lifetimeBudget) body.lifetime_budget = lifetimeBudget;
+  const spendCap = optionalMoney(flags, "spend-cap");
+  if (spendCap) body.spend_cap = spendCap;
+  if (Object.keys(body).length === 0) usage("Campaign update requires at least one change");
+  return body;
+}
+
 function usage(message: string): never {
   throw new MetaAdsCliError(message, "META_ADS_USAGE");
 }
@@ -242,6 +437,12 @@ function normalizeAccountId(value: string): string {
   const normalized = value.trim().replace(/^act_/, "");
   if (!/^\d+$/.test(normalized)) usage("Meta ad account ID must contain only digits");
   return `act_${normalized}`;
+}
+
+function normalizeCampaignId(value: string): string {
+  const normalized = value.trim();
+  if (!/^\d+$/.test(normalized)) usage("Meta campaign ID must contain only digits");
+  return normalized;
 }
 
 function normalizeBusinessId(value: string): string {
@@ -282,6 +483,133 @@ async function requestCollection(
     nextCursor: typeof cursors.after === "string" ? cursors.after : null,
     ...(accountId ? { accountId } : {}),
   };
+}
+
+function planHash(plan: Omit<StoredCampaignPlan, "planId">): string {
+  return createHash("sha256").update(JSON.stringify(plan)).digest("hex").slice(0, 24);
+}
+
+function planPath(planDir: string, planId: string): string {
+  if (!/^[a-f0-9]{24}$/.test(planId)) usage("Invalid Meta Ads plan ID");
+  return join(planDir, `${planId}.json`);
+}
+
+async function validateAndStorePlan(input: {
+  runCommand: CommandRunner;
+  timeoutMs: number;
+  planDir: string;
+  now: Date;
+  operation: StoredCampaignPlan["operation"];
+  path: string;
+  body: CampaignMutationBody;
+}): Promise<Record<string, unknown>> {
+  const validation = await requestMetaAdsMutation(
+    input.runCommand,
+    input.timeoutMs,
+    input.path,
+    { ...input.body, execution_options: ["validate_only"] },
+  );
+  const unsigned: Omit<StoredCampaignPlan, "planId"> = {
+    version: 1,
+    provider: "meta-ads",
+    operation: input.operation,
+    path: input.path,
+    body: input.body,
+    createdAt: input.now.toISOString(),
+    expiresAt: new Date(input.now.getTime() + PLAN_TTL_MS).toISOString(),
+  };
+  const plan: StoredCampaignPlan = { ...unsigned, planId: planHash(unsigned) };
+  await mkdir(input.planDir, { recursive: true, mode: 0o700 });
+  await writeFile(planPath(input.planDir, plan.planId), `${JSON.stringify(plan, null, 2)}\n`, {
+    flag: "wx",
+    mode: 0o600,
+  });
+  return {
+    validated: true,
+    validation,
+    plan,
+    approvalRequired: true,
+    approvalPhrase: `Approve Meta Ads plan ${plan.planId}`,
+    applyCommand: `bun \"$META_ADS_CLI\" campaign-apply --plan-id ${plan.planId} --confirm ${plan.planId}`,
+  };
+}
+
+async function applyStoredPlan(input: {
+  runCommand: CommandRunner;
+  timeoutMs: number;
+  planDir: string;
+  now: Date;
+  planId: string;
+  confirmation: string;
+}): Promise<Record<string, unknown>> {
+  if (input.confirmation !== input.planId) usage("--confirm must exactly match --plan-id");
+  const filePath = planPath(input.planDir, input.planId);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(await readFile(filePath, "utf8"));
+  } catch (error) {
+    throw new MetaAdsCliError(
+      error instanceof SyntaxError ? "Meta Ads plan is invalid" : "Meta Ads plan was not found",
+      error instanceof SyntaxError ? "META_ADS_PLAN_INVALID" : "META_ADS_PLAN_NOT_FOUND",
+    );
+  }
+  const record = asRecord(parsed);
+  const body = asRecord(record.body) as CampaignMutationBody;
+  const unsigned: Omit<StoredCampaignPlan, "planId"> = {
+    version: record.version as 1,
+    provider: record.provider as "meta-ads",
+    operation: record.operation as StoredCampaignPlan["operation"],
+    path: String(record.path ?? ""),
+    body,
+    createdAt: String(record.createdAt ?? ""),
+    expiresAt: String(record.expiresAt ?? ""),
+  };
+  if (
+    unsigned.version !== 1
+    || unsigned.provider !== "meta-ads"
+    || !new Set(["create-campaign", "update-campaign"]).has(unsigned.operation)
+    || planHash(unsigned) !== input.planId
+    || record.planId !== input.planId
+  ) {
+    throw new MetaAdsCliError("Meta Ads plan integrity check failed", "META_ADS_PLAN_INVALID");
+  }
+  const expiresAt = new Date(unsigned.expiresAt);
+  if (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() < input.now.getTime()) {
+    throw new MetaAdsCliError("Meta Ads plan expired; create and approve a new plan", "META_ADS_PLAN_EXPIRED");
+  }
+  const response = await requestMetaAdsMutation(
+    input.runCommand,
+    input.timeoutMs,
+    unsigned.path,
+    body,
+  );
+  await unlink(filePath);
+  return {
+    applied: true,
+    planId: input.planId,
+    operation: unsigned.operation,
+    response,
+  };
+}
+
+async function requestMetaAdsMutation(
+  runCommand: CommandRunner,
+  timeoutMs: number,
+  path: string,
+  body: CampaignMutationBody & { execution_options?: string[] },
+): Promise<unknown> {
+  const argv = [
+    "masterclaw", "integrations", "request",
+    "--provider", "meta-ads",
+    "--method", "POST",
+    "--path", path,
+    "--body", JSON.stringify(body),
+  ];
+  const response = parseIntegrationResponse(await runMasterclawJson(runCommand, timeoutMs, argv));
+  if (!response.ok) {
+    throw metaResponseError(response.status, response.body, response.requestId ?? undefined);
+  }
+  return response.body;
 }
 
 async function requestMetaAds(
