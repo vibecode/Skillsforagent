@@ -1,0 +1,40 @@
+{
+  "skill_name": "google-ads",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Compare my Google Ads campaign spend, conversions, and ROAS for the last 30 days and flag the weakest campaigns.",
+      "expected_output": "Reads the google-ads skill, checks the Nango connection, discovers the account, and runs a bounded read-only GAQL report through the installed CLI and generic backend integration proxy.",
+      "files": [],
+      "expectations": [
+        "The run reads the google-ads skill before attempting account operations",
+        "The run uses the installed google_ads.ts CLI through native Bash and does not call a Google-specific MCP tool",
+        "The installed CLI uses masterclaw connections check and masterclaw integrations request instead of runtime credentials or direct Google HTTP calls",
+        "The report query is a read-only SELECT with a bounded date range and at most 100 rows",
+        "The answer identifies weak campaigns using spend, conversion, and ROAS evidence"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Connect my Google Ads account so you can inspect it.",
+      "expected_output": "Reads the google-ads skill and uses one masterclaw connections ensure call, returning the capability link without requesting credentials in chat.",
+      "files": [],
+      "expectations": [
+        "The run reads the google-ads skill",
+        "The run calls masterclaw connections ensure --provider google-ads exactly once",
+        "The response returns the capability link and stops without asking the user to paste credentials"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Create and launch a new search campaign with a $200 daily budget.",
+      "expected_output": "Uses the google-ads skill but clearly states that the current integration is read-only and does not claim to mutate the account.",
+      "files": [],
+      "expectations": [
+        "The run reads the google-ads skill",
+        "The response states that campaign creation is not available in the current read-only version",
+        "The run does not call any mutate endpoint or claim that a campaign was created"
+      ]
+    }
+  ]
+}
