@@ -520,6 +520,18 @@ function isAmbiguousMutationOutcome(error: unknown): boolean {
   ]).has(error.code);
 }
 
+function isSafeApprovalUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    if (url.username || url.password) return false;
+    if (url.protocol === "https:") return true;
+    return url.protocol === "http:"
+      && new Set(["localhost", "127.0.0.1", "::1"]).has(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
 async function validateAndStorePlan(input: {
   runCommand: CommandRunner;
   timeoutMs: number;
@@ -548,7 +560,7 @@ async function validateAndStorePlan(input: {
   const approvalUrl = typeof validationRecord.chorusApprovalUrl === "string"
     ? validationRecord.chorusApprovalUrl
     : null;
-  if (!approvalUrl || !/^https?:\/\//.test(approvalUrl)) {
+  if (!approvalUrl || !isSafeApprovalUrl(approvalUrl)) {
     throw new MetaAdsCliError(
       "Chorus did not issue a Meta Ads human approval link",
       "META_ADS_APPROVAL_NOT_ISSUED",

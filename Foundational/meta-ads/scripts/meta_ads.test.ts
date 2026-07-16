@@ -271,6 +271,29 @@ describe("meta ads skill CLI", () => {
     }
   });
 
+  test("rejects missing or insecure approval links before storing a plan", async () => {
+    const planDir = await mkdtemp(join(tmpdir(), "meta-ads-plans-"));
+    const argv = [
+      "campaign-plan-update",
+      "--campaign-id", "987654321",
+      "--status", "PAUSED",
+    ];
+    try {
+      const missing = proxyResponse({ chorusMutationPlanId: BACKEND_PLAN_ID });
+      await expect(runMetaAdsCli(argv, { ...mockCommands([missing]), planDir }))
+        .rejects.toMatchObject({ code: "META_ADS_APPROVAL_NOT_ISSUED" });
+
+      const insecure = proxyResponse({
+        chorusMutationPlanId: BACKEND_PLAN_ID,
+        chorusApprovalUrl: `http://chorus.example/a/${BACKEND_PLAN_ID}`,
+      });
+      await expect(runMetaAdsCli(argv, { ...mockCommands([insecure]), planDir }))
+        .rejects.toMatchObject({ code: "META_ADS_APPROVAL_NOT_ISSUED" });
+    } finally {
+      await rm(planDir, { recursive: true, force: true });
+    }
+  });
+
   test("reuses an identical plan when the deterministic plan file already exists", async () => {
     const planDir = await mkdtemp(join(tmpdir(), "meta-ads-plans-"));
     const argv = [
