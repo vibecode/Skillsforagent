@@ -1,6 +1,7 @@
 ---
 name: internet-image-puller
 description: "Find public internet images and download them into a local directory with a source manifest. Use for query-driven image discovery, official brand-asset pulls, logos, moodboards, research boards, page-specific image extraction, and multi-page site image collection. Routes search discovery through SerpApi Google Images and page or site extraction through Firecrawl."
+metadata: {"openclaw": {"emoji": "🖼️", "requires": {"env": ["SERPAPI_API_KEY", "FIRECRAWL_API_KEY"]}, "primaryEnv": "SERPAPI_API_KEY"}}
 ---
 
 # Internet Image Puller

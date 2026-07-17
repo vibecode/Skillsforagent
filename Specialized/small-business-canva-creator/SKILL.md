@@ -43,8 +43,7 @@ Before Stage 1, confirm:
 
 1. **Brief.** The user has referenced or pasted an approved brief. If not:
    "I'll need the content brief before I can build the campaign. Do you
-   have one from the content-strategy skill, or would you like to write
-   one now?"
+   have an approved brief, or would you like to write one together now?"
 
 2. **Canva tier.** Pro/Teams require manual template selection from the
    user's library (no autofill API). Enterprise can autofill from brand

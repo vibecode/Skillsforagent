@@ -3,7 +3,7 @@
 **Business:** Bloom & Thread — women's clothing boutique, Charleston SC  
 **Canva tier:** Teams (no Enterprise)  
 **HubSpot tier:** Marketing Hub Professional  
-**Brief source:** content-strategy skill output (approved by owner)
+**Brief source:** approved content brief provided by the owner
 
 ---
 
