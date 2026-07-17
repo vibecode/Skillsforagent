@@ -9,25 +9,32 @@ Usage:
 Each line must look like:
     Recipient - Subject - <summary>
 
-Only the <summary> portion (everything after the second " - ") is word-counted.
-Hyphenated terms (e.g. "well-known") count as a single word because they contain
-no internal whitespace. Exits non-zero and prints every failing line if any
-summary is not exactly 20 words.
+Only the <summary> portion is word-counted. Subjects (and summaries) may
+themselves contain " - ", so every separator after the first is treated as a
+possible subject/summary boundary and a line passes when any parse yields an
+exactly-20-word summary. Hyphenated terms (e.g. "well-known") count as a
+single word because they contain no internal whitespace. Exits non-zero and
+prints every failing line if any summary is not exactly 20 words.
 """
 import sys
 import argparse
 
 
-def split_line(line):
-    """Split a '- Recipient - Subject - Summary' or 'Recipient - Subject - Summary'
-    line into (recipient, subject, summary) using the first two ' - ' separators."""
+def candidate_summaries(line):
+    """Return every candidate <summary> for a '- Recipient - Subject - Summary'
+    or 'Recipient - Subject - Summary' line. The recipient always ends at the
+    first ' - '; each later ' - ' is a possible subject/summary boundary, so a
+    subject containing ' - ' cannot force a miscount. Empty list = bad format."""
     text = line.strip()
     if text.startswith("- "):
         text = text[2:]
-    parts = text.split(" - ", 2)
-    if len(parts) != 3:
-        return None
-    return parts[0].strip(), parts[1].strip(), parts[2].strip()
+    first = text.split(" - ", 1)
+    if len(first) != 2:
+        return []
+    parts = first[1].split(" - ")
+    if len(parts) < 2:
+        return []
+    return [" - ".join(parts[i:]).strip() for i in range(1, len(parts))]
 
 
 def word_count(summary):
@@ -54,14 +61,14 @@ def main():
 
     failures = []
     for i, line in enumerate(lines, 1):
-        parsed = split_line(line)
-        if parsed is None:
+        candidates = candidate_summaries(line)
+        if not candidates:
             failures.append((i, line, "does not match 'Recipient - Subject - Summary' format"))
             continue
-        recipient, subject, summary = parsed
-        n = word_count(summary)
-        if n != 20:
-            failures.append((i, line, f"summary has {n} words, expected exactly 20"))
+        counts = [word_count(summary) for summary in candidates]
+        if 20 not in counts:
+            closest = min(counts, key=lambda n: abs(n - 20))
+            failures.append((i, line, f"summary has {closest} words, expected exactly 20"))
 
     if failures:
         print(f"FAIL: {len(failures)} of {len(lines)} line(s) invalid\n")
