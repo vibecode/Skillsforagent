@@ -3,9 +3,9 @@ name: email-draft
 description: >
   Create real Gmail drafts through the Chorus-managed gws CLI (requires the google
   integration), verify them against the live mailbox, and hand back an open-able link
-  to each one for review. Use when Riley invokes /email-draft, is asked to draft one or
-  more Gmail messages, is asked to pick actionable inbox conversations and prepare
-  replies, or is asked to prepare saved Gmail drafts for review without sending them.
+  to each one for review. Use when the user invokes /email-draft, asks to draft one or
+  more Gmail messages, asks to pick actionable inbox conversations and prepare
+  replies, or asks to prepare saved Gmail drafts for review without sending them.
 metadata: {"openclaw": {"emoji": "✉️", "requires": {"cli": ["gws"], "integrations": ["google"]}}}
 ---
 

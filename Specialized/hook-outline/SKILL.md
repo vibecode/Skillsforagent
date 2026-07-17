@@ -1,6 +1,6 @@
 ---
 name: hook-outline
-description: "Turn rough video notes, transcripts, dictation, research, links, or idea dumps into a directly usable creator draft with a complete camera-ready spoken intro and a concise outline for the rest of the video. Use when the user asks for a hook outline, video intro plus bullets, full intro with concise outline, long-form YouTube outline, or a Riley-style creator draft."
+description: "Turn rough video notes, transcripts, dictation, research, links, or idea dumps into a directly usable creator draft with a complete camera-ready spoken intro and a concise outline for the rest of the video. Use when the user asks for a hook outline, video intro plus bullets, full intro with concise outline, long-form YouTube outline, or a creator-style video draft."
 ---
 
 # Hook Outline
