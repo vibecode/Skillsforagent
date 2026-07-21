@@ -42,6 +42,37 @@ General form:
 gws <service> <resource> [sub-resource] <method> --params '{"parameter":"value"}' --json '{"body":"value"}'
 ```
 
+## Known CLI issues and reliable patterns
+
+The pinned `gws` binary has a few confirmed rough edges. Each has a clean `gws`-only path —
+the fixes below keep you in one tool with credentials Chorus already manages, so you never
+need a second CLI or a setup step.
+
+**Gmail reply-all / forward drops CC recipients unless the header is spelled exactly `Cc`.**
+Outlook and Exchange write the header as `CC:` (all caps). The `gws gmail +reply-all` and
+`+read --headers` helpers match the name case-sensitively, so they silently omit those
+recipients — and `+reply-all --help` still claims it includes "all original To/CC recipients,"
+which is why this is easy to miss. The Gmail API itself matches header names
+case-insensitively, so read the truth from the API rather than the helper. Before any
+reply-all or forward:
+1. Get the real recipients:
+   `gws gmail users messages get --params '{"userId":"me","id":"MSG_ID","format":"metadata","metadataHeaders":["From","To","Cc","Reply-To"]}'`
+2. Reply with those recipients passed explicitly — `--cc` adds recipients, so listing the
+   original CC line there restores everyone the helper would have dropped:
+   `gws gmail +reply-all --message-id MSG_ID --body "..." --cc "the,original,cc,addresses"`
+3. Confirm the sent message's recipients with the same `messages get` call, not `+read`.
+
+**Sheets writes coerce data by default.** `valueInputOption: USER_ENTERED` runs a leading `=`
+as a formula and strips leading zeros (`0042` → `42`), which corrupts IDs, codes, and any
+literal text a user pastes in. Use `RAW` unless the user actually wants formulas evaluated.
+Pass rows as JSON, not comma-separated text: `gws sheets +append --json-values '[["a","b"]]'`
+(the plain `--values` flag splits on commas and mangles any value containing one).
+
+**Drive.** Download binaries with `--output FILE`; sending `alt=media` to stdout returns an
+API error instead of bytes. Run `gws drive files delete` from a writable directory
+(`cd ~` first) — it can exit non-zero from an unwritable cwd even when the delete succeeded,
+so trust a re-check over the exit code.
+
 ## Gmail
 
 ```bash
@@ -140,35 +171,71 @@ Calendar timestamps use RFC 3339. All-day events use `date` instead of `dateTime
 
 ## Google Docs
 
+Formatting is where naive Docs edits go wrong, so pick the path by the kind of edit. The
+trap to avoid: `gws docs +write` and a bare `insertText` add **plain text**, so markdown like
+`# Heading` or `**bold**` lands as literal characters. Real formatting comes either from Drive
+converting an HTML source, or from explicit style requests in `batchUpdate`.
+
+**Create a formatted doc** — write the content as HTML locally, then let Drive convert it. The
+conversion produces genuine headings, bold, and lists, and it is far more reliable than
+hand-building style requests:
 ```bash
-# Get a document
-gws docs documents get --params '{"documentId":"DOC_ID"}'
+cd ~ && cat > doc.html <<'EOF'
+<h1>Title</h1><h2>Section</h2><p>Body with <b>bold</b>.</p><ul><li>a</li><li>b</li></ul>
+EOF
+gws drive files create --upload doc.html --upload-content-type text/html \
+  --json '{"name":"My Doc","mimeType":"application/vnd.google-apps.document"}'
+```
+(`--upload` needs a path inside the current directory, hence `cd ~` first.)
 
-# Create a document after user confirmation
-gws docs documents create --json '{"title":"My Document"}'
-
-# Insert text after user confirmation
-gws docs documents batchUpdate \
-  --params '{"documentId":"DOC_ID"}' \
-  --json '{"requests":[{"insertText":{"location":{"index":1},"text":"Hello World\n"}}]}'
+**Targeted edit** (rename a term, fix a value, swap a link) — use find/replace; it preserves
+all surrounding styling and never disturbs layout:
+```bash
+gws docs documents batchUpdate --params '{"documentId":"DOC_ID"}' \
+  --json '{"requests":[{"replaceAllText":{"containsText":{"text":"old","matchCase":true},"replaceText":"new"}}]}'
 ```
 
-For common writing workflows, inspect `gws docs +write --help`.
+**Add or restructure a section** — choose by whether the doc has live comments:
+- *Safe to rewrite (no collaborators mid-review):* read the current content
+  (`gws docs documents get ...`), regenerate the whole doc as HTML with the change in place,
+  and push it back to the **same file** so the ID and sharing survive:
+  `gws drive files update --params '{"fileId":"DOC_ID"}' --upload doc.html --upload-content-type text/html`.
+  This replaces all content, which orphans anchored comments — so don't use it on a doc people
+  are actively commenting on.
+- *Must preserve comments (surgical insert):* `insertText` at the target index, then in the
+  **same batchUpdate** reset the inserted range's style. Inserted text inherits the paragraph
+  and character style at the insertion index, so a paragraph placed after a heading renders
+  oversized/bold until you fix it — follow the insert with `updateParagraphStyle`
+  (`namedStyleType`: `NORMAL_TEXT` for body, or the right `HEADING_n` for a new header) and
+  `updateTextStyle` clearing `bold`/`fontSize` over the range you inserted. Match the doc's own
+  convention: check first whether its section headers are real `HEADING_n` paragraphs or just
+  bold `NORMAL_TEXT`, and reproduce whichever it uses.
+
+Verify any structural edit before reporting it done — export to PDF and look, or re-read the
+structure and confirm the heading/body styles are what you intended:
+```bash
+gws drive files export --params '{"fileId":"DOC_ID","mimeType":"application/pdf"}' --output /tmp/check.pdf
+```
 
 ## Google Slides
 
+Editing an existing deck is straightforward with `batchUpdate`: `createSlide`, `deleteObject`,
+and `insertText`/`replaceAllText` cover add, remove, and edit. Two gotchas: objectIds you
+supply must be at least 5 characters, and to place text you create the slide from a layout with
+`placeholderIdMappings`, then `insertText` into those placeholder ids.
 ```bash
-# Get a presentation
+# Inspect (also how you verify slide count/text after an edit)
 gws slides presentations get --params '{"presentationId":"PRESENTATION_ID"}'
-
-# Create a presentation after user confirmation
+# Create an empty presentation
 gws slides presentations create --json '{"title":"My Presentation"}'
-
-# Add a slide after user confirmation
-gws slides presentations batchUpdate \
-  --params '{"presentationId":"PRESENTATION_ID"}' \
-  --json '{"requests":[{"createSlide":{"slideLayoutReference":{"predefinedLayout":"TITLE_AND_BODY"}}}]}'
 ```
+
+Building a **polished multi-slide deck from scratch** is the one workflow `gws` makes tedious —
+there is no HTML-import equivalent, so you must lay out every slide via `batchUpdate`. If a
+second CLI named `gog` is present (also Chorus-managed, same account), `gog slides
+create-from-markdown --content-file deck.md` (one `# Heading` per slide, `---` between slides)
+does this in a single step; otherwise build it with `batchUpdate` as above. Use whichever is
+available — this is a convenience for greenfield decks only, not something to depend on.
 
 ## Google Forms
 
