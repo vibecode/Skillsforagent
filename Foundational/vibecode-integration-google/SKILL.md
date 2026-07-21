@@ -67,6 +67,29 @@ gws gmail +forward --help
 
 Gmail search supports operators such as `from:`, `to:`, `subject:`, `is:unread`, `newer_than:`, `has:attachment`, `label:`, and `in:sent`.
 
+**Reply-all: `+reply-all` computes the CC list itself and gets it wrong, so you must supply
+CC yourself every time.** The helper matches the CC header name case-sensitively. Real senders
+on Outlook/Exchange write it as `CC:` (all caps), so the helper's own recipient computation
+silently drops every one of those people — and it does this even after you've read the correct
+recipients, because passing `--body` alone lets the helper decide CC. Reading the recipients is
+not enough; knowing who should be on the mail does nothing unless you put them on the outgoing
+`--cc`. Treat these two calls as one inseparable step — never run the second without the first:
+
+```bash
+# 1. Get the real To and Cc from the API (case-insensitive, unlike the helper)
+gws gmail users messages get --params '{"userId":"me","id":"MSG_ID","format":"metadata","metadataHeaders":["From","To","Cc","Reply-To"]}'
+
+# 2. Reply, and pass EVERY original Cc address (and any extra To) explicitly. Do not omit
+#    --cc and trust the helper — that is exactly the path that drops recipients.
+gws gmail +reply-all --message-id MSG_ID --body "..." \
+  --cc "noah@example.com,ava@example.com"   # the addresses you read in step 1
+```
+
+`+forward` has the same blind spot — set recipients explicitly there too. Then confirm the
+sent message's `To`/`Cc` with another `messages get` (not `+read`, which shares the bug and
+will cheerfully show a wrong result as correct). If the `Cc` you intended isn't on the sent
+copy, you dropped it — resend with `--cc`.
+
 ## Google Drive
 
 ```bash
@@ -79,11 +102,17 @@ gws drive files list --params '{"q":"name contains '\''report'\''","pageSize":10
 # Get file metadata
 gws drive files get --params '{"fileId":"FILE_ID","fields":"id,name,mimeType,modifiedTime"}'
 
-# Download a stored binary file without printing its contents
+# Download a stored binary file. Always use --output: sending alt=media to
+# stdout returns an API error instead of the file bytes.
 gws drive files get --params '{"fileId":"FILE_ID","alt":"media"}' --output ./download.bin
 
 # Export a Google-native Doc, Sheet, or Slide
 gws drive files export --params '{"fileId":"FILE_ID","mimeType":"application/pdf"}' --output ./export.pdf
+
+# Delete a file — run from a writable directory (cd ~ first). The command can
+# exit non-zero from an unwritable cwd even when the delete actually succeeded,
+# so re-check rather than trusting the exit code.
+gws drive files delete --params '{"fileId":"FILE_ID"}'
 ```
 
 For uploads, inspect the maintained helper instead of constructing multipart requests manually:
@@ -101,16 +130,31 @@ gws sheets spreadsheets get --params '{"spreadsheetId":"SHEET_ID","fields":"shee
 # Read a range
 gws sheets spreadsheets values get --params '{"spreadsheetId":"SHEET_ID","range":"Sheet1!A1:D10"}'
 
-# Update a range after user confirmation
+# Update a range. Choose valueInputOption deliberately (see below).
 gws sheets spreadsheets values update \
-  --params '{"spreadsheetId":"SHEET_ID","range":"Sheet1!A1","valueInputOption":"USER_ENTERED"}' \
+  --params '{"spreadsheetId":"SHEET_ID","range":"Sheet1!A1","valueInputOption":"RAW"}' \
   --json '{"values":[["Name","Age"],["Alice",30]]}'
 ```
+
+Preserving values like `0074` takes care at two layers, and missing either one silently
+corrupts the data:
+1. **Quote every value as a JSON string.** `{"values":[["0074"]]}` keeps the leading zero;
+   `{"values":[[0074]]}` is a JSON number and becomes `74` before the request even leaves —
+   nothing the API does can recover it. Codes, ZIPs, and phone numbers are the usual victims.
+2. **Use `valueInputOption: RAW`.** `USER_ENTERED` mimics a person typing, so it strips leading
+   zeros (`0074` → `74`), runs a leading `=` as a formula, and applies locale parsing. `RAW`
+   stores exactly what you send. Reach for `USER_ENTERED` only when you genuinely want a
+   formula evaluated or a date parsed.
+
+After writing IDs or codes, read the range back and confirm the leading zeros survived.
 
 Maintained helpers:
 
 ```bash
 gws sheets +read --help
+# Pass rows as JSON, not the plain --values flag (which splits on commas and
+# corrupts any value that contains one):
+gws sheets +append --spreadsheet SHEET_ID --json-values '[["Alice","New York, NY"]]'
 gws sheets +append --help
 ```
 
@@ -140,35 +184,88 @@ Calendar timestamps use RFC 3339. All-day events use `date` instead of `dateTime
 
 ## Google Docs
 
+Formatting is where naive Docs edits go wrong, so pick the path by the kind of edit. The
+trap to avoid: `gws docs +write` and a bare `insertText` add **plain text**, so markdown like
+`# Heading` or `**bold**` lands as literal characters. Real formatting comes either from Drive
+converting an HTML source, or from explicit style requests in `batchUpdate`.
+
+**Create a formatted doc** — write the content as HTML locally, then let Drive convert it. The
+conversion produces genuine headings, bold, and lists, and it is far more reliable than
+hand-building style requests:
 ```bash
-# Get a document
-gws docs documents get --params '{"documentId":"DOC_ID"}'
+cd ~ && cat > doc.html <<'EOF'
+<h1>Title</h1><h2>Section</h2><p>Body with <b>bold</b>.</p><ul><li>a</li><li>b</li></ul>
+EOF
+gws drive files create --upload doc.html --upload-content-type text/html \
+  --json '{"name":"My Doc","mimeType":"application/vnd.google-apps.document"}'
+```
+(`--upload` needs a path inside the current directory, hence `cd ~` first.)
 
-# Create a document after user confirmation
-gws docs documents create --json '{"title":"My Document"}'
-
-# Insert text after user confirmation
-gws docs documents batchUpdate \
-  --params '{"documentId":"DOC_ID"}' \
-  --json '{"requests":[{"insertText":{"location":{"index":1},"text":"Hello World\n"}}]}'
+**Targeted edit** (rename a term, fix a value, swap a link) — use find/replace; it preserves
+all surrounding styling and never disturbs layout:
+```bash
+gws docs documents batchUpdate --params '{"documentId":"DOC_ID"}' \
+  --json '{"requests":[{"replaceAllText":{"containsText":{"text":"old","matchCase":true},"replaceText":"new"}}]}'
 ```
 
-For common writing workflows, inspect `gws docs +write --help`.
+**Add or restructure a section** — choose by whether the doc has live comments:
+- *Safe to rewrite (no collaborators mid-review):* read the current content
+  (`gws docs documents get ...`), regenerate the whole doc as HTML with the change in place,
+  and push it back to the **same file** so the ID and sharing survive:
+  `gws drive files update --params '{"fileId":"DOC_ID"}' --upload doc.html --upload-content-type text/html`.
+  This replaces all content, which orphans anchored comments — so don't use it on a doc people
+  are actively commenting on.
+- *Must preserve comments (surgical insert):* `insertText` at the target index, then in the
+  **same batchUpdate** reset the inserted range's style. Inserted text inherits the paragraph
+  and character style at the insertion index, so a paragraph placed after a heading renders
+  oversized/bold until you fix it — follow the insert with `updateParagraphStyle`
+  (`namedStyleType`: `NORMAL_TEXT` for body, or the right `HEADING_n` for a new header) and
+  `updateTextStyle` clearing `bold`/`fontSize` over the range you inserted. Match the doc's own
+  convention: check first whether its section headers are real `HEADING_n` paragraphs or just
+  bold `NORMAL_TEXT`, and reproduce whichever it uses.
+
+Verify any structural edit before reporting it done — export to PDF and look, or re-read the
+structure and confirm the heading/body styles are what you intended:
+```bash
+gws drive files export --params '{"fileId":"DOC_ID","mimeType":"application/pdf"}' --output /tmp/check.pdf
+```
 
 ## Google Slides
 
-```bash
-# Get a presentation
-gws slides presentations get --params '{"presentationId":"PRESENTATION_ID"}'
+Editing an existing deck is straightforward with `batchUpdate`: `createSlide`, `deleteObject`,
+and `insertText`/`replaceAllText` cover add, remove, and edit. Adding a slide with text is the
+fiddly one: each entry in `placeholderIdMappings` pairs a `layoutPlaceholder` (the slot type on
+the chosen layout) with a **new `objectId` you invent** (at least 5 chars), and `insertText`
+then targets that new id — never the layout's own id. Do all of it in one `batchUpdate`:
 
-# Create a presentation after user confirmation
-gws slides presentations create --json '{"title":"My Presentation"}'
-
-# Add a slide after user confirmation
-gws slides presentations batchUpdate \
-  --params '{"presentationId":"PRESENTATION_ID"}' \
-  --json '{"requests":[{"createSlide":{"slideLayoutReference":{"predefinedLayout":"TITLE_AND_BODY"}}}]}'
+```json
+{"requests":[
+  {"createSlide":{"objectId":"agenda01","slideLayoutReference":{"predefinedLayout":"TITLE_AND_BODY"},
+    "placeholderIdMappings":[
+      {"layoutPlaceholder":{"type":"TITLE"},"objectId":"agenda01title"},
+      {"layoutPlaceholder":{"type":"BODY"},"objectId":"agenda01body"}]}},
+  {"insertText":{"objectId":"agenda01title","text":"Agenda"}},
+  {"insertText":{"objectId":"agenda01body","text":"First point\nSecond point"}}
+]}
 ```
+
+To **change wording already on a slide** (e.g. a year or a title), use `replaceAllText`, which
+swaps the text in place across the deck. Do not instead add a new text box with the new
+wording — that leaves the old text sitting on the slide, so the "change" reads as a duplicate.
+After the edit, re-read with `presentations get` and confirm the old text is actually gone.
+```bash
+# Inspect (also how you verify slide count/text after an edit)
+gws slides presentations get --params '{"presentationId":"PRESENTATION_ID"}'
+# Create an empty presentation
+gws slides presentations create --json '{"title":"My Presentation"}'
+```
+
+Building a **polished multi-slide deck from scratch** is the one workflow `gws` makes tedious —
+there is no HTML-import equivalent, so you must lay out every slide via `batchUpdate`. If a
+second CLI named `gog` is present (also Chorus-managed, same account), `gog slides
+create-from-markdown --content-file deck.md` (one `# Heading` per slide, `---` between slides)
+does this in a single step; otherwise build it with `batchUpdate` as above. Use whichever is
+available — this is a convenience for greenfield decks only, not something to depend on.
 
 ## Google Forms
 
