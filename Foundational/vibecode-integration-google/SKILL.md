@@ -233,9 +233,21 @@ gws drive files export --params '{"fileId":"DOC_ID","mimeType":"application/pdf"
 ## Google Slides
 
 Editing an existing deck is straightforward with `batchUpdate`: `createSlide`, `deleteObject`,
-and `insertText`/`replaceAllText` cover add, remove, and edit. Two gotchas: objectIds you
-supply must be at least 5 characters, and to place text you create the slide from a layout with
-`placeholderIdMappings`, then `insertText` into those placeholder ids.
+and `insertText`/`replaceAllText` cover add, remove, and edit. Adding a slide with text is the
+fiddly one: each entry in `placeholderIdMappings` pairs a `layoutPlaceholder` (the slot type on
+the chosen layout) with a **new `objectId` you invent** (at least 5 chars), and `insertText`
+then targets that new id — never the layout's own id. Do all of it in one `batchUpdate`:
+
+```json
+{"requests":[
+  {"createSlide":{"objectId":"agenda01","slideLayoutReference":{"predefinedLayout":"TITLE_AND_BODY"},
+    "placeholderIdMappings":[
+      {"layoutPlaceholder":{"type":"TITLE"},"objectId":"agenda01title"},
+      {"layoutPlaceholder":{"type":"BODY"},"objectId":"agenda01body"}]}},
+  {"insertText":{"objectId":"agenda01title","text":"Agenda"}},
+  {"insertText":{"objectId":"agenda01body","text":"First point\nSecond point"}}
+]}
+```
 
 To **change wording already on a slide** (e.g. a year or a title), use `replaceAllText`, which
 swaps the text in place across the deck. Do not instead add a new text box with the new
