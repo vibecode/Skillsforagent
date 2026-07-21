@@ -42,37 +42,6 @@ General form:
 gws <service> <resource> [sub-resource] <method> --params '{"parameter":"value"}' --json '{"body":"value"}'
 ```
 
-## Known CLI issues and reliable patterns
-
-The pinned `gws` binary has a few confirmed rough edges. Each has a clean `gws`-only path —
-the fixes below keep you in one tool with credentials Chorus already manages, so you never
-need a second CLI or a setup step.
-
-**Gmail reply-all / forward drops CC recipients unless the header is spelled exactly `Cc`.**
-Outlook and Exchange write the header as `CC:` (all caps). The `gws gmail +reply-all` and
-`+read --headers` helpers match the name case-sensitively, so they silently omit those
-recipients — and `+reply-all --help` still claims it includes "all original To/CC recipients,"
-which is why this is easy to miss. The Gmail API itself matches header names
-case-insensitively, so read the truth from the API rather than the helper. Before any
-reply-all or forward:
-1. Get the real recipients:
-   `gws gmail users messages get --params '{"userId":"me","id":"MSG_ID","format":"metadata","metadataHeaders":["From","To","Cc","Reply-To"]}'`
-2. Reply with those recipients passed explicitly — `--cc` adds recipients, so listing the
-   original CC line there restores everyone the helper would have dropped:
-   `gws gmail +reply-all --message-id MSG_ID --body "..." --cc "the,original,cc,addresses"`
-3. Confirm the sent message's recipients with the same `messages get` call, not `+read`.
-
-**Sheets writes coerce data by default.** `valueInputOption: USER_ENTERED` runs a leading `=`
-as a formula and strips leading zeros (`0042` → `42`), which corrupts IDs, codes, and any
-literal text a user pastes in. Use `RAW` unless the user actually wants formulas evaluated.
-Pass rows as JSON, not comma-separated text: `gws sheets +append --json-values '[["a","b"]]'`
-(the plain `--values` flag splits on commas and mangles any value containing one).
-
-**Drive.** Download binaries with `--output FILE`; sending `alt=media` to stdout returns an
-API error instead of bytes. Run `gws drive files delete` from a writable directory
-(`cd ~` first) — it can exit non-zero from an unwritable cwd even when the delete succeeded,
-so trust a re-check over the exit code.
-
 ## Gmail
 
 ```bash
@@ -98,6 +67,29 @@ gws gmail +forward --help
 
 Gmail search supports operators such as `from:`, `to:`, `subject:`, `is:unread`, `newer_than:`, `has:attachment`, `label:`, and `in:sent`.
 
+**Reply-all: `+reply-all` computes the CC list itself and gets it wrong, so you must supply
+CC yourself every time.** The helper matches the CC header name case-sensitively. Real senders
+on Outlook/Exchange write it as `CC:` (all caps), so the helper's own recipient computation
+silently drops every one of those people — and it does this even after you've read the correct
+recipients, because passing `--body` alone lets the helper decide CC. Reading the recipients is
+not enough; knowing who should be on the mail does nothing unless you put them on the outgoing
+`--cc`. Treat these two calls as one inseparable step — never run the second without the first:
+
+```bash
+# 1. Get the real To and Cc from the API (case-insensitive, unlike the helper)
+gws gmail users messages get --params '{"userId":"me","id":"MSG_ID","format":"metadata","metadataHeaders":["From","To","Cc","Reply-To"]}'
+
+# 2. Reply, and pass EVERY original Cc address (and any extra To) explicitly. Do not omit
+#    --cc and trust the helper — that is exactly the path that drops recipients.
+gws gmail +reply-all --message-id MSG_ID --body "..." \
+  --cc "noah@example.com,ava@example.com"   # the addresses you read in step 1
+```
+
+`+forward` has the same blind spot — set recipients explicitly there too. Then confirm the
+sent message's `To`/`Cc` with another `messages get` (not `+read`, which shares the bug and
+will cheerfully show a wrong result as correct). If the `Cc` you intended isn't on the sent
+copy, you dropped it — resend with `--cc`.
+
 ## Google Drive
 
 ```bash
@@ -110,11 +102,17 @@ gws drive files list --params '{"q":"name contains '\''report'\''","pageSize":10
 # Get file metadata
 gws drive files get --params '{"fileId":"FILE_ID","fields":"id,name,mimeType,modifiedTime"}'
 
-# Download a stored binary file without printing its contents
+# Download a stored binary file. Always use --output: sending alt=media to
+# stdout returns an API error instead of the file bytes.
 gws drive files get --params '{"fileId":"FILE_ID","alt":"media"}' --output ./download.bin
 
 # Export a Google-native Doc, Sheet, or Slide
 gws drive files export --params '{"fileId":"FILE_ID","mimeType":"application/pdf"}' --output ./export.pdf
+
+# Delete a file — run from a writable directory (cd ~ first). The command can
+# exit non-zero from an unwritable cwd even when the delete actually succeeded,
+# so re-check rather than trusting the exit code.
+gws drive files delete --params '{"fileId":"FILE_ID"}'
 ```
 
 For uploads, inspect the maintained helper instead of constructing multipart requests manually:
@@ -132,16 +130,31 @@ gws sheets spreadsheets get --params '{"spreadsheetId":"SHEET_ID","fields":"shee
 # Read a range
 gws sheets spreadsheets values get --params '{"spreadsheetId":"SHEET_ID","range":"Sheet1!A1:D10"}'
 
-# Update a range after user confirmation
+# Update a range. Choose valueInputOption deliberately (see below).
 gws sheets spreadsheets values update \
-  --params '{"spreadsheetId":"SHEET_ID","range":"Sheet1!A1","valueInputOption":"USER_ENTERED"}' \
+  --params '{"spreadsheetId":"SHEET_ID","range":"Sheet1!A1","valueInputOption":"RAW"}' \
   --json '{"values":[["Name","Age"],["Alice",30]]}'
 ```
+
+Preserving values like `0074` takes care at two layers, and missing either one silently
+corrupts the data:
+1. **Quote every value as a JSON string.** `{"values":[["0074"]]}` keeps the leading zero;
+   `{"values":[[0074]]}` is a JSON number and becomes `74` before the request even leaves —
+   nothing the API does can recover it. Codes, ZIPs, and phone numbers are the usual victims.
+2. **Use `valueInputOption: RAW`.** `USER_ENTERED` mimics a person typing, so it strips leading
+   zeros (`0074` → `74`), runs a leading `=` as a formula, and applies locale parsing. `RAW`
+   stores exactly what you send. Reach for `USER_ENTERED` only when you genuinely want a
+   formula evaluated or a date parsed.
+
+After writing IDs or codes, read the range back and confirm the leading zeros survived.
 
 Maintained helpers:
 
 ```bash
 gws sheets +read --help
+# Pass rows as JSON, not the plain --values flag (which splits on commas and
+# corrupts any value that contains one):
+gws sheets +append --spreadsheet SHEET_ID --json-values '[["Alice","New York, NY"]]'
 gws sheets +append --help
 ```
 
@@ -223,6 +236,11 @@ Editing an existing deck is straightforward with `batchUpdate`: `createSlide`, `
 and `insertText`/`replaceAllText` cover add, remove, and edit. Two gotchas: objectIds you
 supply must be at least 5 characters, and to place text you create the slide from a layout with
 `placeholderIdMappings`, then `insertText` into those placeholder ids.
+
+To **change wording already on a slide** (e.g. a year or a title), use `replaceAllText`, which
+swaps the text in place across the deck. Do not instead add a new text box with the new
+wording — that leaves the old text sitting on the slide, so the "change" reads as a duplicate.
+After the edit, re-read with `presentations get` and confirm the old text is actually gone.
 ```bash
 # Inspect (also how you verify slide count/text after an edit)
 gws slides presentations get --params '{"presentationId":"PRESENTATION_ID"}'
