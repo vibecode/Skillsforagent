@@ -93,7 +93,7 @@ See [batch-email-examples.md](batch-email-examples.md) for complete chunking imp
 
 Follow these practices to maximize inbox placement.
 
-For more help with deliverability, install the email-best-practices skill with `npx skills add resend/email-best-practices`.
+For more help with deliverability, install the `email-best-practices` skill.
 
 ### Required
 
