@@ -176,7 +176,7 @@ export async function POST(req: Request) {
 | **Create automations** (event-driven workflows) | [automations.md](references/automations.md) — steps, connections, runs, conditions |
 | **Define and send events** (automation triggers) | [events.md](references/events.md) — schemas, payloads, contact association |
 | **Install SDK** (8+ languages) | [installation.md](references/installation.md) |
-| **Set up an AI agent inbox** | Install the `agent-email-inbox` skill — covers security levels for untrusted input |
+| **Set up an AI agent inbox** | See [`agent-email-inbox`](https://github.com/resend/resend-skills/tree/main/skills/agent-email-inbox) upstream — covers security levels for untrusted input |
 
 ## SDK Version Requirements
 
@@ -242,7 +242,7 @@ Auto-replies, email forwarding, or any receive-then-send workflow requires both 
 
 ### AI Agent Inbox
 
-If your system processes untrusted email content and takes actions (refunds, database changes, forwarding), install the `agent-email-inbox` skill. This applies whether or not AI is involved — any system interpreting freeform email content from external senders needs security measures.
+If your system processes untrusted email content and takes actions (refunds, database changes, forwarding), consult the [`agent-email-inbox`](https://github.com/resend/resend-skills/tree/main/skills/agent-email-inbox) skill upstream (not vendored here). This applies whether or not AI is involved — any system interpreting freeform email content from external senders needs security measures.
 
 ### Marketing Emails
 

@@ -17,7 +17,7 @@ description: >
   4. When the user wants to enroll someone in an automation or newsletter list
   5. When the user asks to set up webhooks for subscription or post events
   6. When the user mentions beehiiv, their newsletter, or their publication
-metadata: {"openclaw": {"emoji": "🐝", "requires": {"env": ["BEEHIIV_API_KEY", "BEEHIIV_PUBLICATION_ID"]}}}
+metadata: {"openclaw": {"emoji": "🐝", "requires": {"env": ["BEEHIIV_API_KEY"]}}}
 ---
 
 # Beehiiv Integration
@@ -34,7 +34,7 @@ on authenticated responses.
 
 ```bash
 BASE="https://api.beehiiv.com/v2"
-PUB="$BEEHIIV_PUBLICATION_ID"   # looks like pub_xxxxxxxx-xxxx-...
+PUB="$BEEHIIV_PUBLICATION_ID"   # looks like pub_xxxxxxxx-xxxx-...; if unset, discover it below
 
 curl -s "$BASE/publications/$PUB/<endpoint>" \
   -H "Authorization: Bearer $BEEHIIV_API_KEY"
@@ -42,9 +42,17 @@ curl -s "$BASE/publications/$PUB/<endpoint>" \
 
 ## Verify auth & discover the publication id
 
+`BEEHIIV_PUBLICATION_ID` is normally set for you when the connection is made,
+but it is **not** required for this skill to load — if it is empty, discover it
+yourself rather than reporting the connection as broken:
+
 ```bash
 # Lists only the publications this key can reach — the reliable way to get the id
 curl -s "$BASE/publications" -H "Authorization: Bearer $BEEHIIV_API_KEY"
+
+# Fall back to the first reachable publication when the env var is unset
+PUB="${BEEHIIV_PUBLICATION_ID:-$(curl -s "$BASE/publications" \
+  -H "Authorization: Bearer $BEEHIIV_API_KEY" | jq -r '.data[0].id')}"
 ```
 
 A bad key returns `401 INVALID_API_KEY`. **A publication outside the key's scope
@@ -248,15 +256,15 @@ curl -sG "$BASE/publications/$PUB/posts" \
   --data-urlencode "status=confirmed" \
   --data-urlencode "audience=free" \
   --data-urlencode "platform=email" \
-  --data-urlencode "expand[]=stats" \
+  --data-urlencode "expand=stats" \
   --data-urlencode "order_by=publish_date" \
   --data-urlencode "direction=desc" \
   --data-urlencode "limit=100"
 
-# Single post with content
+# Single post with content — also unbracketed, repeat the param to expand more than one
 curl -sG "$BASE/publications/$PUB/posts/{postId}" \
   -H "Authorization: Bearer $BEEHIIV_API_KEY" \
-  --data-urlencode "expand[]=stats" --data-urlencode "expand[]=free_web_content"
+  --data-urlencode "expand=stats" --data-urlencode "expand=free_web_content"
 
 # Aggregate stats across posts
 curl -sG "$BASE/publications/$PUB/posts/aggregate_stats" \
