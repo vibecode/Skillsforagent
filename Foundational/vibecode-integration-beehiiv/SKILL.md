@@ -50,10 +50,22 @@ yourself rather than reporting the connection as broken:
 # Lists only the publications this key can reach — the reliable way to get the id
 curl -s "$BASE/publications" -H "Authorization: Bearer $BEEHIIV_API_KEY"
 
-# Fall back to the first reachable publication when the env var is unset
-PUB="${BEEHIIV_PUBLICATION_ID:-$(curl -s "$BASE/publications" \
-  -H "Authorization: Bearer $BEEHIIV_API_KEY" | jq -r '.data[0].id')}"
+# Resolve the id ONLY when the choice is unambiguous
+if [ -z "$BEEHIIV_PUBLICATION_ID" ]; then
+  PUBS=$(curl -s "$BASE/publications" -H "Authorization: Bearer $BEEHIIV_API_KEY")
+  if [ "$(printf '%s' "$PUBS" | jq '.data | length')" = "1" ]; then
+    PUB=$(printf '%s' "$PUBS" | jq -r '.data[0].id')
+  else
+    # Two or more reachable publications — do NOT pick one.
+    printf '%s' "$PUBS" | jq -r '.data[] | "\(.id)\t\(.name)"'
+  fi
+fi
 ```
+
+**Never guess which publication to use.** If the key reaches more than one, show
+the user the list above and ask which they mean. Picking `.data[0]` would look
+like it worked while adding subscribers to, or sending posts from, the wrong
+newsletter — a silent wrong-target write is far worse than stopping to ask.
 
 A bad key returns `401 INVALID_API_KEY`. **A publication outside the key's scope
 returns `404` — the exact same response as a publication that doesn't exist.**
