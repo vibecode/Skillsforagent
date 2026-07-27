@@ -43,7 +43,7 @@ inputs:
       required: true
     - name: RESEND_WEBHOOK_SECRET
       description: Webhook signing secret for verifying inbound email event payloads. Returned as `signing_secret` in the response when you create a webhook via the API.
-      required: true
+      required: false
 references:
     - security-levels.md
     - webhook-setup.md
