@@ -92,7 +92,7 @@ This skill requires Resend SDK features for webhook verification (`webhooks.veri
 | Java | `resend-java` | >= 4.11.0 |
 | .NET | `Resend` | >= 0.2.1 |
 
-Install the `resend` npm package: `npm install resend` (or the equivalent for your language). For full sending docs, install the `resend` skill.
+Install the `resend` npm package: `npm install resend` (or the equivalent for your language). For full sending docs, install the `vibecode-integration-resend` skill.
 
 ## Quick Start
 
@@ -348,7 +348,7 @@ async function sendAgentReply(to: string, subject: string, body: string, inReply
 }
 ```
 
-For full sending docs, install the `resend` skill.
+For full sending docs, install the `vibecode-integration-resend` skill.
 
 ## Environment Variables
 
@@ -396,4 +396,4 @@ For security testing, send test emails from non-allowlisted addresses to verify 
 
 ## Related Skills
 
-- For full sending and receiving docs, install the `resend` skill
+- For full sending and receiving docs, install the `vibecode-integration-resend` skill

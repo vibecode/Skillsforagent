@@ -53,14 +53,21 @@ curl -s "$BASE/publications" -H "Authorization: Bearer $BEEHIIV_API_KEY"
 # Resolve the id ONLY when the choice is unambiguous
 if [ -z "$BEEHIIV_PUBLICATION_ID" ]; then
   PUBS=$(curl -s "$BASE/publications" -H "Authorization: Bearer $BEEHIIV_API_KEY")
-  if [ "$(printf '%s' "$PUBS" | jq '.data | length')" = "1" ]; then
-    PUB=$(printf '%s' "$PUBS" | jq -r '.data[0].id')
-  else
-    # Two or more reachable publications — do NOT pick one.
-    printf '%s' "$PUBS" | jq -r '.data[] | "\(.id)\t\(.name)"'
-  fi
+  COUNT=$(printf '%s' "$PUBS" | jq 'if .data then (.data | length) else -1 end')
+  case "$COUNT" in
+    1)  PUB=$(printf '%s' "$PUBS" | jq -r '.data[0].id') ;;
+    0)  echo "Key is valid but reaches no publications — check the beehiiv account." ;;
+    -1) # No `data` at all: an auth/plan/rate-limit error. Surface it verbatim.
+        printf '%s' "$PUBS" | jq -r '.errors[]? | "\(.code): \(.message)"' ;;
+    *)  # Two or more reachable publications — do NOT pick one.
+        printf '%s' "$PUBS" | jq -r '.data[] | "\(.id)\t\(.name)"' ;;
+  esac
 fi
 ```
+
+**Stop if `PUB` is still empty.** Every path below interpolates it, so continuing
+would request `/publications//subscriptions` and turn a clear auth or account
+error into a confusing 404 somewhere else entirely.
 
 **Never guess which publication to use.** If the key reaches more than one, show
 the user the list above and ask which they mean. Picking `.data[0]` would look
