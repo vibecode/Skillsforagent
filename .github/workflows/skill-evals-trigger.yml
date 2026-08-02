@@ -38,9 +38,22 @@ jobs:
           COMMENT_AUTHOR: ${{ github.event.comment.user.login || github.actor }}
           PR_FROM_COMMENT: ${{ github.event.issue.number }}
           PR_FROM_INPUT: ${{ inputs.pr_number }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
           TARGET_PATH: Foundational/vibecode-integration-google/SKILL.md
         run: |
           set -euo pipefail
+
+          # the job filter is a cheap prefix match, so /evaluate and /eval-disabled
+          # reach here too. A run costs real money, so require the exact command.
+          if [ "${EVENT_NAME}" = "issue_comment" ]; then
+            command="$(printf '%s' "${COMMENT_BODY}" | head -1 | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+            if [ "${command}" != "/eval" ]; then
+              echo "Comment is not exactly /eval; skipping eval dispatch."
+              echo "run=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
           PR="${PR_FROM_INPUT:-${PR_FROM_COMMENT}}"
           permission="$(gh api "repos/${REPO}/collaborators/${COMMENT_AUTHOR}/permission" --jq '.permission' 2>/dev/null || true)"
           case "${permission}" in
