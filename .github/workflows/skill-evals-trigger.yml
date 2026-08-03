@@ -27,7 +27,7 @@ jobs:
     permissions:
       contents: read
       issues: write
-      pull-requests: read
+      pull-requests: write
     steps:
       - name: verify requester and changed path
         id: gate
@@ -75,8 +75,15 @@ jobs:
             exit 0
           fi
 
-          head_repo="$(jq -r '.head.repo.full_name' <<< "${pr_json}")"
-          head_sha="$(jq -r '.head.sha' <<< "${pr_json}")"
+          head_repo="$(jq -r '.head.repo.full_name // empty' <<< "${pr_json}")"
+          head_sha="$(jq -r '.head.sha // empty' <<< "${pr_json}")"
+          # a deleted fork leaves head.repo null, so the raw URL would 404 and the
+          # eval run would fail with nothing to report back
+          if [ -z "${head_repo}" ] || [ -z "${head_sha}" ]; then
+            echo "PR ${PR} has no reachable head repository; skipping eval dispatch."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           echo "run=true" >> "$GITHUB_OUTPUT"
           echo "pr=${PR}" >> "$GITHUB_OUTPUT"
           echo "head_repo=${head_repo}" >> "$GITHUB_OUTPUT"
@@ -84,6 +91,8 @@ jobs:
 
       - name: react to eval request
         if: steps.gate.outputs.run == 'true' && github.event_name == 'issue_comment'
+        # acknowledgement only: never let it stand between a valid /eval and the run
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
