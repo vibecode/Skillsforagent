@@ -1,0 +1,122 @@
+# The eval harness, the baseline and the Google accounts live in vibecode/chorus,
+# and the skill under test lives here. This is the bridge: a
+# `/eval` comment on a Google Workspace SKILL.md PR here fires the scoring
+# run in vibecode/chorus, and the report comes back as a comment on the PR here.
+#
+# Needs one secret in this repo: EVAL_DISPATCH_TOKEN, a fine-grained
+# PAT limited to "contents: write" on vibecode/chorus only. The workflow checks the
+# commenter's repo permission before reading that token, so public comments
+# cannot spend eval money.
+# vibecode/chorus also needs SKILL_EVALS_COMMENT_TOKEN scoped to this repo so the
+# dispatched workflow can write the PR comment back here.
+name: skill-evals-trigger
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Marketplace PR number to evaluate"
+        required: true
+
+jobs:
+  dispatch:
+    if: github.event_name == 'workflow_dispatch' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '/eval'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: verify requester and changed path
+        id: gate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          COMMENT_AUTHOR: ${{ github.event.comment.user.login || github.actor }}
+          PR_FROM_COMMENT: ${{ github.event.issue.number }}
+          PR_FROM_INPUT: ${{ inputs.pr_number }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          TARGET_PATH: Foundational/vibecode-integration-google/SKILL.md
+        run: |
+          set -euo pipefail
+
+          # the job filter is a cheap prefix match, so /evaluate and /eval-disabled
+          # reach here too. A run costs real money, so require the whole comment to
+          # be the command: "/eval once the base branch lands" reads as discussion,
+          # and asking for a bare /eval comment is cheaper than a wrong run.
+          if [ "${EVENT_NAME}" = "issue_comment" ]; then
+            command="$(printf '%s' "${COMMENT_BODY}" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+            if [ "${command}" != "/eval" ]; then
+              echo "Comment is not exactly /eval; skipping eval dispatch."
+              echo "run=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          PR="${PR_FROM_INPUT:-${PR_FROM_COMMENT}}"
+          permission="$(gh api "repos/${REPO}/collaborators/${COMMENT_AUTHOR}/permission" --jq '.permission' 2>/dev/null || true)"
+          case "${permission}" in
+            admin|maintain|write) ;;
+            *)
+              echo "User ${COMMENT_AUTHOR} does not have write access; skipping eval dispatch."
+              echo "run=false" >> "$GITHUB_OUTPUT"
+              exit 0
+              ;;
+          esac
+
+          pr_json="$(gh api "repos/${REPO}/pulls/${PR}")"
+          skill_touched="$(jq -r --arg path "${TARGET_PATH}" '.[]? | select(.filename == $path) | .filename' < <(
+            gh api --paginate "repos/${REPO}/pulls/${PR}/files"
+          ) | head -1)"
+          if [ "${skill_touched}" != "${TARGET_PATH}" ]; then
+            echo "PR ${PR} does not touch ${TARGET_PATH}; skipping eval dispatch."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          head_repo="$(jq -r '.head.repo.full_name // empty' <<< "${pr_json}")"
+          head_sha="$(jq -r '.head.sha // empty' <<< "${pr_json}")"
+          # a deleted fork leaves head.repo null, so the raw URL would 404 and the
+          # eval run would fail with nothing to report back
+          if [ -z "${head_repo}" ] || [ -z "${head_sha}" ]; then
+            echo "PR ${PR} has no reachable head repository; skipping eval dispatch."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "run=true" >> "$GITHUB_OUTPUT"
+          echo "pr=${PR}" >> "$GITHUB_OUTPUT"
+          echo "head_repo=${head_repo}" >> "$GITHUB_OUTPUT"
+          echo "head_sha=${head_sha}" >> "$GITHUB_OUTPUT"
+
+      - name: react to eval request
+        if: steps.gate.outputs.run == 'true' && github.event_name == 'issue_comment'
+        # acknowledgement only: never let it stand between a valid /eval and the run
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+        run: |
+          gh api "repos/${REPO}/issues/comments/${COMMENT_ID}/reactions" \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            --field content=eyes >/dev/null
+
+      - name: ask the eval repo to score this SKILL.md
+        if: steps.gate.outputs.run == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.EVAL_DISPATCH_TOKEN }}
+          SHA: ${{ steps.gate.outputs.head_sha }}
+          HEAD_REPO: ${{ steps.gate.outputs.head_repo }}
+          PR: ${{ steps.gate.outputs.pr }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api repos/vibecode/chorus/dispatches \
+            --method POST \
+            --field event_type=google-skill-changed \
+            --field "client_payload[skill_url]=https://raw.githubusercontent.com/${HEAD_REPO}/${SHA}/Foundational/vibecode-integration-google/SKILL.md" \
+            --field "client_payload[pr_number]=${PR}" \
+            --field "client_payload[source_repo]=${REPO}"
