@@ -44,9 +44,11 @@ jobs:
           set -euo pipefail
 
           # the job filter is a cheap prefix match, so /evaluate and /eval-disabled
-          # reach here too. A run costs real money, so require the exact command.
+          # reach here too. A run costs real money, so require the whole comment to
+          # be the command: "/eval once the base branch lands" reads as discussion,
+          # and asking for a bare /eval comment is cheaper than a wrong run.
           if [ "${EVENT_NAME}" = "issue_comment" ]; then
-            command="$(printf '%s' "${COMMENT_BODY}" | head -1 | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+            command="$(printf '%s' "${COMMENT_BODY}" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
             if [ "${command}" != "/eval" ]; then
               echo "Comment is not exactly /eval; skipping eval dispatch."
               echo "run=false" >> "$GITHUB_OUTPUT"
