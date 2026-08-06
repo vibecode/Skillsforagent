@@ -12,6 +12,8 @@ const DEFAULT_LIMIT = "100";
 // Business Portfolio discovery is available through the explicit commands below.
 const ACCOUNT_FIELDS = "id,account_id,name,account_status,currency,timezone_id,timezone_name";
 const BUSINESS_FIELDS = "id,name,verification_status,created_time,updated_time";
+const PAGE_FIELDS = "id,name,category,tasks";
+const PAGE_POST_FIELDS = "id,message,created_time,permalink_url,shares,comments.limit(0).summary(true),reactions.limit(0).summary(true)";
 const CAMPAIGN_FIELDS = "id,name,account_id,objective,status,effective_status,configured_status,buying_type,created_time,updated_time,daily_budget,lifetime_budget";
 const ADSET_FIELDS = "id,name,account_id,campaign_id,status,effective_status,configured_status,optimization_goal,billing_event,daily_budget,lifetime_budget,start_time,end_time,created_time,updated_time";
 const AD_FIELDS = "id,name,account_id,campaign_id,adset_id,status,effective_status,configured_status,created_time,updated_time";
@@ -71,6 +73,8 @@ type StoredCampaignPlan = {
 type ParsedCommand =
   | { command: "status" }
   | { command: "accounts"; after?: string }
+  | { command: "pages"; after?: string }
+  | { command: "page-posts"; pageId: string; after?: string }
   | { command: "businesses"; after?: string }
   | {
       command: "business-accounts";
@@ -186,6 +190,23 @@ export async function runMetaAdsCli(
     });
   }
 
+  if (parsed.command === "pages") {
+    return requestCollection(runCommand, timeoutMs, "me/accounts", {
+      fields: PAGE_FIELDS,
+      limit: DEFAULT_LIMIT,
+      after: parsed.after,
+    });
+  }
+
+  if (parsed.command === "page-posts") {
+    const pageId = normalizePageId(parsed.pageId);
+    return requestCollection(runCommand, timeoutMs, `${pageId}/posts`, {
+      fields: PAGE_POST_FIELDS,
+      limit: DEFAULT_LIMIT,
+      after: parsed.after,
+    }, pageId);
+  }
+
   if (parsed.command === "businesses") {
     return requestCollection(runCommand, timeoutMs, "me/businesses", {
       fields: BUSINESS_FIELDS,
@@ -248,6 +269,14 @@ function parseCommand(argv: string[]): ParsedCommand {
   if (command === "accounts") {
     const flags = parseFlags(rest, new Set(["after"]));
     return { command, after: flags.after };
+  }
+  if (command === "pages") {
+    const flags = parseFlags(rest, new Set(["after"]));
+    return { command, after: flags.after };
+  }
+  if (command === "page-posts") {
+    const flags = parseFlags(rest, new Set(["page-id", "after"]));
+    return { command, pageId: requiredFlag(flags, "page-id"), after: flags.after };
   }
   if (command === "businesses") {
     const flags = parseFlags(rest, new Set(["after"]));
@@ -331,7 +360,7 @@ function parseCommand(argv: string[]): ParsedCommand {
       confirmation: requiredFlag(flags, "confirm"),
     };
   }
-  usage("Usage: meta_ads.ts status | accounts|businesses [--after CURSOR] | business-accounts --business-id ID [--relationship owned|client] [--after CURSOR] | campaigns|adsets|ads --account-id ID [--after CURSOR] | insights --account-id ID [--level LEVEL] (--date-preset PRESET | --since YYYY-MM-DD --until YYYY-MM-DD) [--after CURSOR] | campaign-plan-create --account-id ID --name NAME --objective OBJECTIVE --special-ad-categories NONE [budget options] | campaign-plan-update --campaign-id ID [changes] | campaign-apply --plan-id ID --confirm ID");
+  usage("Usage: meta_ads.ts status | accounts|businesses|pages [--after CURSOR] | page-posts --page-id ID [--after CURSOR] | business-accounts --business-id ID [--relationship owned|client] [--after CURSOR] | campaigns|adsets|ads --account-id ID [--after CURSOR] | insights --account-id ID [--level LEVEL] (--date-preset PRESET | --since YYYY-MM-DD --until YYYY-MM-DD) [--after CURSOR] | campaign-plan-create --account-id ID --name NAME --objective OBJECTIVE --special-ad-categories NONE [budget options] | campaign-plan-update --campaign-id ID [changes] | campaign-apply --plan-id ID --confirm ID");
 }
 
 function parseFlags(argv: string[], allowed: Set<string>): Record<string, string> {
@@ -449,6 +478,12 @@ function normalizeCampaignId(value: string): string {
 function normalizeBusinessId(value: string): string {
   const normalized = value.trim();
   if (!/^\d+$/.test(normalized)) usage("Meta business ID must contain only digits");
+  return normalized;
+}
+
+function normalizePageId(value: string): string {
+  const normalized = value.trim();
+  if (!/^\d+$/.test(normalized)) usage("Meta Page ID must contain only digits");
   return normalized;
 }
 

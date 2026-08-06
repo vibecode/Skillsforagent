@@ -6,7 +6,8 @@ description: >
   through the installed CLI. Consult this skill whenever the user asks about
   Meta Ads, Facebook Ads, Instagram
   Ads, Ads Manager, ad accounts, campaigns, ad sets, ads, spend, impressions,
-  clicks, CTR, CPC, CPM, conversions, CPA, ROAS, or marketing performance—even
+  Facebook Pages, Page posts, Page engagement, clicks, CTR, CPC, CPM,
+  conversions, CPA, ROAS, or marketing performance—even
   if they do not explicitly ask for a Meta Ads skill. It discovers ad accounts
   and runs bounded Marketing API reports without exposing OAuth credentials.
   It supports approval-gated campaign creation, activation, pausing, renaming,
@@ -52,6 +53,25 @@ Run `status` before the first API call in a task.
   finishes, but their links remain intact.
 
 ## Reporting commands
+
+List Facebook Pages the connected user can access. This requires
+`pages_show_list` on the reauthorized Meta connection:
+
+```bash
+bun "$META_ADS_CLI" pages
+```
+
+Read recent content and bounded engagement summaries for one selected Page.
+This requires `pages_read_engagement`:
+
+```bash
+bun "$META_ADS_CLI" page-posts --page-id 123456789
+```
+
+Use `--after '<nextCursor>'` for additional pages. If either command reports a
+missing permission, ask the user to reconnect the existing Meta Ads connection
+after a Chorus administrator adds the required scope in Nango. Do not claim
+that the user has no Facebook Pages when the permission is absent.
 
 List accessible ad accounts:
 
