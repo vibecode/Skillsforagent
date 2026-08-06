@@ -128,6 +128,32 @@ describe("meta ads skill CLI", () => {
     expect(queryMap(argv).fields).not.toContain("business");
   });
 
+  test("lists accessible Pages and reads bounded Page engagement", async () => {
+    const pages = mockCommands([proxyResponse({
+      data: [{ id: "123456789", name: "Bluegrass Shield Roofing", category: "Roofing Service" }],
+    })]);
+    await expect(runMetaAdsCli(["pages"], pages)).resolves.toEqual({
+      data: [{ id: "123456789", name: "Bluegrass Shield Roofing", category: "Roofing Service" }],
+      nextCursor: null,
+    });
+    expect(pages.calls[0]?.argv).toContain("me/accounts");
+    expect(queryMap(pages.calls[0]?.argv ?? []).fields).toBe("id,name,category,tasks");
+
+    const posts = mockCommands([proxyResponse({
+      data: [{ id: "post-1", message: "Storm inspection", reactions: { summary: { total_count: 8 } } }],
+    })]);
+    await expect(runMetaAdsCli([
+      "page-posts",
+      "--page-id",
+      "123456789",
+    ], posts)).resolves.toMatchObject({
+      data: [{ id: "post-1" }],
+      accountId: "123456789",
+    });
+    expect(posts.calls[0]?.argv).toContain("123456789/posts");
+    expect(queryMap(posts.calls[0]?.argv ?? []).fields).toContain("reactions.limit(0).summary(true)");
+  });
+
   test("lists campaign objects with a normalized ad account selector", async () => {
     const commands = mockCommands([proxyResponse({ data: [{ id: "campaign-1" }] })]);
 
